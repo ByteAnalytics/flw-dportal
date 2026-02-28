@@ -1,0 +1,6 @@
+# Load environment if needed
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # Load NVM if available
+
+# Run commitlint with your TypeScript config
+npx --no -- commitlint --config commitlint.config.ts --edit "${1}"
