@@ -26,7 +26,7 @@ This project is production-ready with complete Docker containerization and autom
 ### GitHub Actions CI/CD
 
 - ✅ **Automated linting** and build checks on every PR
-- ✅ **Docker image builds** - separate dev (`ridzy619/fhfl-frontend-dev`) and production (`ridzy619/fhfl-frontend`) images
+- ✅ **Docker image builds** - separate dev (`ridzy619/infracredit-frontend-dev`) and production (`ridzy619/infracredit-frontend`) images
 - ✅ **DockerHub integration** - auto-push on every commit to main/feat branches
 - ✅ **Smart triggers** - PRs run tests only, pushes build and deploy
 - ✅ **Version tagging** - commit SHA tags for easy rollback
@@ -44,12 +44,12 @@ docker-compose up -d --build
 
 ```bash
 # Production image
-docker pull ridzy619/fhfl-frontend
-docker run -d -p 3000:3000 ridzy619/fhfl-frontend
+docker pull ridzy619/infracredit-frontend
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend
 
 # Development image
-docker pull ridzy619/fhfl-frontend-dev
-docker run -d -p 3000:3000 ridzy619/fhfl-frontend-dev
+docker pull ridzy619/infracredit-frontend-dev
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend-dev
 ```
 
 **Option 3: Vercel** (quick deployment)
@@ -238,7 +238,7 @@ NEXT_PUBLIC_API_BASE_URL=https://api.example.com docker-compose up -d --build
 docker-compose down && docker-compose up -d --build
 
 # Access container shell
-docker exec -it fhfl-frontend-dev sh
+docker exec -it infracredit-frontend-dev sh
 
 # View all running containers
 docker ps
@@ -250,7 +250,7 @@ docker-compose down && docker system prune -a
 #### Docker Files Included
 
 - `Dockerfile` - Multi-stage build optimized for Next.js (standalone output enabled)
-- `docker-compose.yml` - Development deployment (container: `fhfl-frontend-dev`)
+- `docker-compose.yml` - Development deployment (container: `infracredit-frontend-dev`)
 - `docker-compose.production.yml` - Production with health checks and resource limits
 - `.dockerignore` - Build optimization (excludes node_modules, .git, etc.)
 - `nginx.conf.example` - Optional reverse proxy configuration for production
@@ -261,7 +261,7 @@ docker-compose down && docker system prune -a
 **Container won't start:**
 
 ```bash
-docker-compose logs fhfl-frontend-dev
+docker-compose logs infracredit-frontend-dev
 ```
 
 **Port 3000 already in use:**
@@ -307,8 +307,8 @@ Automatically lints, builds, and pushes Docker images to DockerHub.
    - **Push to main**: Lint, build, and push both dev and prod images
 
 4. **Built images**:
-   - Development: `ridzy619/fhfl-frontend-dev` and `ridzy619/fhfl-frontend-dev:{commit-sha}`
-   - Production: `ridzy619/fhfl-frontend` and `ridzy619/fhfl-frontend:{commit-sha}`
+   - Development: `ridzy619/infracredit-frontend-dev` and `ridzy619/infracredit-frontend-dev:{commit-sha}`
+   - Production: `ridzy619/infracredit-frontend` and `ridzy619/infracredit-frontend:{commit-sha}`
 
 #### Pipeline Jobs
 
@@ -326,7 +326,7 @@ Automatically lints, builds, and pushes Docker images to DockerHub.
 
 - Runs on: Push events only (not PRs)
 - Requires: lint-and-build to pass
-- Builds Docker image: `ridzy619/fhfl-frontend-dev`
+- Builds Docker image: `ridzy619/infracredit-frontend-dev`
 - Tags: latest + commit SHA
 - Uses: `NEXT_PUBLIC_API_BASE_URL_DEV` variable
 
@@ -334,7 +334,7 @@ Automatically lints, builds, and pushes Docker images to DockerHub.
 
 - Runs on: Push to main branch only
 - Requires: lint-and-build to pass
-- Builds Docker image: `ridzy619/fhfl-frontend`
+- Builds Docker image: `ridzy619/infracredit-frontend`
 - Tags: latest + commit SHA
 - Uses: `NEXT_PUBLIC_API_BASE_URL_PROD` variable
 
@@ -376,14 +376,14 @@ Automatically deploys to a VM via SSH after successful builds.
 The workflow:
 
 1. Connects to VM via SSH
-2. Pulls the latest `fhfl-frontend-dev` image
+2. Pulls the latest `infracredit-frontend-dev` image
 3. Starts the container with docker compose
 4. Shows logs if deployment fails
 
 ```bash
 # Commands executed on VM:
-docker compose pull fhfl-frontend-dev
-docker compose up fhfl-frontend-dev -d --no-build --wait || docker compose logs fhfl-frontend-dev
+docker compose pull infracredit-frontend-dev
+docker compose up infracredit-frontend-dev -d --no-build --wait || docker compose logs infracredit-frontend-dev
 ```
 
 ### Complete Configuration Checklist
@@ -408,16 +408,16 @@ Instead of building locally, you can use the pre-built images from DockerHub (au
 
 ```bash
 # Pull and run production image (built from main branch)
-docker pull ridzy619/fhfl-frontend
-docker run -d -p 3000:3000 ridzy619/fhfl-frontend
+docker pull ridzy619/infracredit-frontend
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend
 
 # Or use specific commit version for rollback
-docker pull ridzy619/fhfl-frontend:abc1234
-docker run -d -p 3000:3000 ridzy619/fhfl-frontend:abc1234
+docker pull ridzy619/infracredit-frontend:abc1234
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend:abc1234
 
 # Pull and run development image (built from feat/deployment)
-docker pull ridzy619/fhfl-frontend-dev
-docker run -d -p 3000:3000 ridzy619/fhfl-frontend-dev
+docker pull ridzy619/infracredit-frontend-dev
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend-dev
 ```
 
 ### Manual VM Deployment
@@ -429,13 +429,13 @@ If you want to deploy manually instead of using the automated workflow:
 ssh user@your-vm-host
 
 # Pull latest image
-docker compose pull fhfl-frontend-dev
+docker compose pull infracredit-frontend-dev
 
 # Start the container
-docker compose up fhfl-frontend-dev -d --no-build
+docker compose up infracredit-frontend-dev -d --no-build
 
 # Check logs
-docker compose logs -f fhfl-frontend-dev
+docker compose logs -f infracredit-frontend-dev
 ```
 
 ## Contributing
@@ -481,14 +481,14 @@ The following files were added/modified to enable Docker deployment and CI/CD:
 
 **Production Images**
 
-- Repository: `ridzy619/fhfl-frontend`
+- Repository: `ridzy619/infracredit-frontend`
 - Tags: `latest` (implicit), `{commit-sha}`
 - Built on: Push to `main` branch
 - Used for: Production deployments
 
 **Development Images**
 
-- Repository: `ridzy619/fhfl-frontend-dev`
+- Repository: `ridzy619/infracredit-frontend-dev`
 - Tags: `latest` (implicit), `{commit-sha}`
 - Built on: Push to `main` or `feat/deployment` branches
 - Used for: Development/staging environments and VM deployments
