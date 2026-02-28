@@ -132,7 +132,7 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
                       htmlFor={`recipient-${user.id}`}
                       className="cursor-pointer text-sm font-[400] text-[#5B5F5E]"
                     >
-                      {user.name}
+                      {user.first_name} {user.last_name} ({user.email})
                     </Label>
                   </div>
                 ))}
