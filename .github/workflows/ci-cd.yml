@@ -1,0 +1,241 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - feat/deployment
+      - demo
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  lint-and-build:
+    name: Lint and Build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Build project
+        run: npm run build
+        env:
+          CI: ""
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL || 'http://66.42.92.219:8010' }}
+
+  # ============================================
+  # DEVELOPMENT BUILD (feat/deployment branch)
+  # ============================================
+  build-and-push-dev:
+    name: Build and Push Development Image
+    runs-on: ubuntu-latest
+    needs: lint-and-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/deployment'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Development Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            chenray79/infracredit_fe:dev
+            chenray79/infracredit_fe:dev-${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL_DEV || 'http://66.42.92.219:8010' }}
+            NEXT_PUBLIC_NODE_ENV=development
+            NEXT_PUBLIC_USE_SECURE_COOKIES=false
+            NODE_ENV=production
+          cache-from: type=registry,ref=chenray79/infracredit_fe:dev
+          cache-to: type=inline
+
+  # ============================================
+  # DEMO BUILD
+  # ============================================
+  build-and-push-demo:
+    name: Build and Push Demo Image
+    runs-on: ubuntu-latest
+    needs: lint-and-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/demo'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Demo Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            chenray79/infracredit_fe:demo
+            chenray79/infracredit_fe:demo-${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL_DEMO || 'http://66.42.92.219:8010/api' }}
+            NEXT_PUBLIC_NODE_ENV=demo
+            NEXT_PUBLIC_USE_SECURE_COOKIES=false
+            NODE_ENV=production
+          cache-from: type=registry,ref=chenray79/infracredit-frontend:demo
+          cache-to: type=inline
+
+  # ============================================
+  # PRODUCTION BUILD
+  # ============================================
+  build-and-push-prod:
+    name: Build and Push Production Image
+    runs-on: ubuntu-latest
+    needs: lint-and-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Production Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            chenray79/infracredit_fe:latest
+            chenray79/infracredit_fe:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL_PROD }}
+            NEXT_PUBLIC_NODE_ENV=production
+            NEXT_PUBLIC_USE_SECURE_COOKIES=false
+            NODE_ENV=production
+          cache-from: type=registry,ref=chenray79/infracredit-frontend:latest
+          cache-to: type=inline
+
+  # ============================================
+  # DEPLOY DEVELOPMENT
+  # ============================================
+  deploy-dev:
+    name: Deploy Development
+    runs-on: ubuntu-latest
+    needs: build-and-push-dev
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/deployment'
+
+    steps:
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull chenray79/infracredit_fe:dev
+            docker stop infracredit-frontend-dev || true
+            docker rm infracredit-frontend-dev || true
+            docker run -d \
+              --name infracredit-frontend-dev \
+              -p 8011:8010 \
+              --restart unless-stopped \
+              chenray79/infracredit_fe:dev
+
+  # ============================================
+  # DEPLOY DEMO ← NEW
+  # ============================================
+  deploy-demo:
+    name: Deploy Demo
+    runs-on: ubuntu-latest
+    needs: build-and-push-demo
+    if: github.event_name == 'push' && github.ref == 'refs/heads/demo'
+
+    steps:
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull chenray79/infracredit_fe:demo
+            docker stop infracredit-frontend-demo || true
+            docker rm infracredit-frontend-demo || true
+            docker run -d \
+              --name infracredit-frontend-demo \
+              -p 8012:8010 \
+              --restart unless-stopped \
+              chenray79/infracredit_fe:demo
+
+  # ============================================
+  # DEPLOY PRODUCTION
+  # ============================================
+  deploy-prod:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    needs: build-and-push-prod
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull chenray79/infracredit_fe:latest
+            docker stop infracredit-frontend || true
+            docker rm infracredit-frontend || true
+            docker run -d \
+              --name infracredit-frontend \
+              -p 8010:8010 \
+              --restart unless-stopped \
+              chenray79/infracredit_fe:latest

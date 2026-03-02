@@ -1,0 +1,25 @@
+# docker-compose.yml (for development)
+version: "3.8"
+
+services:
+  infracredit-frontend-dev:
+    container_name: infracredit-frontend-dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL_DEV:-http://66.42.92.219:8010}
+        - NEXT_PUBLIC_NODE_ENV=development
+        - NODE_ENV=production
+    ports:
+      - "8011:8010"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+    restart: unless-stopped
+    networks:
+      - infracredit-network
+
+networks:
+  infracredit-network:
+    driver: bridge
