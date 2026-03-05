@@ -30,6 +30,7 @@ import { useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { EnvironmentHelper } from "@/lib/environment-utils";
 import ByteLogo from "@/public/assets/nav-brand.svg";
+import Link from "next/link";
 
 const SignIn: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -150,6 +151,14 @@ const SignIn: React.FC = () => {
                 placeholder="••••••••"
                 disabled={isSubmitting}
               />
+              <div className="flex justify-end -mt-4">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-sm font-[600] text-primary_40 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <CustomButton
                 disabled={isSubmitting}
                 isLoading={isSubmitting}

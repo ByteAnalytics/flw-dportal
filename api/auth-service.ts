@@ -26,4 +26,14 @@ export const authService = {
 
     return apiClient.post("/auth/set-password", payload);
   },
+
+  forgetPassword: async (
+    email: string,
+  ): Promise<AxiosResponse<ApiResponse<null>>> => {
+    const payload = {
+      email,
+    };
+
+    return apiClient.post("/auth/forgot-password", payload);
+  },
 };

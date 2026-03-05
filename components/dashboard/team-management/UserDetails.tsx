@@ -51,8 +51,6 @@ const UserDetails = () => {
 
   const userDetails = data?.data;
 
-  // const isEmailRecipient = userDetails?.is_email_recipient ?? false;
-
   const deleteUserMutation = useDynamicDelete<ApiResponse<null>>();
 
   const activateUserMutation = usePatch<ApiResponse<null>, null>(

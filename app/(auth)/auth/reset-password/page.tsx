@@ -3,8 +3,8 @@ import { EnvironmentHelper } from "@/lib/environment-utils";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: `${EnvironmentHelper.getMetaTitle()} | Forgot Password`,
-  description: "Get your reset password mail here",
+  title: `${EnvironmentHelper.getMetaTitle()} | Reset Password`,
+  description: "Set your password here",
 };
 
 export default function ResetPasswordPage() {
