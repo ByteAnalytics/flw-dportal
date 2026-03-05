@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,15 +13,22 @@ interface MobileNavProps {
   items: readonly NavItem[];
 }
 
+const subscribe = () => () => {};
+
 export const MobileNav: React.FC<MobileNavProps> = ({ items }) => {
   const pathname = usePathname();
 
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const { user, isLoading } = useAuthStore((s) => s);
 
   const userRole = user?.role;
+
+  const mounted = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
 
   const filteredItems = useMemo(() => {
     if (!userRole) return [];
@@ -45,10 +52,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({ items }) => {
 
   const activeUrl = getActiveUrl();
   const isActive = (url: string) => url === activeUrl;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   if (!mounted) return null;
 

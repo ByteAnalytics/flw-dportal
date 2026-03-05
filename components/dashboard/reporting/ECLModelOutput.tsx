@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useRouter } from "nextjs-toploader/app";
 import { ChevronLeft } from "lucide-react";
@@ -30,9 +30,7 @@ import {
   DEFAULT_COLUMNS,
   IMPORTANT_COLUMNS,
 } from "@/constants/ecl-model-config";
-import {
-  createStatsData,
-} from "@/lib/ecl-model-utils";
+import { createStatsData } from "@/lib/ecl-model-utils";
 import { CustomTabs } from "@/components/shared/CustomTab";
 import Link from "next/link";
 import { StatCard } from "@/components/shared/StatCard";
@@ -55,7 +53,7 @@ const ECLModelOutput: React.FC = () => {
 
   // Build query string for API
   const buildQueryString = () => {
-    let query = `model_execution_id=${id}&page=${pageNumber}&page_size=${itemsPerPage}`;
+    const query = `model_execution_id=${id}&page=${pageNumber}&page_size=${itemsPerPage}`;
 
     return query;
   };
@@ -189,7 +187,7 @@ const ECLModelOutput: React.FC = () => {
   }, [data]);
 
   // Generate columns
-  const getColumns = () => {
+  const getColumns = useCallback(() => {
     if (!data?.data || data.data.length === 0) {
       return DEFAULT_COLUMNS;
     }
@@ -204,7 +202,7 @@ const ECLModelOutput: React.FC = () => {
       label: eclformatColumnHeader(key),
       width: COLUMN_WIDTHS[key] || "w-[120px]",
     }));
-  };
+  }, [data]);
 
   const tabContent = useMemo(() => {
     return (
@@ -241,7 +239,7 @@ const ECLModelOutput: React.FC = () => {
         )}
       </div>
     );
-  }, [tableRows, statsData]);
+  }, [tableRows, statsData, getColumns, data, setPageNumber, itemsPerPage]);
 
   const renderTabContent = (content: React.ReactNode) => {
     if (isLoading) {
