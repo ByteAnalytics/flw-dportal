@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import CustomTable from "@/components/ui/custom-table";
 import CustomButton from "@/components/ui/custom-button";
 import CustomDropdown from "@/components/ui/custom-dropdown";
@@ -22,6 +22,12 @@ const ManageUsersTable = () => {
   const router = useRouter();
 
   const { data, isLoading } = useGet<TeamUsersResponse>(["users"], "/users/");
+
+  const handleEdit = useCallback((user: User) => {
+    setIsEditMode(true);
+    setSelectedUser(user);
+    setIsUserSheetOpen(true);
+  }, []);
 
   const rows = useMemo(() => {
     if (!data?.data) return [];
@@ -52,13 +58,7 @@ const ManageUsersTable = () => {
         />
       ),
     }));
-  }, [data]);
-
-  const handleEdit = (user: User) => {
-    setIsEditMode(true);
-    setSelectedUser(user);
-    setIsUserSheetOpen(true);
-  };
+  }, [data, router, handleEdit]);
 
   const handleAddNew = () => {
     setIsEditMode(false);

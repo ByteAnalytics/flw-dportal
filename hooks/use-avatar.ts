@@ -12,15 +12,12 @@ export function useAvatar({
   textCount = 2,
 }: UseAvatarProps) {
   const [validImageSrc, setValidImageSrc] = useState<string | null>(
-    imageSrc ?? null
+    imageSrc ?? null,
   );
   const usingValidImage = useRef(true);
 
   useEffect(() => {
-    if (!imageSrc) {
-      setValidImageSrc(null);
-      return;
-    }
+    if (!imageSrc) return;
 
     const img = new window.Image();
     img.onerror = () => {

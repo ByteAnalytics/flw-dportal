@@ -42,8 +42,6 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
     "send-to-email",
   ]);
 
-  const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
-
   const form = useForm<ExportToEmailFormData>({
     resolver: zodResolver(ExportToEmailFormSchema),
     defaultValues: {
@@ -51,27 +49,29 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
     },
   });
 
+  const selectedRecipients = data?.data
+    .filter((user) => user.is_email_recipient)
+    .map((user) => user.email);
+
   useEffect(() => {
     if (data?.data && data.data.length > 0) {
       const defaultRecipients = data.data
         .filter((user) => user.is_email_recipient)
         .map((user) => user.email);
 
-      setSelectedRecipients(defaultRecipients);
+      // setSelectedRecipients(defaultRecipients);
       form.setValue("email", defaultRecipients.join(", "));
     }
   }, [data?.data, form]);
 
   const toggleRecipient = (email: string) => {
-    setSelectedRecipients((prev) => {
-      const isSelected = prev.includes(email);
-      const updated = isSelected
-        ? prev.filter((e) => e !== email)
-        : [...prev, email];
+    const recipients = selectedRecipients ?? [];
+    const isSelected = recipients.includes(email);
+    const updated = isSelected
+      ? recipients.filter((e) => e !== email)
+      : [...recipients, email];
 
-      form.setValue("email", updated.join(", "));
-      return updated;
-    });
+    form.setValue("email", updated.join(", "));
   };
 
   const handleSubmitForm = async (values: ExportToEmailFormData) => {
@@ -124,7 +124,7 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
                   >
                     <Checkbox
                       id={`recipient-${user.id}`}
-                      checked={selectedRecipients.includes(user.email)}
+                      checked={selectedRecipients?.includes(user.email)}
                       onCheckedChange={() => toggleRecipient(user.email)}
                       className="text-[#006F37] border-[#006F37] data-[state=checked]:bg-[#006F37]"
                     />

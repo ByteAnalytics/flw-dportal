@@ -2,18 +2,17 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import CustomButton from "@/components/ui/custom-button";
 import CustomAvatar from "@/components/ui/custom-avatar";
-import { Mail, Calendar, Edit } from "lucide-react";
+import { Mail, Calendar } from "lucide-react";
 import AlertModal from "@/components/shared/AlertModal";
 import { getRoleBadge, getStatusBadge } from "@/components/shared/Badge";
 import UserSheet from "./UserSheet";
 import UserActivitySheet from "./UserActivities";
 import { SheetWrapper } from "@/components/ui/custom-sheet";
-import { Switch } from "@/components/ui/switch";
 import {
   useGet,
   useDynamicDelete,
@@ -38,7 +37,6 @@ const UserDetails = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isActivitySheetOpen, setIsActivitySheetOpen] = useState(false);
-  const [isEmailRecipient, setIsEmailRecipient] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -53,11 +51,7 @@ const UserDetails = () => {
 
   const userDetails = data?.data;
 
-  useEffect(() => {
-    if (userDetails) {
-      setIsEmailRecipient(userDetails?.is_email_recipient ?? false);
-    }
-  }, [userDetails]);
+  // const isEmailRecipient = userDetails?.is_email_recipient ?? false;
 
   const deleteUserMutation = useDynamicDelete<ApiResponse<null>>();
 
@@ -138,8 +132,6 @@ const UserDetails = () => {
   };
 
   const handleToggleEmailRecipient = async (checked: boolean) => {
-    setIsEmailRecipient(checked);
-
     try {
       const response = await updateUserMutation.mutateAsync({
         is_email_recipient: checked,
@@ -148,7 +140,6 @@ const UserDetails = () => {
       refetch();
     } catch (error: any) {
       toast.error(extractErrorMessage(error));
-      setIsEmailRecipient(!checked);
     }
   };
 
