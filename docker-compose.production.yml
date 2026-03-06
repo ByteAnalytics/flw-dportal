@@ -2,7 +2,8 @@ version: "3.8"
 
 services:
   infracredit-frontend:
-    container_name: infracredit-frontend
+    image: ${DOCKER_IMAGE:-chenray79/infracredit_fe:latest}
+    container_name: ${CONTAINER_NAME:-infracredit-frontend}
     build:
       context: .
       dockerfile: Dockerfile
@@ -11,21 +12,19 @@ services:
         - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
         - NODE_ENV=production
     ports:
-      - "8010:8010"
+      - "${HOST_PORT:-3010}:${CONTAINER_PORT:-3000}"
     environment:
       # Runtime environment variables
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
     restart: unless-stopped
-    networks:
-      - infracredit-network
     healthcheck:
       test:
         [
           "CMD",
           "node",
           "-e",
-          "require('http').get('http://66.42.92.219:8010', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})",
+          "require('http').get('http://localhost:${CONTAINER_PORT:-3000}', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})",
         ]
       interval: 30s
       timeout: 10s
@@ -44,26 +43,3 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-  # Optional: Add Nginx reverse proxy
-  # nginx:
-  #   image: nginx:alpine
-  #   container_name: infracredit-nginx
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
-  #     - ./ssl:/etc/nginx/ssl:ro
-  #   depends_on:
-  #     - infracredit-frontend
-  #   restart: unless-stopped
-  #   networks:
-  #     - infracredit-network
-
-networks:
-  infracredit-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.25.0.0/16
