@@ -1,0 +1,101 @@
+name: Bare Metal Deployment (Direct to VM)
+
+on:
+  push:
+    branches:
+      - main
+      - feat/deployment
+      - demo
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      target_folder:
+        description: 'Target deployment path on your VM'
+        required: true
+        default: '~/infra-fe'
+      service_name:
+        description: 'Systemd service name to restart'
+        required: true
+        default: 'infracredit-frontend.service'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Project
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL_PROD || 'http://localhost:8010' }}
+
+      - name: Package Standalone Output
+        run: |
+          echo "Copying static assets into standalone folder..."
+          cp -r public .next/standalone/
+          cp -r .next/static .next/standalone/.next/
+          
+          # Compress the folder so it uploads to your VM much faster
+          echo "Compressing build..."
+          cd .next/standalone
+          tar -czf ../../release.tar.gz .
+
+      - name: Upload Release Archive to VM
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          password: ${{ secrets.VM_PASSWORD }}
+          source: "release.tar.gz"
+          target: "~/infra-fe"
+          overwrite: true
+
+      - name: Extract Release and Restart Service
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          password: ${{ secrets.VM_PASSWORD }}
+          script: |
+            APP_DIR="${{ github.event.inputs.target_folder }}"
+            SERVICE_NAME="${{ github.event.inputs.service_name }}"
+            
+            echo "Creating application directory: $APP_DIR"
+            mkdir -p $APP_DIR
+            
+            # Since SCP uploads to the target folder, the tar file is located there
+            TAR_FILE="$APP_DIR/release.tar.gz"
+            
+            # Empty out old application files before extraction 
+            # (ignoring the new tar file so we don't delete what we just uploaded)
+            echo "Cleaning up old release files..."
+            find $APP_DIR -mindepth 1 -maxdepth 1 ! -name "release.tar.gz" -exec rm -rf {} +
+            
+            echo "Extracting build into $APP_DIR..."
+            tar -xzf $TAR_FILE -C $APP_DIR
+            
+            # Clean up the archive so it doesn't take up VM disk space
+            rm $TAR_FILE
+            
+            # Restart the systemd service so it picks up the new code
+            echo "Restarting service: $SERVICE_NAME..."
+            sudo systemctl restart $SERVICE_NAME 
+            
+            # Check the status to ensure it didn't crash on startup
+            sleep 3
+            sudo systemctl is-active $SERVICE_NAME
