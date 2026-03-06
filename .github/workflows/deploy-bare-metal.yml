@@ -81,9 +81,9 @@ jobs:
           script: |
             set -euo pipefail
 
-            : "${APP_DIR:?APP_DIR is not set}"
             APP_DIR="${{ github.event.inputs.target_folder || '/home/infra/infra-fe' }}"
             SERVICE_NAME="${{ github.event.inputs.service_name || 'infracredit-frontend.service' }}"
+            : "${APP_DIR:?APP_DIR is not set}"
             
             echo "Creating application directory: $APP_DIR"
             mkdir -p $APP_DIR
