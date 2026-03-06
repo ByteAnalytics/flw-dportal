@@ -66,8 +66,7 @@ const ForgotPassword: React.FC = () => {
               Forgot password?
             </h1>
             <h2 className="text-center text-base font-[600] text-gray-500">
-              No worries! Enter your email and we@aposll send you reset
-              instructions.
+              {"No worries! Enter your email and we'll send you reset instructions."}
             </h2>
 
             <Form {...form}>

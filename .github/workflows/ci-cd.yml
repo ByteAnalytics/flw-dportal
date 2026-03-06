@@ -1,14 +1,16 @@
 name: CI/CD Pipeline
 
 on:
-  push:
-    branches:
-      - main
-      - feat/deployment
-      - demo
-  pull_request:
-    branches:
-      - main
+  #   push:
+  #   branches:
+  #     - main
+  #     - feat/deployment
+  #     - demo
+  # pull_request:
+  #   branches:
+  #     - main
+
+  workflow_dispatch:
 
 permissions:
   id-token: write
