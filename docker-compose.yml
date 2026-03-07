@@ -12,7 +12,7 @@ services:
         - NEXT_PUBLIC_NODE_ENV=development
         - NODE_ENV=production
     ports:
-      - "8011:8010"
+      - "3011:3000"
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
