@@ -1,14 +1,16 @@
 name: CI/CD Pipeline
 
 on:
-  push:
-    branches:
-      - main
-      - feat/deployment
-      - demo
-  pull_request:
-    branches:
-      - main
+  #   push:
+  #   branches:
+  #     - main
+  #     - feat/deployment
+  #     - demo
+  # pull_request:
+  #   branches:
+  #     - main
+
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -38,6 +40,9 @@ jobs:
 
       - name: Lint code
         run: npm run lint
+
+      - name: Run tests
+        run: npm run test --if-present
 
       - name: Build project
         run: npm run build
@@ -120,7 +125,7 @@ jobs:
             NEXT_PUBLIC_NODE_ENV=demo
             NEXT_PUBLIC_USE_SECURE_COOKIES=false
             NODE_ENV=production
-          cache-from: type=registry,ref=chenray79/infracredit-frontend:demo
+          cache-from: type=registry,ref=chenray79/infracredit_fe:demo
           cache-to: type=inline
 
   # ============================================
@@ -159,7 +164,7 @@ jobs:
             NEXT_PUBLIC_NODE_ENV=production
             NEXT_PUBLIC_USE_SECURE_COOKIES=false
             NODE_ENV=production
-          cache-from: type=registry,ref=chenray79/infracredit-frontend:latest
+          cache-from: type=registry,ref=chenray79/infracredit_fe:latest
           cache-to: type=inline
 
   # ============================================
@@ -172,6 +177,19 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/feat/deployment'
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy docker compose file
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.production.yml"
+          target: "~/"
+          overwrite: true
+
       - name: Deploy to VM via SSH
         uses: appleboy/ssh-action@master
         with:
@@ -179,14 +197,36 @@ jobs:
           username: ${{ secrets.VM_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker pull chenray79/infracredit_fe:dev
-            docker stop infracredit-frontend-dev || true
-            docker rm infracredit-frontend-dev || true
-            docker run -d \
-              --name infracredit-frontend-dev \
-              -p 8011:8010 \
-              --restart unless-stopped \
-              chenray79/infracredit_fe:dev
+            cd ~/
+            export DOCKER_IMAGE="chenray79/infracredit_fe:dev"
+            export CONTAINER_NAME="infracredit-frontend-dev"
+            export HOST_PORT="3011"
+            export CONTAINER_PORT="3000"
+            
+            export OLD_IMAGE_ID=$(docker inspect --format='{{.Image}}' $CONTAINER_NAME 2>/dev/null || true)
+            
+            docker compose -f docker-compose.production.yml -p dev pull
+            docker compose -f docker-compose.production.yml -p dev up -d
+            
+            echo "Verifying deployment on port $HOST_PORT..."
+            for i in {1..6}; do
+              if curl -sSf http://localhost:$HOST_PORT > /dev/null; then
+                echo "Deployment successfully verified!"
+                exit 0
+              fi
+              echo "Waiting for service to start..."
+              sleep 10
+            done
+            echo "Deployment verification failed!"
+            docker logs $CONTAINER_NAME
+            
+            if [ -n "$OLD_IMAGE_ID" ]; then
+              echo "Rolling back to previous version..."
+              export DOCKER_IMAGE="$OLD_IMAGE_ID"
+              docker compose -f docker-compose.production.yml -p dev up -d
+              echo "Rollback complete."
+            fi
+            exit 1
 
   # ============================================
   # DEPLOY DEMO ← NEW
@@ -198,6 +238,19 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/demo'
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy docker compose file
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.production.yml"
+          target: "~/"
+          overwrite: true
+
       - name: Deploy to VM via SSH
         uses: appleboy/ssh-action@master
         with:
@@ -205,14 +258,36 @@ jobs:
           username: ${{ secrets.VM_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker pull chenray79/infracredit_fe:demo
-            docker stop infracredit-frontend-demo || true
-            docker rm infracredit-frontend-demo || true
-            docker run -d \
-              --name infracredit-frontend-demo \
-              -p 8012:8010 \
-              --restart unless-stopped \
-              chenray79/infracredit_fe:demo
+            cd ~/
+            export DOCKER_IMAGE="chenray79/infracredit_fe:demo"
+            export CONTAINER_NAME="infracredit-frontend-demo"
+            export HOST_PORT="3012"
+            export CONTAINER_PORT="3000"
+            
+            export OLD_IMAGE_ID=$(docker inspect --format='{{.Image}}' $CONTAINER_NAME 2>/dev/null || true)
+            
+            docker compose -f docker-compose.production.yml -p demo pull
+            docker compose -f docker-compose.production.yml -p demo up -d
+            
+            echo "Verifying deployment on port $HOST_PORT..."
+            for i in {1..6}; do
+              if curl -sSf http://localhost:$HOST_PORT > /dev/null; then
+                echo "Deployment successfully verified!"
+                exit 0
+              fi
+              echo "Waiting for service to start..."
+              sleep 10
+            done
+            echo "Deployment verification failed!"
+            docker logs $CONTAINER_NAME
+            
+            if [ -n "$OLD_IMAGE_ID" ]; then
+              echo "Rolling back to previous version..."
+              export DOCKER_IMAGE="$OLD_IMAGE_ID"
+              docker compose -f docker-compose.production.yml -p demo up -d
+              echo "Rollback complete."
+            fi
+            exit 1
 
   # ============================================
   # DEPLOY PRODUCTION
@@ -224,6 +299,19 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy docker compose file
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.production.yml"
+          target: "~/"
+          overwrite: true
+
       - name: Deploy to VM via SSH
         uses: appleboy/ssh-action@master
         with:
@@ -231,11 +319,33 @@ jobs:
           username: ${{ secrets.VM_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker pull chenray79/infracredit_fe:latest
-            docker stop infracredit-frontend || true
-            docker rm infracredit-frontend || true
-            docker run -d \
-              --name infracredit-frontend \
-              -p 8010:8010 \
-              --restart unless-stopped \
-              chenray79/infracredit_fe:latest
+            cd ~/
+            export DOCKER_IMAGE="chenray79/infracredit_fe:latest"
+            export CONTAINER_NAME="infracredit-frontend"
+            export HOST_PORT="3010"
+            export CONTAINER_PORT="3000"
+            
+            export OLD_IMAGE_ID=$(docker inspect --format='{{.Image}}' $CONTAINER_NAME 2>/dev/null || true)
+            
+            docker compose -f docker-compose.production.yml -p prod pull
+            docker compose -f docker-compose.production.yml -p prod up -d
+            
+            echo "Verifying deployment on port $HOST_PORT..."
+            for i in {1..6}; do
+              if curl -sSf http://localhost:$HOST_PORT > /dev/null; then
+                echo "Deployment successfully verified!"
+                exit 0
+              fi
+              echo "Waiting for service to start..."
+              sleep 10
+            done
+            echo "Deployment verification failed!"
+            docker logs $CONTAINER_NAME
+            
+            if [ -n "$OLD_IMAGE_ID" ]; then
+              echo "Rolling back to previous version..."
+              export DOCKER_IMAGE="$OLD_IMAGE_ID"
+              docker compose -f docker-compose.production.yml -p prod up -d
+              echo "Rollback complete."
+            fi
+            exit 1
