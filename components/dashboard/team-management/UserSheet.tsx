@@ -32,10 +32,10 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
   const { user: loggedInUser } = useAuthStore((s) => s);
   const queryClient = useQueryClient();
 
-  const canEditRole =
-    loggedInUser?.role?.toLocaleLowerCase() ===
-      UserRole.ADMIN.toLocaleLowerCase() ||
-    loggedInUser?.role === UserRole.SUPER_USER.toLocaleLowerCase();
+  // const canEditRole =
+  //   loggedInUser?.role?.toLocaleLowerCase() ===
+  //     UserRole.ADMIN.toLocaleLowerCase() ||
+  //   loggedInUser?.role === UserRole["SUPER USER"].toLocaleLowerCase();
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(UserFormSchema),
@@ -83,9 +83,9 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
           data.addAsEmailReceipient === AddAsEmailReceipient.YES,
       };
 
-      if (canEditRole) {
+      // if (canEditRole) {
         payload.role = data.role;
-      }
+      // }
 
       let response;
       if (user?.id) {
@@ -149,7 +149,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
               disabled={isLoading}
             />
 
-            {canEditRole && (
+            {/* {canEditRole && ( */}
               <CustomInputField
                 control={control}
                 fieldType={FormFieldType.SELECT}
@@ -160,7 +160,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
                 options={roleOptions}
                 disabled={isLoading}
               />
-            )}
+          
 
             <CustomInputField
               control={control}

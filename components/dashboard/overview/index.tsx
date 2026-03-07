@@ -63,13 +63,6 @@ const DashboardOverviewPage = () => {
         setSelectedDateIntervalLabel("This Year");
       },
     },
-    {
-      label: "Rental Housing",
-      onClick: () => {
-        setselectedDateInterval(Portfolio.RHF);
-        setSelectedDateIntervalLabel("Rental Housing");
-      },
-    },
   ];
 
   const computedData = useMemo(() => {
