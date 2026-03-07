@@ -17,7 +17,8 @@ export enum FormFieldType {
 export enum UserRole {
   ADMIN = "ADMIN",
   USER = "USER",
-  SUPER_USER = "SUPERUSER",
+  "SUPER USER" = "SUPERUSER",
+  "USER ADMIN" = "USER_ADMIN",
 }
 
 export enum AddAsEmailReceipient {

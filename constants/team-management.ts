@@ -35,11 +35,7 @@ export const usersTableColumns: TableColumn[] = [
   },
 ];
 
-export const roleOptions = [
-  { label: "Admin", value: UserRole.ADMIN },
-  { label: "User", value: UserRole.USER },
-  { label: "Super User", value: UserRole.SUPER_USER },
-];
+export const roleOptions = Object.values(UserRole);
 
 export const receipientOptions = [
   { label: "Yes", value: AddAsEmailReceipient.YES },
@@ -55,7 +51,7 @@ export const ActivitiesTableColumn: TableColumn[] = [
   {
     key: "actions",
     label: "Actions",
-    align: "right",
+    align: "left",
     className: "min-w-[100px]",
   },
 ];
@@ -69,3 +65,5 @@ export const PasswordChangeLogColumns: TableColumn[] = [
   { key: "status", label: "Status", className: "min-w-[120px]" },
   { key: "ip_address", label: "IP Address", className: "min-w-[120px]" },
 ];
+
+export const itemsPerPage = 10;

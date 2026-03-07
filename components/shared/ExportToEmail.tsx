@@ -34,7 +34,7 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
   emailExportApiUrl,
 }) => {
   const { data, isLoading } = useGet<TeamUsersResponse>(
-    ["users"],
+    ["users", "email-recipients"],
     "/users/email_recipients",
   );
 
@@ -49,9 +49,10 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
     },
   });
 
-  const selectedRecipients = data?.data
-    .filter((user) => user.is_email_recipient)
-    .map((user) => user.email);
+  const emailValue = form.watch("email");
+  const selectedRecipients = emailValue
+    ? emailValue.split(", ").filter(Boolean)
+    : [];
 
   useEffect(() => {
     if (data?.data && data.data.length > 0) {
@@ -59,17 +60,14 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
         .filter((user) => user.is_email_recipient)
         .map((user) => user.email);
 
-      // setSelectedRecipients(defaultRecipients);
       form.setValue("email", defaultRecipients.join(", "));
     }
   }, [data?.data, form]);
 
   const toggleRecipient = (email: string) => {
-    const recipients = selectedRecipients ?? [];
-    const isSelected = recipients.includes(email);
-    const updated = isSelected
-      ? recipients.filter((e) => e !== email)
-      : [...recipients, email];
+    const updated = selectedRecipients.includes(email)
+      ? selectedRecipients.filter((e) => e !== email)
+      : [...selectedRecipients, email];
 
     form.setValue("email", updated.join(", "));
   };
