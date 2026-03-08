@@ -18,7 +18,6 @@ import {
   useDynamicDelete,
   usePut,
   usePatch,
-  usePost,
 } from "@/hooks/use-queries";
 import { TeamUserResponse } from "@/types/team-management";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -29,6 +28,7 @@ import {
   formatDate,
 } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
+import { authService } from "@/api/auth-service";
 
 const UserDetails = () => {
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
@@ -37,7 +37,7 @@ const UserDetails = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isActivitySheetOpen, setIsActivitySheetOpen] = useState(false);
-
+  const [isResseting, setIsResseting] = useState(false);
   const queryClient = useQueryClient();
 
   const params = useParams();
@@ -59,10 +59,6 @@ const UserDetails = () => {
   );
   const deactivateUserMutation = usePatch<ApiResponse<null>, null>(
     `/users/${id}/status?user_status=inactive`,
-    ["users", id],
-  );
-  const resetPasswordMutation = usePost<ApiResponse<null>, null>(
-    `/users/${id}/password-reset`,
     ["users", id],
   );
 
@@ -95,11 +91,16 @@ const UserDetails = () => {
 
   const handleReset = async () => {
     try {
-      const response = await resetPasswordMutation.mutateAsync(null);
+      setIsResseting(true);
+      const response = await authService.forgetPassword(
+        userDetails?.email ?? "",
+      );
       toast.success(extractSuccessMessage(response));
       setIsResetModalOpen(false);
-    } catch (error: any) {
-      toast.error(extractErrorMessage(error));
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setIsResseting(false);
     }
   };
 
@@ -146,7 +147,7 @@ const UserDetails = () => {
     deleteUserMutation.isPending ||
     activateUserMutation.isPending ||
     deactivateUserMutation.isPending ||
-    resetPasswordMutation.isPending ||
+    isResseting ||
     updateUserMutation.isPending;
 
   if (isLoading) return <LoadingSpinner />;
@@ -344,7 +345,7 @@ const UserDetails = () => {
         rightAction={{
           label: "Reset",
           onClick: handleReset,
-          isLoading: resetPasswordMutation.isPending,
+          isLoading: isResseting,
           className: "bg-[#006F37] hover:bg-[#005a2d] text-white",
         }}
       />
