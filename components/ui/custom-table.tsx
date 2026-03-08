@@ -71,7 +71,7 @@ const CustomTable: React.FC<CustomTableProps> = ({
             <TableHead
               key={i}
               className={cn(
-                "font-[700] sm:text-[14px] text-[13px] text-[#003A1B] py-5 pl-4",
+                "font-[700] sm:text-[14px] text-[13px] text-[#003A1B] py-5 pl-4 !min-w-[180px]",
                 col.width,
                 col.align === "right" && "text-right",
                 col.align === "center" && "text-center",

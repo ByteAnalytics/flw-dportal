@@ -34,7 +34,7 @@ const ProfileDetails = () => {
       console.error("Logout API failed:", err);
     } finally {
       logout();
-      await router.push("/auth/sign-in");
+      router.push("/auth/sign-in");
     }
   };
 
