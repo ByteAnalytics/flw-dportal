@@ -13,6 +13,8 @@ import { NavItem } from "@/types/navigation";
 import * as React from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { EnvironmentHelper } from "@/lib/environment-utils";
+import { ccrNavItems } from "@/constants/navigation";
+import { CCR_BASE } from "@/constants/model-management";
 
 interface NavMainProps {
   items: readonly NavItem[];
@@ -25,10 +27,15 @@ export function NavMain({ items }: NavMainProps) {
 
   const isByte = EnvironmentHelper.isDemo();
 
+  const isCCRSection = pathname.startsWith(CCR_BASE);
+  const activeItems = isCCRSection ? ccrNavItems : items;
+
   const filteredItems = React.useMemo(() => {
     if (!userRole) return [];
-    return items.filter((item) => item.roles?.includes(userRole));
-  }, [items, userRole]);
+    return activeItems.filter((item) =>
+      item.roles?.includes(userRole as never),
+    );
+  }, [activeItems, userRole]);
 
   const getActiveUrl = React.useCallback(() => {
     const exactMatch = filteredItems.find((item) => pathname === item.url);
@@ -50,6 +57,7 @@ export function NavMain({ items }: NavMainProps) {
 
   return (
     <SidebarGroup>
+
       <SidebarMenu className="flex flex-col gap-3">
         {isLoading ? (
           <>
@@ -86,9 +94,7 @@ export function NavMain({ items }: NavMainProps) {
                     href={item.url}
                     className="flex items-center gap-3 w-full"
                   >
-                    {item.icon && (
-                      <item.icon isActive={active} className="w-[24px] h-[24px] flex-shrink-0" />
-                    )}
+                    {item.icon && <item.icon isActive={active} />}
                     <span className="text-[14px] font-[500]">{item.title}</span>
                   </Link>
                 </SidebarMenuButton>

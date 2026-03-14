@@ -111,6 +111,7 @@ const ManageUsersTable = () => {
         columns={usersTableColumns}
         rows={rows}
         loading={isLoading}
+        isActionOnRow={true}
       />
     </div>
   );

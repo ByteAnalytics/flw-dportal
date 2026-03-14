@@ -5,56 +5,41 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "nextjs-toploader/app";
 import { useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import SuccessModal from "@/components/shared/SuccessModal";
-import FileUploadArea from "../../shared/FileUploadArea";
-import { FileItem } from "../../shared/FileItems";
 import CustomButton from "@/components/ui/custom-button";
 import ModelCard from "./ModelCard";
 import { CustomModal } from "@/components/ui/custom-modal";
 import { Form } from "@/components/ui/form";
-import CustomInputField from "@/components/ui/custom-input-field";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 import ValidationErrorSheet from "@/components/shared/ValidationErrorSheet";
 
 import { usePost } from "@/hooks/use-queries";
 import { models } from "@/constants/model-management";
-import { ApiResponse, FormFieldType } from "@/types";
+import { ApiResponse } from "@/types";
 import {
   ExecutableModels,
   ModelManagementApiResponse,
 } from "@/types/model-execution";
-import {
-  extractErrorMessage,
-  extractSuccessMessage,
-  formatFileSize,
-  isValidDate,
-} from "@/lib/utils";
-import {
-  ModelExecutionFormData,
-  ModelExecutionFormSchema,
-} from "@/schema/model-management";
+import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { useUploadProgress } from "@/hooks/use-upload-progress";
 import { extractValidationPayload } from "@/lib/parse-validation-error";
 import type { ValidationErrorPayload } from "@/lib/parse-validation-error";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+const FLIFormSchema = z.object({
+  probability_scenarios: z.string().optional(),
+  fli_scalar_mapping: z.string().optional(),
+});
+
+type FLIFormData = z.infer<typeof FLIFormSchema>;
+
 const ModelManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedModelType, setSelectedModelType] = useState("");
-  const [dateOpen, setDateOpen] = useState(false);
   const [errorSheetOpen, setErrorSheetOpen] = useState(false);
   const [validationError, setValidationError] =
     useState<ValidationErrorPayload | null>(null);
@@ -64,53 +49,31 @@ const ModelManagement = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const {
-    uploadStep,
-    uploadProgress,
-    startProgress,
-    completeProgress,
-    resetProgress,
-    setUploadStep,
-    isUploading,
-  } = useUploadProgress();
+  const { resetProgress } = useUploadProgress();
 
-  const form = useForm<ModelExecutionFormData>({
-    resolver: zodResolver(ModelExecutionFormSchema),
+  const form = useForm<FLIFormData>({
+    resolver: zodResolver(FLIFormSchema),
     defaultValues: {
-      execution_date: new Date(),
-      upTurn: 0,
-      downTurn: 0,
-      base: 0,
+      probability_scenarios: "",
+      fli_scalar_mapping: "",
     },
   });
 
   const isFLIModel = selectedModelType === ExecutableModels.FLI;
-  const isPDModel = selectedModelType === ExecutableModels.PD;
 
   const executePDModel = usePost<
     ApiResponse<ModelManagementApiResponse>,
-    FormData
-  >("/models/pd", ["execution-models"]);
+    undefined
+  >("/guarantees/pd", ["execution-models"]);
 
   const executeFLIModel = usePost<ApiResponse<ModelManagementApiResponse>, any>(
-    "/models/fli",
+    "/guarantees/fli",
     ["execution-models"],
   );
-
-  const executeModel = isPDModel ? executePDModel : executeFLIModel;
-
-  const displayErrorSheet = () => {
-    if (toastIdRef.current) {
-      toast.dismiss(toastIdRef.current);
-      toastIdRef.current = null;
-    }
-    setErrorSheetOpen(true);
-  };
 
   const resetAllState = () => {
     setSelectedModelType("");
     resetProgress();
-    setSelectedFile(null);
     setShowSuccess(false);
     setIsModalOpen(false);
     setValidationError(null);
@@ -127,94 +90,64 @@ const ModelManagement = () => {
     router.push("/dashboard/reporting/");
   };
 
-  const handleRunModel = (modelType: string) => {
-    setSelectedModelType(modelType);
-    setIsModalOpen(true);
-    resetProgress();
-    setSelectedFile(null);
-    form.reset({
-      execution_date: new Date(),
-      upTurn: 0,
-      downTurn: 0,
-      base: 0,
-    });
-  };
-
-  const handleFileSelect = (file: File) => {
-    setSelectedFile(file);
-    setUploadStep("idle");
-  };
-
-  const resetFileState = () => {
-    setSelectedFile(null);
-    setValidationError(null);
-    resetProgress();
-  };
-
-  const validateFLIForm = (formData: ModelExecutionFormData) => {
-    const { base, upTurn, downTurn } = formData;
-    return (
-      base !== undefined &&
-      base !== null &&
-      upTurn !== undefined &&
-      upTurn !== null &&
-      downTurn !== undefined &&
-      downTurn !== null
-    );
-  };
-
-  const validateForm = () => {
-    if (!selectedModelType) {
-      toast.error("Please select a model type");
-      return false;
-    }
-
-    if (isPDModel && !selectedFile) {
-      toast.error("Please select a file for PD model");
-      return false;
-    }
-
-    if (isFLIModel && !validateFLIForm(form.getValues())) {
-      toast.error("Please provide base, upTurn, and downTurn for FLI model");
-      return false;
-    }
-
-    return true;
-  };
-
-  const executeModelWithFile = async (
-    formDataValues: ModelExecutionFormData,
-  ) => {
-    if (!validateForm()) return;
-
-    const cleanupProgress = startProgress();
-
+  const handleRunPDModel = async () => {
+    setSelectedModelType(ExecutableModels.PD);
     try {
-      const executionDate = formDataValues?.execution_date
-        ? format(formDataValues.execution_date, "yyyy-MM-dd")
-        : new Date().toISOString().split("T")[0];
+      const response = await executePDModel.mutateAsync(undefined);
+      toast.success(extractSuccessMessage(response));
+      await queryClient.invalidateQueries({
+        queryKey: ["execution-models"],
+        exact: false,
+      });
+      setShowSuccess(true);
+      setIsModalOpen(true);
+    } catch (error: unknown) {
+      toast.error(extractErrorMessage(error));
+    }
+  };
 
-      let payload: any;
+  const handleRunFLIModel = () => {
+    setSelectedModelType(ExecutableModels.FLI);
+    setIsModalOpen(true);
+    form.reset({ probability_scenarios: "", fli_scalar_mapping: "" });
+  };
 
-      if (isPDModel) {
-        const formData = new FormData();
-        formData.append("execution_date", executionDate);
-        formData.append("execution_model_type", selectedModelType);
-        if (selectedFile) formData.append("file1", selectedFile);
-        payload = formData;
-      } else {
-        payload = {
-          execution_date: executionDate,
-          base: formDataValues.base,
-          upturn: formDataValues.upTurn,
-          downturn: formDataValues.downTurn,
-        };
-      }
+  const handleRunModel = (modelType: string) => {
+    if (modelType === ExecutableModels.PD) {
+      handleRunPDModel();
+    } else {
+      handleRunFLIModel();
+    }
+  };
 
-      const response = await executeModel.mutateAsync(payload);
+  // Safely parse an optional JSON string field; returns undefined if empty
+  const parseOptionalJSON = (value: string | undefined) => {
+    if (!value || value.trim() === "") return undefined;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value; // let server handle validation
+    }
+  };
 
-      cleanupProgress();
-      completeProgress();
+  const executeFLIWithPayload = async (formValues: FLIFormData) => {
+    try {
+      const payload: Record<string, any> = {};
+
+      const parsedScenarios = parseOptionalJSON(
+        formValues.probability_scenarios,
+      );
+      const parsedMapping = parseOptionalJSON(formValues.fli_scalar_mapping);
+
+      if (parsedScenarios !== undefined)
+        payload.probability_scenarios = parsedScenarios;
+      if (parsedMapping !== undefined)
+        payload.fli_scalar_mapping = parsedMapping;
+
+      const response = await executeFLIModel.mutateAsync(
+        Object.keys(payload).length > 0 ? payload : undefined,
+      );
+
       toast.success(extractSuccessMessage(response));
 
       await queryClient.invalidateQueries({
@@ -224,19 +157,14 @@ const ModelManagement = () => {
 
       setTimeout(() => setShowSuccess(true), 1500);
     } catch (error: unknown) {
-      cleanupProgress();
-      setUploadStep("error");
-
       const validationPayload = extractValidationPayload(error);
 
       if (validationPayload) {
         setValidationError(validationPayload);
-
         toastIdRef.current = toast.error("Validation failed", {
-          description: "Your uploaded file contains validation issues",
+          description: "Your request contains validation issues",
           duration: Infinity,
         });
-
         return;
       }
 
@@ -244,148 +172,47 @@ const ModelManagement = () => {
     }
   };
 
-  const renderExecutionDateField = () => (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-gray-700">
-        Execution Date
-      </label>
-      <div className="relative flex gap-2 mt-1 border border-[#e5e5e5] dark:border-neutral-800 dark:bg-transparent px-4 rounded-[8px] h-[48px] overflow-hidden items-center gap-x-4 focus-within:border-[#FDC316]">
-        <input
-          value={
-            form.watch("execution_date")
-              ? format(form.watch("execution_date"), "PPP")
-              : ""
-          }
-          placeholder="Select execution date"
-          className="pr-10 w-full h-full bg-transparent text-[#171717] dark:text-white text-[12px] placeholder:text-[#A3A3A3] dark:placeholder:text-neutral-400 placeholder:font-light outline-none"
-          onChange={(e) => {
-            const date = new Date(e.target.value);
-            if (isValidDate(date)) form.setValue("execution_date", date);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "ArrowDown") {
-              e.preventDefault();
-              setDateOpen(true);
-            }
-          }}
+  const renderFLIFields = () => (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700">
+          Probability Scenarios{" "}
+          <span className="text-[#A3A3A3] font-normal">(Optional)</span>
+        </label>
+        <textarea
+          {...form.register("probability_scenarios")}
+          placeholder='e.g. {"scenario_1": 0.3, "scenario_2": 0.7}'
+          rows={4}
+          disabled={executeFLIModel.isPending}
+          className="w-full border border-[#e5e5e5] dark:border-neutral-800 dark:bg-transparent px-4 py-3 rounded-[8px] text-[#171717] dark:text-white text-[12px] placeholder:text-[#A3A3A3] dark:placeholder:text-neutral-400 placeholder:font-light outline-none focus:border-[#FDC316] resize-none"
         />
-        <Popover open={dateOpen} onOpenChange={setDateOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
-            >
-              <CalendarIcon className="size-3.5" />
-              <span className="sr-only">Select date</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-auto overflow-hidden p-0"
-            align="end"
-            alignOffset={-8}
-            sideOffset={10}
-          >
-            <Calendar
-              mode="single"
-              selected={form.watch("execution_date")}
-              captionLayout="dropdown"
-              onSelect={(date) => {
-                if (date) {
-                  form.setValue("execution_date", date);
-                  setDateOpen(false);
-                }
-              }}
-              disabled={(date) =>
-                date > new Date() || date < new Date("1900-01-01")
-              }
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700">
+          FLI Scalar Mapping{" "}
+          <span className="text-[#A3A3A3] font-normal">(Optional)</span>
+        </label>
+        <textarea
+          {...form.register("fli_scalar_mapping")}
+          placeholder='e.g. {"key": "value"}'
+          rows={4}
+          disabled={executeFLIModel.isPending}
+          className="w-full border border-[#e5e5e5] dark:border-neutral-800 dark:bg-transparent px-4 py-3 rounded-[8px] text-[#171717] dark:text-white text-[12px] placeholder:text-[#A3A3A3] dark:placeholder:text-neutral-400 placeholder:font-light outline-none focus:border-[#FDC316] resize-none"
+        />
       </div>
     </div>
   );
 
-  const renderFLIFields = () => (
-    <div className="space-y-4">
-      <CustomInputField
-        name="base"
-        label="Base(%)"
-        control={form.control}
-        min={0}
-        fieldType={FormFieldType.NUMBER}
-        placeholder="Enter base value"
-        disabled={isUploading || executeModel.isPending}
-      />
-      <CustomInputField
-        name="upTurn"
-        label="Up Turn(%)"
-        min={0}
-        control={form.control}
-        fieldType={FormFieldType.NUMBER}
-        placeholder="Enter up Turn value"
-        disabled={isUploading || executeModel.isPending}
-      />
-      <CustomInputField
-        name="downTurn"
-        label="Down Turn(%)"
-        control={form.control}
-        min={0}
-        fieldType={FormFieldType.NUMBER}
-        placeholder="Enter downTurn value"
-        disabled={isUploading || executeModel.isPending}
-      />
-    </div>
+  const renderFLIActionButtons = () => (
+    <CustomButton
+      title="Submit"
+      onClick={form.handleSubmit(executeFLIWithPayload)}
+      disabled={executeFLIModel.isPending}
+      isLoading={executeFLIModel.isPending}
+      className="w-full hover:bg-[#005A2E] rounded-[12px]"
+    />
   );
-
-  const renderFileUploadSection = () => (
-    <>
-      {uploadStep === "initial" && !selectedFile && (
-        <FileUploadArea onFileSelect={handleFileSelect} enableLink />
-      )}
-
-      {selectedFile && (
-        <FileItem
-          onViewErrorLog={displayErrorSheet}
-          fileName={selectedFile.name}
-          fileSize={formatFileSize(selectedFile.size)}
-          status={uploadStep}
-          progress={uploadProgress}
-          onReplace={resetFileState}
-          onRemove={resetFileState}
-          showActions={uploadStep !== "uploading"}
-          validationError={validationError}
-        />
-      )}
-    </>
-  );
-
-  const renderActionButtons = () => {
-    if (isUploading) {
-      return (
-        <CustomButton
-          title="Cancel"
-          onClick={resetFileState}
-          variant="outline"
-          className="w-full border-red-300 text-red-600 hover:bg-red-50 rounded-[1.25rem]"
-        />
-      );
-    }
-
-    const isFormValid = isPDModel
-      ? selectedFile !== null
-      : validateFLIForm(form.getValues());
-
-    return (
-      <CustomButton
-        title={isFLIModel ? "Submit" : "Run Model"}
-        onClick={form.handleSubmit(executeModelWithFile)}
-        disabled={!isFormValid || executeModel.isPending}
-        isLoading={executeModel.isPending}
-        className="w-full  hover:bg-[#005A2E] rounded-[12px]"
-      />
-    );
-  };
 
   const renderModalContent = () => {
     if (showSuccess) {
@@ -405,18 +232,21 @@ const ModelManagement = () => {
       );
     }
 
-    return (
-      <div className="space-y-[1.5rem]">
-        <Form {...form}>
-          <form className="space-y-4">
-            {!isFLIModel && renderExecutionDateField()}
-            {isFLIModel && renderFLIFields()}
-            {isPDModel && renderFileUploadSection()}
-            <div className="space-y-2">{renderActionButtons()}</div>
-          </form>
-        </Form>
-      </div>
-    );
+    // Only FLI opens a modal with fields
+    if (isFLIModel) {
+      return (
+        <div className="space-y-[1.5rem]">
+          <Form {...form}>
+            <form className="space-y-4">
+              {renderFLIFields()}
+              <div className="space-y-2">{renderFLIActionButtons()}</div>
+            </form>
+          </Form>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -446,20 +276,23 @@ const ModelManagement = () => {
               title={model.title}
               description={model.description}
               onClick={() => handleRunModel(model.type)}
+              isLoading={
+                model.type === ExecutableModels.PD && executePDModel.isPending
+              }
             />
           ))}
         </div>
       </div>
 
+      {/* FLI modal + PD success modal */}
       <CustomModal
         open={isModalOpen}
         bg="bg-[#FFFFFF]"
-        setOpen={setIsModalOpen}
-        title={
-          !showSuccess
-            ? `${isPDModel ? "Run PD Model" : "Provide FLI Details"}`
-            : undefined
-        }
+        setOpen={(open) => {
+          if (!open) resetAllState();
+          else setIsModalOpen(true);
+        }}
+        title={!showSuccess ? "Provide FLI Details" : undefined}
         width="max-w-xl"
       >
         {renderModalContent()}

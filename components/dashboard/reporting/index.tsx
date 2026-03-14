@@ -17,8 +17,11 @@ import {
   transformExecutionModelsResponse,
 } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useSearchParams } from "next/navigation";
 
 const Reporting = () => {
+  const params = useSearchParams();
+  const model_execution_id = params.get("model_execution_id");
   const [activeTab, setActiveTab] = useState("all");
   const [pageNumber, setPageNumber] = useState(1);
 
@@ -27,9 +30,9 @@ const Reporting = () => {
   const getFilterValue = (tabValue: string): string | null => {
     const filterMap: { [key: string]: string } = {
       "pd-model": ExecutableModels.PD,
-      "lgd-model": ExecutableModels.ECL,
-      "ead-model": ExecutableModels.ECL,
-      "ccf-model": ExecutableModels.ECL,
+      "lgd-model": ExecutableModels.LGD,
+      "ead-model": ExecutableModels.EAD,
+      "ccf-model": ExecutableModels.CCF,
       "fli-model": ExecutableModels.FLI,
       "ecl-model": ExecutableModels.ECL,
       "joint-model": ExecutableModels.ECL,
@@ -37,10 +40,13 @@ const Reporting = () => {
     return filterMap[tabValue] || null;
   };
 
-  // Build API URL with filter parameter
   const buildApiUrl = () => {
-    const baseUrl = `/models/?page=${pageNumber}&limit=${itemsPerPage}`;
+    let baseUrl = `/crr/logs/?page=${pageNumber}&limit=${itemsPerPage}`;
     const filterValue = getFilterValue(activeTab);
+
+    if (model_execution_id) {
+      baseUrl += `&model_execution_id=${model_execution_id}`;
+    }
 
     if (activeTab !== "all" && filterValue) {
       return `${baseUrl}&filter=${filterValue}`;
@@ -55,7 +61,7 @@ const Reporting = () => {
       // Add these options to ensure refetching
       refetchOnMount: "always",
       refetchOnWindowFocus: true,
-      staleTime: 0, 
+      staleTime: 0,
     },
   );
 
@@ -117,9 +123,10 @@ const Reporting = () => {
         date: formatDateOnly(model.created_at),
         timeStamp: formatDate(model.timestamp),
         createdBy: {
-          name: model?.user_name|| "Unknown User",
+          name: model?.user_name || "Unknown User",
           email: model?.user_email || "user@system.com",
         },
+        executedModelType: model.executed_model_type,
         modelCategory: getModelCategory(),
         status: getStatus(),
         executionStatus: model.execution_status,
@@ -291,7 +298,9 @@ const Reporting = () => {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-[1.4rem] text-[#111827] font-[700] mb-2">Reporting</h1>
+          <h1 className="text-[1.4rem] text-[#111827] font-[700] mb-2">
+            Reporting
+          </h1>
           <h1 className="text-base text-[#5B5F5E] font-[600]">
             View reports and system output
           </h1>

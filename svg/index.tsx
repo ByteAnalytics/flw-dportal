@@ -1,3 +1,5 @@
+export type IconProps = React.HTMLAttributes<SVGElement>;
+
 const DashboardIcon = ({ isActive = false }) => (
   <svg
     width="16"
@@ -327,6 +329,44 @@ const NPLSvg = () => (
   </svg>
 );
 
+const Check = (props: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 16"
+    fill="none"
+    width="16"
+    height="16"
+    {...props}
+  >
+    <path
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      d="M10 3 4.5 8.5 2 6"
+    />
+  </svg>
+);
+
+const Redirect = (props: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 16"
+    fill="none"
+    width="16"
+    height="16"
+    {...props}
+  >
+    <path
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      d="M4.5 7 2 4.5m0 0L4.5 2M2 4.5h6c.53043 0 1.03914.21071 1.41421.58579C9.78929 5.46086 10 5.96957 10 6.5V10"
+    />
+  </svg>
+);
+
 export {
   DashboardIcon,
   ModelExecutionIcon,
@@ -344,4 +384,6 @@ export {
   EclSvg,
   LGDSvg,
   NPLSvg,
+  Check,
+  Redirect,
 };

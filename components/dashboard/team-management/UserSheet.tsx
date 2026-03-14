@@ -19,7 +19,6 @@ import { usePost, usePut } from "@/hooks/use-queries";
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { UserFormData, UserFormSchema } from "@/schema/profile";
 import { receipientOptions, roleOptions } from "@/constants/team-management";
-import { useAuthStore } from "@/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface UserSheetProps {
@@ -29,13 +28,7 @@ interface UserSheetProps {
 }
 
 const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
-  const { user: loggedInUser } = useAuthStore((s) => s);
   const queryClient = useQueryClient();
-
-  // const canEditRole =
-  //   loggedInUser?.role?.toLocaleLowerCase() ===
-  //     UserRole.ADMIN.toLocaleLowerCase() ||
-  //   loggedInUser?.role === UserRole["SUPER USER"].toLocaleLowerCase();
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(UserFormSchema),
@@ -125,7 +118,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
               name="first_name"
               label="First Name"
               placeholder="Enter first name"
-              className="bg-[#F3F3F3] rounded-[20px] sm:h-[45px] h-[45px]"
+              className="bg-InfraBorder rounded-[20px] sm:h-[45px] h-[45px]"
               disabled={isLoading}
             />
 
@@ -135,7 +128,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
               name="last_name"
               label="Last Name"
               placeholder="Enter last name"
-              className="bg-[#F3F3F3] rounded-[20px] sm:h-[45px] h-[45px]"
+              className="bg-InfraBorder rounded-[20px] sm:h-[45px] h-[45px]"
               disabled={isLoading}
             />
 
@@ -145,7 +138,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
               name="email"
               label="Email"
               placeholder="example@email.com"
-              className="bg-[#F3F3F3] rounded-[20px] sm:h-[45px] h-[45px]"
+              className="bg-InfraBorder rounded-[20px] sm:h-[45px] h-[45px]"
               disabled={isLoading}
             />
 
@@ -156,7 +149,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
                 name="role"
                 label="Role"
                 placeholder="Select role"
-                className="bg-[#F3F3F3] rounded-[20px] sm:h-[45px] h-[45px]"
+                className="bg-InfraBorder rounded-[20px] sm:h-[45px] h-[45px]"
                 options={roleOptions}
                 disabled={isLoading}
               />
@@ -168,7 +161,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
               name="addAsEmailReceipient"
               label="Add as Email Recipient"
               placeholder="Select choice"
-              className="bg-[#F3F3F3] rounded-[20px] sm:h-[45px] h-[45px]"
+              className="bg-InfraBorder rounded-[20px] sm:h-[45px] h-[45px]"
               options={receipientOptions}
               disabled={isLoading}
             />
