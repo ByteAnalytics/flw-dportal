@@ -1,3 +1,5 @@
+import { ExecutableModels } from "./model-execution";
+
 export interface EADFileContent {
   "LOAN UNIQUE ID": string;
   "CLIENT UNIQUE ID": string;
@@ -252,8 +254,9 @@ export interface ReportData {
     name: string;
     email: string;
   };
+  executedModelType: ExecutableModels;
   modelCategory: string;
-  status: "Completed" | "Pending" | "Queued" | "Failed" | "Running";
+  status: reportStatus;
   executionStatus: string;
   id: string;
 }
@@ -327,3 +330,12 @@ export const PDOutputTabStructures: Record<string, PDOutputTabColumnStructure> =
       dynamic: true,
     },
   };
+
+export type reportStatus =
+  | "Running"
+  | "Queued"
+  | "Pending"
+  | "Failed"
+  | "Completed"
+  | "Validating"
+  | "Validation_Failed";

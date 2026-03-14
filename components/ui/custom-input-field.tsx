@@ -261,7 +261,7 @@ const CustomFormField = <T extends FieldValues>(props: CustomProps<T>) => {
   return (
     <div className="flex flex-col gap-y-2">
       {fieldType !== FormFieldType.CHECKBOX && label && (
-        <label className="text-sm md:text-base capitalize font-[500] text-InfraSoftBlack dark:text-white">
+        <label className="text-sm capitalize font-[500] text-InfraSoftBlack dark:text-white">
           {label}
         </label>
       )}

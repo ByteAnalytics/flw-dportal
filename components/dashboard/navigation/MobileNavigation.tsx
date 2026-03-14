@@ -1,6 +1,11 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useSyncExternalStore } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useSyncExternalStore,
+} from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,6 +13,8 @@ import { Menu, X } from "lucide-react";
 import { NavItem } from "@/types/navigation";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
+import { CCR_BASE } from "@/constants/model-management";
+import { ccrNavItems } from "@/constants/navigation";
 
 interface MobileNavProps {
   items: readonly NavItem[];
@@ -30,12 +37,17 @@ export const MobileNav: React.FC<MobileNavProps> = ({ items }) => {
     () => false,
   );
 
-  const filteredItems = useMemo(() => {
-    if (!userRole) return [];
-    return items.filter((item) => item.roles?.includes(userRole));
-  }, [items, userRole]);
+  const isCCRSection = pathname.startsWith(CCR_BASE);
+    const activeItems = isCCRSection ? ccrNavItems : items;
+  
+    const filteredItems = React.useMemo(() => {
+      if (!userRole) return [];
+      return activeItems.filter((item) =>
+        item.roles?.includes(userRole as never),
+      );
+    }, [activeItems, userRole]);
 
-  const getActiveUrl = useCallback(() => {
+  const getActiveUrl = React.useCallback(() => {
     const exactMatch = filteredItems.find((item) => pathname === item.url);
     if (exactMatch) return exactMatch.url;
 
@@ -117,7 +129,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ items }) => {
                           )}
                         >
                           <div className="flex h-14 w-14 shrink-0 items-center justify-center">
-                            <item.icon className="h-4 w-4" />
+                            <item.icon />
                           </div>
 
                           <motion.span

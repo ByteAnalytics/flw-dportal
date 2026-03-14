@@ -1,33 +1,24 @@
+import { reportStatus } from "./reporting";
+
 export type ModelManagementApiResponse = {
-  created_at: Date;
-  id: string;
-  timestamp: Date;
-  executed_model_type: ExecutableModels;
-  celery_task_name: string;
-  updated_at: Date;
-  data_name: string;
-  report_exported: false;
-  user_id: string;
-  execution_status: string;
-  celery_task_id: string;
-  finished_at: string | null;
+  model_execution_id: string;
 };
 
 export enum ExecutableModels {
-  PD = "pd_model",
-  JOINT = "joint_model",
-  LGD = "lgd_model",
-  EAD = "ead_model",
-  CCF = "ccf_model",
-  FLI = "fli_model",
-  ECL = "ecl_model",
+  PD = "guarantees_pd",
+  JOINT = "guarantees_joint",
+  LGD = "guarantees_lgd",
+  EAD = "guarantees_ead",
+  CCF = "guarantees_ccf",
+  FLI = "guarantees_fli",
+  ECL = "guarantees_ecl",
 }
 
 export interface ExecutionModel {
   created_at: string;
   id: string;
   timestamp: string;
-  executed_model_type: string;
+  executed_model_type: ExecutableModels;
   celery_task_name: string;
   updated_at: string;
   file_name: string;
@@ -35,7 +26,7 @@ export interface ExecutionModel {
   user_email: string;
   report_exported: boolean;
   user_id: string;
-  execution_status: string;
+  execution_status: reportStatus;
   celery_task_id: string;
   finished_at: string | null;
 }
@@ -57,8 +48,44 @@ export interface ReportData {
     name: string;
     email: string;
   };
+  executedModelType: ExecutableModels;
   modelCategory: string;
-  status: "Completed" | "Pending" | "Queued" | "Failed" | "Running";
+  status: reportStatus;
   executionStatus: string;
   id: string;
 }
+
+// Shared types for model execution form state
+
+export type ThreeFileSet = {
+  amortization_file: File | null;
+  asset_information_file: File | null;
+  collateral_file: File | null;
+  exposure_date: Date;
+};
+
+export type LGDData = ThreeFileSet;
+export type EADData = ThreeFileSet;
+export type ECLData = ThreeFileSet;
+export type CCFData = ThreeFileSet;
+
+export type ModelFormData = {
+  lgd: LGDData;
+  ccf: CCFData;
+  ead: EADData;
+  ecl: ECLData;
+};
+
+export const defaultThreeFileSet = (): ThreeFileSet => ({
+  amortization_file: null,
+  asset_information_file: null,
+  collateral_file: null,
+  exposure_date: new Date(),
+});
+
+export const defaultModelFormData = (): ModelFormData => ({
+  lgd: defaultThreeFileSet(),
+  ead: defaultThreeFileSet(),
+  ecl: defaultThreeFileSet(),
+  ccf: defaultThreeFileSet(),
+});

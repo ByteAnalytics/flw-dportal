@@ -46,6 +46,8 @@ export interface CustomTableProps {
   emptyMessage?: string;
   loading?: boolean;
   skeletonRowCount?: number;
+  hasCheckbox?: boolean;
+  isActionOnRow?: boolean;
 }
 
 const CustomTable: React.FC<CustomTableProps> = ({
@@ -58,6 +60,8 @@ const CustomTable: React.FC<CustomTableProps> = ({
   emptyMessage = "No records found.",
   loading = false,
   skeletonRowCount = 5,
+  hasCheckbox = false,
+  isActionOnRow = false,
 }) => {
   const hasActions = actions.length > 0;
 
@@ -67,20 +71,25 @@ const CustomTable: React.FC<CustomTableProps> = ({
 
       <TableHeader className={cn("bg-[#F3F3F3]", tableHeaderClassName)}>
         <TableRow>
-          {columns.map((col, i) => (
-            <TableHead
-              key={i}
-              className={cn(
-                "font-[700] sm:text-[14px] text-[13px] text-[#003A1B] py-5 pl-4 !min-w-[180px]",
-                col.width,
-                col.align === "right" && "text-right",
-                col.align === "center" && "text-center",
-                col.className,
-              )}
-            >
-              {col.label}
-            </TableHead>
-          ))}
+          {columns.map((col, i) => {
+            const isCheckboxColumn = hasCheckbox && i === 0;
+            const isAction = isActionOnRow && i === columns.length - 1;
+            return (
+              <TableHead
+                key={i}
+                className={cn(
+                  "font-[700] sm:text-[14px] text-[13px] text-[#003A1B] py-5 pl-4",
+                  !isCheckboxColumn && !isAction && "!min-w-[180px]",
+                  col.width,
+                  col.align === "right" && "text-right",
+                  col.align === "center" && "text-center",
+                  col.className,
+                )}
+              >
+                {col.label}
+              </TableHead>
+            );
+          })}
           {hasActions && <TableHead className="text-right">Actions</TableHead>}
         </TableRow>
       </TableHeader>
@@ -91,7 +100,7 @@ const CustomTable: React.FC<CustomTableProps> = ({
             <TableRow key={`skeleton-${i}`}>
               {columns.map((col, j) => (
                 <TableCell key={j}>
-                  <Skeleton className="h-4 w-[80%]" />
+                  <Skeleton className="h-8 w-[80%]" />
                 </TableCell>
               ))}
               {hasActions && (

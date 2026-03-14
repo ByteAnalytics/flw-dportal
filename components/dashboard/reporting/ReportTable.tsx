@@ -10,7 +10,7 @@ import StatusBadge from "./StatusBadge";
 import { formatDate, getModelLabel, getModelTypeFromTab } from "@/lib/utils";
 import { useFileDownload } from "@/hooks/us-file-download";
 import { useDelete } from "@/hooks/use-queries";
-import { ReportData, ReportTableProps } from "@/types/reporting";
+import { ReportData, reportStatus, ReportTableProps } from "@/types/reporting";
 import { toast } from "sonner";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -247,8 +247,9 @@ const ReportTable = ({
       ),
       status: createClickableCell(
         <StatusBadge
-          status={item.status}
-          executionStatus={item.executionStatus}
+          modelType={item.executedModelType}
+          executionStatus={item.executionStatus as reportStatus}
+          reportId={item.id}
         />,
         item,
         index,
@@ -313,6 +314,8 @@ const ReportTable = ({
           columns={columns}
           rows={rows}
           tableHeaderClassName="bg-white"
+          hasCheckbox={true}
+          isActionOnRow={true}
         />
       </div>
     </div>

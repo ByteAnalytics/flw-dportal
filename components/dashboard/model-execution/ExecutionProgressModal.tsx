@@ -27,6 +27,8 @@ interface ExecutionProgressModalProps {
   selectedModels: string[];
   selectedModelFiles: Record<string, File | null>;
   executionState: ModelExecutionState;
+  // ✅ Each model's independent state
+  perModelState: Record<string, ModelExecutionState>;
   showSuccess: boolean;
   onCancel: () => void;
   onBackToDashboard: () => void;
@@ -43,6 +45,7 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
   selectedModels,
   selectedModelFiles,
   executionState,
+  perModelState,
   showSuccess,
   onCancel,
   onBackToDashboard,
@@ -51,7 +54,14 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
   validationError,
 }) => {
   const filteredModels = models.filter((m) => selectedModels.includes(m.id));
+
+  // ✅ Only block closing/cancelling while at least one model is still in flight
   const isRunning = executionState.status === "uploading";
+
+  // ✅ True only if every model that has settled came back as success
+  const hasAnyError = Object.values(perModelState).some(
+    (s) => s.status === "error",
+  );
 
   const renderContent = () => {
     if (showSuccess) {
@@ -75,6 +85,10 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
             const file = selectedModelFiles[model.id];
             if (!file) return null;
 
+            // ✅ Each model uses its own state, falling back to overall state
+            // while perModelState hasn't been populated yet (first render)
+            const modelState = perModelState[model.id] ?? executionState;
+
             return (
               <div key={model.id} className="flex flex-col gap-1">
                 <p className="text-xs font-[600] text-[#5B5F5E] uppercase tracking-wide">
@@ -83,16 +97,17 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
                 <FileItem
                   fileName={file.name}
                   fileSize={formatFileSize(file.size)}
-                  status={executionState.status}
-                  progress={executionState.progress}
+                  status={modelState.status}
+                  progress={modelState.progress}
                   onRemove={!isRunning ? onCancel : undefined}
                   onReplace={!isRunning ? onCancel : undefined}
-                  onViewErrorLog={onViewErrorLog}
+                  // ✅ Only show error log action on models that actually failed
+                  onViewErrorLog={
+                    modelState.status === "error" ? onViewErrorLog : undefined
+                  }
                   showActions={!isRunning}
                   validationError={
-                    model.id === filteredModels[filteredModels.length - 1].id
-                      ? validationError
-                      : null
+                    modelState.status === "error" ? validationError : null
                   }
                 />
               </div>
@@ -107,7 +122,8 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
             textClassName="!text-[0.875rem] font-[600]"
             className="w-full border-red-300 text-red-600 bg-red-50 rounded-[1.25rem]"
           />
-        ) : executionState.status === "error" ? (
+        ) : hasAnyError ? (
+          // ✅ Show dismiss instead of full success if any model failed
           <CustomButton
             title="Dismiss"
             onClick={onCancel}

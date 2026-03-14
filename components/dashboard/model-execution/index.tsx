@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useRouter } from "nextjs-toploader/app";
 import { useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { toast } from "sonner";
 
 import CustomButton from "@/components/ui/custom-button";
@@ -27,23 +26,28 @@ import {
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { extractValidationPayload } from "@/lib/parse-validation-error";
 import type { ValidationErrorPayload } from "@/lib/parse-validation-error";
+import { ModelFormData, defaultModelFormData } from "@/types/model-execution";
+import { buildModelPayload } from "@/lib/model-execution-utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const ModelExecution = () => {
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
-
   const [isFileSheetOpen, setIsFileSheetOpen] = useState(false);
-  const [selectedModelFiles, setSelectedModelFiles] = useState<
-    Record<string, File | null>
-  >({});
-  const [executionDate, setExecutionDate] = useState<Date>(new Date());
+  const [modelFormData, setModelFormData] = useState<ModelFormData>(
+    defaultModelFormData(),
+  );
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [executionState, setExecutionState] = useState<ModelExecutionState>({
     status: "idle",
     progress: 0,
   });
+
+  const [perModelState, setPerModelState] = useState<
+    Record<string, ModelExecutionState>
+  >({});
+
   const [showSuccess, setShowSuccess] = useState(false);
 
   const [errorSheetOpen, setErrorSheetOpen] = useState(false);
@@ -58,32 +62,51 @@ const ModelExecution = () => {
   const { startProgress, completeProgress, resetProgress, setUploadStep } =
     useUploadProgress();
 
-  const executeModel = usePost<
-    ApiResponse<ModelManagementApiResponse>,
-    FormData
-  >(`/models/all_model_run`, ["execution-models"]);
+  const executeLGD = usePost<ApiResponse<ModelManagementApiResponse>, any>(
+    `/guarantees/lgd`,
+    ["execution-models"],
+  );
+  const executeEAD = usePost<ApiResponse<ModelManagementApiResponse>, any>(
+    `/guarantees/ead`,
+    ["execution-models"],
+  );
+  const executeECL = usePost<ApiResponse<ModelManagementApiResponse>, any>(
+    `/guarantees/ecl`,
+    ["execution-models"],
+  );
+  const executeCCF = usePost<ApiResponse<ModelManagementApiResponse>, any>(
+    `/guarantees/ccf`,
+    ["execution-models"],
+  );
 
-  const toggleModelSelection = (id: string) => {
+  const getExecutorForModel = (modelId: string) => {
+    const mid = modelId?.toLowerCase();
+    if (ExecutableModels.LGD.startsWith(mid)) return executeLGD;
+    if (ExecutableModels.EAD.startsWith(mid)) return executeEAD;
+    if (ExecutableModels.ECL.startsWith(mid)) return executeECL;
+    if (ExecutableModels.CCF.startsWith(mid)) return executeCCF;
+    return executeLGD;
+  };
+
+  const toggleModelSelection = useCallback((id: string) => {
     setSelectedModels((prev) =>
       prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id],
     );
-  };
+  }, []);
 
   const handleCheckboxChange = () => {
-    if (selectedModels.length === models.length) {
-      setSelectedModels([]);
-    } else {
-      setSelectedModels(models.map((m) => m.id));
-    }
+    setSelectedModels(
+      selectedModels.length === models.length ? [] : models.map((m) => m.id),
+    );
   };
 
-  const handleOpenFileSheet = () => {
+  const handleOpenFileSheet = useCallback(() => {
     if (selectedModels.length === 0) {
       toast.error("Please select at least one model");
       return;
     }
     setIsFileSheetOpen(true);
-  };
+  }, [selectedModels]);
 
   const displayErrorSheet = () => {
     if (toastIdRef.current) {
@@ -93,13 +116,13 @@ const ModelExecution = () => {
     setErrorSheetOpen(true);
   };
 
-  const resetAllState = () => {
+  const resetAllState = useCallback(() => {
     setSelectedModels([]);
-    setSelectedModelFiles({});
-    setExecutionDate(new Date());
+    setModelFormData(defaultModelFormData());
     setIsFileSheetOpen(false);
     setIsModalOpen(false);
     setExecutionState({ status: "idle", progress: 0 });
+    setPerModelState({});
     setShowSuccess(false);
     setValidationError(null);
     setErrorSheetOpen(false);
@@ -108,40 +131,126 @@ const ModelExecution = () => {
       toast.dismiss(toastIdRef.current);
       toastIdRef.current = null;
     }
-  };
+  }, [resetProgress]);
+
+  const handleModalOpenChange = useCallback((open: boolean) => {
+    setIsModalOpen(open);
+    if (!open && toastIdRef.current) {
+      toast.dismiss(toastIdRef.current);
+      toastIdRef.current = null;
+    }
+  }, []);
 
   const runAllModels = async () => {
-    const dateStr = format(executionDate, "yyyy-MM-dd");
-
     setExecutionState({ status: "uploading", progress: 10 });
     const cleanupProgress = startProgress();
 
-    try {
-      const formData = new FormData();
-      formData.append("execution_date", dateStr);
+    const orderedModels = selectedModels.filter((id) => {
+      const mid = id?.toLowerCase();
+      return (
+        ExecutableModels.LGD.startsWith(mid) ||
+        ExecutableModels.EAD.startsWith(mid) ||
+        ExecutableModels.ECL.startsWith(mid) ||
+        ExecutableModels.CCF.startsWith(mid)
+      );
+    });
 
-      let fileIndex = 1;
-      models
-        .filter((m) => selectedModels.includes(m.id))
-        .forEach((model) => {
-          const file = selectedModelFiles[model.id];
-          if (file) {
-            formData.append(`file${fileIndex}`, file);
-            formData.append(`execution_model_type`, model.id.toUpperCase());
-            fileIndex++;
-          }
-        });
+    const progressStep = Math.floor(80 / orderedModels.length);
 
-      setExecutionState({ status: "uploading", progress: 50 });
+    // ✅ Initialise every model as "uploading" before the loop starts
+    const initialPerModelState: Record<string, ModelExecutionState> = {};
+    orderedModels.forEach((id) => {
+      initialPerModelState[id] = { status: "uploading", progress: 10 };
+    });
+    setPerModelState(initialPerModelState);
 
-      const response = await executeModel.mutateAsync(formData);
+    let currentProgress = 10;
+    let hasAnyFailure = false;
 
-      cleanupProgress();
+    for (const modelId of orderedModels) {
+      let payload: any;
+      const mid = modelId?.toLowerCase();
+
+      if (ExecutableModels.LGD.startsWith(mid)) {
+        payload = buildModelPayload(modelFormData.lgd);
+      } else if (ExecutableModels.EAD.startsWith(mid)) {
+        payload = buildModelPayload(modelFormData.ead);
+      } else if (ExecutableModels.ECL.startsWith(mid)) {
+        payload = buildModelPayload(modelFormData.ecl);
+      } else if (ExecutableModels.CCF.startsWith(mid)) {
+        payload = buildModelPayload(modelFormData.ccf);
+      }
+
+      const executor = getExecutorForModel(modelId);
+      currentProgress += progressStep;
+      setExecutionState({ status: "uploading", progress: currentProgress });
+
+      try {
+        const response = await executor.mutateAsync(payload);
+
+        // ✅ This model succeeded — mark it individually
+        setPerModelState((prev) => ({
+          ...prev,
+          [modelId]: { status: "success", progress: 100 },
+        }));
+
+        toast.success(
+          `${modelId.toUpperCase()}: ${extractSuccessMessage(response)}`,
+        );
+      } catch (error: unknown) {
+        hasAnyFailure = true;
+        setUploadStep("error");
+
+        const validationPayload = extractValidationPayload(error);
+
+        if (validationPayload) {
+          // ✅ Store first validation error encountered
+          setValidationError((prev) => prev ?? validationPayload);
+
+          setPerModelState((prev) => ({
+            ...prev,
+            [modelId]: {
+              status: "error",
+              progress: 0,
+              errorMessage: "Validation failed",
+            },
+          }));
+
+          toastIdRef.current = toast.error(
+            `${modelId.toUpperCase()}: Validation failed`,
+            {
+              description: "Your uploaded file contains validation issues",
+              duration: Infinity,
+            },
+          );
+        } else {
+          // ✅ This model failed — mark it individually, continue the loop
+          setPerModelState((prev) => ({
+            ...prev,
+            [modelId]: {
+              status: "error",
+              progress: 0,
+              errorMessage: extractErrorMessage(error),
+            },
+          }));
+
+          toastIdRef.current = toast.error(
+            `${modelId.toUpperCase()}: ${extractErrorMessage(error)}`,
+            { duration: Infinity },
+          );
+        }
+      }
+    }
+
+    cleanupProgress();
+
+    // ✅ Overall state is determined after ALL models have run
+    if (hasAnyFailure) {
       completeProgress();
-
+      setExecutionState({ status: "error", progress: currentProgress });
+    } else {
+      completeProgress();
       setExecutionState({ status: "success", progress: 100 });
-
-      toast.success(extractSuccessMessage(response));
 
       await queryClient.invalidateQueries({
         queryKey: ["execution-models"],
@@ -150,45 +259,14 @@ const ModelExecution = () => {
       });
 
       setTimeout(() => setShowSuccess(true), 1500);
-    } catch (error: unknown) {
-      cleanupProgress();
-      setUploadStep("error");
-
-      const validationPayload = extractValidationPayload(error);
-
-      if (validationPayload) {
-        setValidationError(validationPayload);
-        setExecutionState({
-          status: "error",
-          progress: 0,
-          errorMessage: "Validation failed",
-        });
-
-        toastIdRef.current = toast.error("Validation failed", {
-          description: "Your uploaded file contains validation issues",
-          duration: Infinity,
-        });
-
-        return;
-      }
-
-      setExecutionState({
-        status: "error",
-        progress: 0,
-        errorMessage: extractErrorMessage(error),
-      });
-
-      toast.error(extractErrorMessage(error));
     }
   };
 
-  const handleSheetSubmit = () => {
+  const handleSheetSubmit = useCallback(() => {
     setIsFileSheetOpen(false);
     setIsModalOpen(true);
-    setTimeout(() => {
-      runAllModels();
-    }, 300);
-  };
+    setTimeout(runAllModels, 300);
+  }, [runAllModels]);
 
   const navigateToReporting = async () => {
     await queryClient.invalidateQueries({
@@ -198,6 +276,19 @@ const ModelExecution = () => {
     resetAllState();
     router.push("/dashboard/reporting/");
   };
+
+  const selectedModelFiles: Record<string, File | null> = {};
+  selectedModels.forEach((id) => {
+    const mid = id?.toLowerCase();
+    if (ExecutableModels.LGD.startsWith(mid))
+      selectedModelFiles[id] = modelFormData.lgd.amortization_file;
+    else if (ExecutableModels.EAD.startsWith(mid))
+      selectedModelFiles[id] = modelFormData.ead.amortization_file;
+    else if (ExecutableModels.ECL.startsWith(mid))
+      selectedModelFiles[id] = modelFormData.ecl.amortization_file;
+    else if (ExecutableModels.CCF.startsWith(mid))
+      selectedModelFiles[id] = modelFormData.ccf.amortization_file;
+  });
 
   return (
     <div>
@@ -247,19 +338,18 @@ const ModelExecution = () => {
         isOpen={isFileSheetOpen}
         setIsOpen={setIsFileSheetOpen}
         selectedModels={selectedModels}
-        selectedModelFiles={selectedModelFiles}
-        setSelectedModelFiles={setSelectedModelFiles}
-        executionDate={executionDate}
-        setExecutionDate={setExecutionDate}
+        modelFormData={modelFormData}
+        setModelFormData={setModelFormData}
         onSubmit={handleSheetSubmit}
       />
 
       <ExecutionProgressModal
         isOpen={isModalOpen}
-        setIsOpen={setIsModalOpen}
+        setIsOpen={handleModalOpenChange}
         selectedModels={selectedModels}
         selectedModelFiles={selectedModelFiles}
         executionState={executionState}
+        perModelState={perModelState}
         showSuccess={showSuccess}
         onCancel={resetAllState}
         onBackToDashboard={resetAllState}
