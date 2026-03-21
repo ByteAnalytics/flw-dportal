@@ -60,15 +60,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
 
   const onSubmit = async (data: NewCaseFormData) => {
     try {
-      // const response = await createCase.mutateAsync(data);
-      // toast.success(extractSuccessMessage(response));
-      // await queryClient.invalidateQueries({
-      //   queryKey: ["recent-cases"],
-      //   exact: false,
-      //   refetchType: "all",
-      // });
-      onSuccess?.("dre_a");
-      // onClose();
+      onSuccess?.(data.project_type);
     } catch (error: any) {
       toast.error(extractErrorMessage(error));
     }

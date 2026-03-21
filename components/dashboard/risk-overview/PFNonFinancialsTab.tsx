@@ -7,21 +7,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import CustomButton from "@/components/ui/custom-button";
 import { useState } from "react";
-import { CF_NON_FINANCIALS_SECTIONS } from "@/constants/risk-cases";
+import { PF_NON_FINANCIALS_SECTIONS } from "@/constants/risk-cases";
 import { Button } from "@/components/ui/button";
-import { PFNonFinancialsData } from "./PFNonFinancialsTab";
 
-interface CFNonFinancialsTabProps {
+export type PFNonFinancialsData = Record<string, string>;
+
+interface PFNonFinancialsTabProps {
   onClose: () => void;
   onNext: (data: PFNonFinancialsData) => void;
   onSaveAsDraft: (data: PFNonFinancialsData) => void;
 }
 
-export default function CFNonFinancialsTab({
+export default function PFNonFinancialsTab({
+  onClose,
   onNext,
   onSaveAsDraft,
-}: CFNonFinancialsTabProps) {
+}: PFNonFinancialsTabProps) {
   const [values, setValues] = useState<PFNonFinancialsData>({});
 
   const handleChange = (key: string, value: string) => {
@@ -30,7 +33,7 @@ export default function CFNonFinancialsTab({
 
   return (
     <div className="flex flex-col gap-8 pb-6">
-      {CF_NON_FINANCIALS_SECTIONS.map((section) => (
+      {PF_NON_FINANCIALS_SECTIONS.map((section) => (
         <div key={section.title}>
           <h3 className="text-[14px] font-bold text-InfraSoftBlack tracking-wide mb-4">
             {section.title}
@@ -46,7 +49,7 @@ export default function CFNonFinancialsTab({
                   value={values[field.key] ?? ""}
                   onValueChange={(val) => handleChange(field.key, val)}
                 >
-                  <SelectTrigger className="h-[45px] italic rounded-[10px] w-full border border-[#e5e5e5] bg-InfraBorder text-[#A3A3A3] text-[12px]">
+                  <SelectTrigger className="h-[45px] bg-[#F3F3F3] italic rounded-[10px] w-full border border-[#e5e5e5] bg-InfraBorder text-[#A3A3A3] text-[12px]">
                     <SelectValue placeholder="select answer" />
                   </SelectTrigger>
                   <SelectContent>
@@ -62,7 +65,6 @@ export default function CFNonFinancialsTab({
           </div>
         </div>
       ))}
-
       <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
         <button
           type="button"

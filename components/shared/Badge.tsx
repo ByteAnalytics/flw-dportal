@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, formatLabel } from "@/lib/utils";
 import { BadgeIcon } from "@/svg";
 
 const getStatusBadge = (status: string) => {
@@ -37,7 +37,7 @@ const getRoleBadge = (role: string) => {
       <BadgeIcon
         fill={isSuperUser ? "#0063F7" : isAdmin ? "#E5B800 " : "#536066"}
       />
-      {role}
+      {formatLabel(role??"")}
     </span>
   );
 };

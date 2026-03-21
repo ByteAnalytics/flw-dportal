@@ -30,9 +30,9 @@ export default function CFBalanceSheetTab({
   onPreviousChange,
 }: any) {
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid sm:grid-cols-2 grid-cols-1 gap-6">
       <div>
-        <h3 className="text-[11px] font-bold text-gray-400 mb-3">
+        <h3 className="text-[14px] text-InfraSoftBlack font-bold mb-3">
           CURRENT PERIOD
         </h3>
         <div className="grid gap-4 grid-cols-1">
@@ -49,7 +49,7 @@ export default function CFBalanceSheetTab({
       </div>
 
       <div>
-        <h3 className="text-[11px] font-bold text-gray-400 mb-3">
+        <h3 className="text-[14px] font-bold text-InfraSoftBlack mb-3">
           PREVIOUS PERIOD
         </h3>
 

@@ -1,11 +1,6 @@
 "use client";
 
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useSyncExternalStore,
-} from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,14 +33,14 @@ export const MobileNav: React.FC<MobileNavProps> = ({ items }) => {
   );
 
   const isCCRSection = pathname.startsWith(CCR_BASE);
-    const activeItems = isCCRSection ? ccrNavItems : items;
-  
-    const filteredItems = React.useMemo(() => {
-      if (!userRole) return [];
-      return activeItems.filter((item) =>
-        item.roles?.includes(userRole as never),
-      );
-    }, [activeItems, userRole]);
+  const activeItems = isCCRSection ? ccrNavItems : items;
+
+  const filteredItems = React.useMemo(() => {
+    if (!userRole) return [];
+    return activeItems.filter((item) =>
+      item.roles?.includes(userRole as never),
+    );
+  }, [activeItems, userRole]);
 
   const getActiveUrl = React.useCallback(() => {
     const exactMatch = filteredItems.find((item) => pathname === item.url);

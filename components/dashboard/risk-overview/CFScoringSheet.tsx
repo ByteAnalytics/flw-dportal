@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X } from "lucide-react";
+import CustomButton from "@/components/ui/custom-button";
 
 type ScoreMetric = { key: string; label: string };
 type ScoreSection = { title: string; metrics: ScoreMetric[] };
@@ -15,7 +15,7 @@ const CF_SCORE_SECTIONS: ScoreSection[] = [
       { key: "interestCoverageRatio", label: "Interest Coverage Ratio" },
       {
         key: "growthInProjectedCashFlow",
-        label: "Growth in Projected cash Flow",
+        label: "Growth in Projected Cash Flow",
       },
     ],
   },
@@ -30,7 +30,7 @@ const CF_SCORE_SECTIONS: ScoreSection[] = [
     ],
   },
   {
-    title: "Liqidity",
+    title: "Liquidity",
     metrics: [
       { key: "operatingCashflow", label: "Operating Cashflow" },
       { key: "currentRatio", label: "Current Ratio" },
@@ -47,7 +47,6 @@ const CF_SCORE_SECTIONS: ScoreSection[] = [
   },
 ];
 
-// Mock data – replace with actual API values
 const MOCK_VALUES: Record<string, string> = {
   debtServiceCoverageRatio: "1.8",
   debtToEquity: "0.8",
@@ -68,52 +67,54 @@ const MOCK_VALUES: Record<string, string> = {
 
 interface CFScoringSheetProps {
   onClose: () => void;
+  onNext: () => void;
+  onSaveAsDraft?: () => void;
   values?: Record<string, string>;
 }
 
 const CFScoringSheet: React.FC<CFScoringSheetProps> = ({
-  onClose,
+  onNext,
+  onSaveAsDraft,
   values = MOCK_VALUES,
 }) => {
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#1A6B5A] to-[#2D9B7F] rounded-t-[12px]">
-        <h2 className="text-white text-[1.1rem] font-bold">CF Scoring Sheet</h2>
-        <button
-          onClick={onClose}
-          className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
-        >
-          <X className="w-4 h-4 text-white" />
-        </button>
+    <div className="flex flex-col gap-6 pb-6">
+      <div className="flex flex-col gap-8">
+        {CF_SCORE_SECTIONS.map((section) => (
+          <div key={section.title}>
+            <h3 className="text-[14px] font-bold text-gray-800 mb-3">
+              {section.title}
+            </h3>
+            <div className="grid grid-cols-4 gap-3">
+              {section.metrics.map((metric) => (
+                <div
+                  key={metric.key}
+                  className="flex flex-col gap-1 p-4 rounded-[10px] border border-gray-200 bg-white"
+                >
+                  <span className="text-[13px] font-medium text-gray-400 leading-tight">
+                    {metric.label}
+                  </span>
+                  <span className="text-[20px] font-bold text-gray-900 mt-1">
+                    {values[metric.key] ?? "—"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="flex flex-col gap-8">
-          {CF_SCORE_SECTIONS.map((section) => (
-            <div key={section.title}>
-              <h3 className="text-[14px] font-bold text-gray-800 mb-3">
-                {section.title}
-              </h3>
-              <div className="grid grid-cols-4 gap-3">
-                {section.metrics.map((metric) => (
-                  <div
-                    key={metric.key}
-                    className="flex flex-col gap-1 p-4 rounded-[10px] border border-gray-200 bg-white"
-                  >
-                    <span className="text-[11px] font-medium text-gray-400 leading-tight">
-                      {metric.label}
-                    </span>
-                    <span className="text-[20px] font-bold text-gray-900 mt-1">
-                      {values[metric.key] ?? "—"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="flex items-center justify-end gap-3 pt-4">
+        <CustomButton
+          title="Save as draft"
+          onClick={onSaveAsDraft}
+          className="bg-transparent border border-InfraBorder text-InfraSoftBlack hover:bg-gray-50 rounded-[8px] px-6"
+        />
+        <CustomButton
+          title="Next"
+          onClick={onNext}
+          className="hover:opacity-90 text-white rounded-[8px] px-8"
+        />
       </div>
     </div>
   );

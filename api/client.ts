@@ -6,8 +6,8 @@ import { EnvironmentHelper } from "@/lib/environment-utils";
 import { useModelTypeStore } from "@/stores/model-type-store";
 import { ModelTypeEnum } from "@/types/model-type-store";
 
-const isProduction =
-  EnvironmentHelper.isProduction() || EnvironmentHelper.isDemo();
+// const isProduction =
+//   EnvironmentHelper.isProduction() || EnvironmentHelper.isDemo();
 
 const apiBaseUrl = EnvironmentHelper.getApiBaseUrl();
 

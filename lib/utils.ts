@@ -195,43 +195,6 @@ export function isValidDate(date: Date | undefined) {
   return !isNaN(date.getTime());
 }
 
-export const eclformatColumnHeader = (key: string): string => {
-  const formatMap: { [key: string]: string } = {
-    "LOAN UNIQUE ID": "Loan ID",
-    "CLIENT UNIQUE ID": "Client ID",
-    "CLIENT NAME": "Client Name",
-    "FUND TYPE": "Fund Type",
-    "PRINCIPAL LOAN AMOUNT": "Principal Amount",
-    "DISBURSEMENT DATE (MM/DD/YYYY)": "Disbursement Date",
-    "EXPIRY DATE (MM/DD/YYYY)": "Expiry Date",
-    LOAN_TYPE: "Loan Type",
-    "EFFECTIVE INT RATE (%)": "Interest Rate",
-    REPAYMENT_FREQUENCY: "Repayment Frequency",
-    STAGE: "Stage",
-    "EIR ADJUSTED": "EIR Adjusted",
-    "PERIODIC EIR": "Periodic EIR",
-    PMT: "Monthly Payment",
-    "MONTHLY EIR": "Monthly EIR",
-    "COLLATERAL AMOUNT": "Collateral Amount",
-    "DISCOUNTED COLLATERAL VALUE": "Discounted Collateral",
-    "COLLATERAL ALLOCATED": "Collateral Allocated",
-    "FINAL LGD": "LGD",
-    "FINAL ECL": "Final ECL",
-    EAD: "EAD",
-  };
-
-  if (formatMap[key]) {
-    return formatMap[key];
-  }
-
-  if (key.startsWith("M") && /^\d+$/.test(key.slice(1))) {
-    const monthNum = parseInt(key.slice(1));
-    return `Month ${monthNum}`;
-  }
-
-  return key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
-};
-
 export const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
@@ -274,4 +237,11 @@ export const normalizePath = (pathSegments: string[]) => {
   }
 
   return path;
+};
+
+export const formatLabel = (value: string) => {
+  return value
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 };

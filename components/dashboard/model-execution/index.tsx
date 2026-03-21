@@ -29,7 +29,10 @@ import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { extractValidationPayload } from "@/lib/parse-validation-error";
 import type { ValidationErrorPayload } from "@/lib/parse-validation-error";
 import { ModelFormData, defaultModelFormData } from "@/types/model-execution";
-import { buildModelPayload, extractModelType } from "@/lib/model-execution-utils";
+import {
+  buildModelPayload,
+  extractModelType,
+} from "@/lib/model-execution-utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -364,13 +367,13 @@ const ModelExecution = () => {
     }
   };
 
-  const runAllModels = async () => {
+  const runAllModels = useCallback(async () => {
     if (selectedModels.length >= 2) {
       await runCombinedModels();
     } else {
       await runSingleModels();
     }
-  };
+  }, [selectedModels]);
 
   const handleSheetSubmit = useCallback(() => {
     setIsFileSheetOpen(false);
