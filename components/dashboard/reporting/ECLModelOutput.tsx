@@ -1,41 +1,37 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useRouter } from "nextjs-toploader/app";
 import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
 
 import CustomTable from "@/components/ui/custom-table";
+import { CustomTabs } from "@/components/shared/CustomTab";
 import ExportTrigger from "@/components/shared/ExportTrigger";
 import { Pagination } from "@/components/shared/Pagination";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
-import { useDynamicDelete, useGet } from "@/hooks/use-queries";
-import {
-  eclformatColumnHeader,
-  formatCurrency,
-  formatDate,
-  formatPercentage,
-} from "@/lib/utils";
-import {
-  ECLApiResponse,
-  ECLApiResponseItem,
-  ECLFileContentItem,
-  ECLStatisticsData,
-  ECLStatisticsFilteredData,
-} from "@/types/reporting";
-import { ApiResponse } from "@/types";
-import {
-  COLUMN_WIDTHS,
-  DEFAULT_COLUMNS,
-  IMPORTANT_COLUMNS,
-} from "@/constants/ecl-model-config";
-import { createStatsData } from "@/lib/ecl-model-utils";
-import { CustomTabs } from "@/components/shared/CustomTab";
-import Link from "next/link";
 import { StatCard } from "@/components/shared/StatCard";
+import { useGet } from "@/hooks/use-queries";
+import { formatDate, formatNumber, formatPercentage } from "@/lib/utils";
+import { ECLApiItem } from "@/types/reporting";
+import { ApiResponse } from "@/types";
+import { CustomerSvg, EadSvg, EclSvg, LGDSvg, NPLSvg } from "@/svg";
+import {
+  ECL_PER_ASSET_COLUMNS,
+  ITEMS_PER_PAGE,
+  TAB_CONFIG,
+} from "@/constants/ecl-model-config";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+type TabValue = (typeof TAB_CONFIG)[number]["value"];
+type SummaryKey = "Baseline" | "Best Case" | "Worst Case";
+
+const TAB_TO_SUMMARY_KEY: Record<TabValue, SummaryKey | null> = {
+  ecl: null,
+  baseline: "Baseline",
+  "best-case": "Best Case",
+  "worst-case": "Worst Case",
+};
 
 const ECLModelOutput: React.FC = () => {
   const params = useParams();
@@ -46,274 +42,182 @@ const ECLModelOutput: React.FC = () => {
   const dataName = searchParams.get("name");
   const timeStamp = searchParams.get("time");
 
-  const itemsPerPage = 10;
-
+  const [activeTab, setActiveTab] = useState<TabValue>("ecl");
   const [pageNumber, setPageNumber] = useState(1);
-  const [activeTab, setActiveTab] = useState("ecl");
 
-  // Build query string for API
+  const activeTabConfig = TAB_CONFIG.find((t) => t.value === activeTab)!;
+  const summaryKey = TAB_TO_SUMMARY_KEY[activeTab];
+
   const buildQueryString = () => {
-    const query = `model_execution_id=${id}&page=${pageNumber}&page_size=${itemsPerPage}`;
-
-    return query;
+    const p = new URLSearchParams();
+    p.set("page", String(pageNumber));
+    p.set("page_size", String(ITEMS_PER_PAGE));
+    if (activeTabConfig.scenario) {
+      p.set("scenario", activeTabConfig.scenario);
+    }
+    return p.toString();
   };
 
-  // Fetch ECL data
-  const { data, isLoading } = useGet<ECLApiResponse>(
-    ["ecl-model-output", id, pageNumber.toString()],
-    `/reporting/models/ecl?${buildQueryString()}`,
+  const { data, isLoading } = useGet<ApiResponse<ECLApiItem>>(
+    ["ecl-model-output", id, activeTab, pageNumber.toString()],
+    `/guarantees/runs/${id}/result?${buildQueryString()}`,
   );
 
-  // Fetch statistics data
-  const { data: statisticsData } = useGet<{ data: ECLStatisticsData }>(
-    ["ecl-statistics", id],
-    `/reporting/models/dashboard?model_execution_id=${id}&section=ecl_summary&page_size=${itemsPerPage}`,
-    { enabled: !!id },
-  );
+  const eclItem = data?.data;
+  const eclSummary = eclItem?.ecl_summary;
+  const pagedData = eclItem?.ecl_per_asset;
+  const rawRows = pagedData?.data ?? [];
 
-  // Fetch filtered statistics data (when portfolio filter is applied)
-  const { data: statisticsFilterData } = useGet<{
-    data: ECLStatisticsFilteredData;
-  }>(
-    ["ecl-statistics-filter", id],
-    `/reporting/models/dashboard?model_execution_id=${id}&section=total_cust_per_loan_class_and_stage`,
-    { enabled: !!id },
-  );
+  const activeScenarioSummary = summaryKey ? eclSummary?.[summaryKey] : null;
 
-  const discardMutation = useDynamicDelete<ApiResponse<any>>();
+  const totalECL =
+    activeScenarioSummary?.total_ecl ?? eclSummary?.Baseline?.total_ecl ?? 0;
+  const totalEAD =
+    activeScenarioSummary?.total_ead ?? eclSummary?.Baseline?.total_ead ?? 0;
+  const stage1ECL =
+    activeScenarioSummary?.summary_per_stage?.["Stage 1"]?.ECL ??
+    eclSummary?.Baseline?.summary_per_stage?.["Stage 1"]?.ECL ??
+    0;
+  const stage2ECL =
+    activeScenarioSummary?.summary_per_stage?.["Stage 2"]?.ECL ??
+    eclSummary?.Baseline?.summary_per_stage?.["Stage 2"]?.ECL ??
+    0;
+  const stage3ECL =
+    activeScenarioSummary?.summary_per_stage?.["Stage 3"]?.ECL ??
+    eclSummary?.Baseline?.summary_per_stage?.["Stage 3"]?.ECL ??
+    0;
+  const npl = totalEAD > 0 ? (stage2ECL + stage3ECL) / totalEAD : 0;
 
-  // Export URLs
-  const fileUrl = `/models/${id}/output?model_type=ECL`;
+  const tableRows = useMemo(() => {
+    return rawRows.map((item) => ({
+      "Counter Party": (
+        <span className="text-[#003A1B] font-medium">
+          {item["Counter Party"]}
+        </span>
+      ),
+      "Carrying Amount": (
+        <span className="text-[#444846]">
+          {formatNumber(item["Carrying Amount"])}
+        </span>
+      ),
+      Baseline: (
+        <span className="text-[#444846]">
+          {formatPercentage(item.Baseline)}
+        </span>
+      ),
+      "Best Case": (
+        <span className="text-[#444846]">
+          {formatPercentage(item["Best Case"])}
+        </span>
+      ),
+      "Worst Case": (
+        <span className="text-[#444846]">
+          {formatPercentage(item["Worst Case"])}
+        </span>
+      ),
+      "Probability Weighted ECL": (
+        <span className="text-[#444846]">
+          {formatPercentage(item["Probability Weighted ECL"])}
+        </span>
+      ),
+      "ECL with Scalar": (
+        <span className="text-[#444846]">
+          {formatPercentage(item["ECL with Scalar"])}
+        </span>
+      ),
+      "ECL Ratio": (
+        <span className="text-[#444846]">
+          {formatPercentage(item["ECL Ratio"])}
+        </span>
+      ),
+    }));
+  }, [rawRows]);
+
+  const fileUrl = `/crr/${id}/output`;
   const emailExportApiUrl = `/reporting/email/models/ecl?model_execution_id=${id}`;
 
-  // Calculate main statistics
-  const statsData = useMemo(() => {
-    if (!statisticsData?.data) {
-      return createStatsData(0, 0, 0, 0, 0);
-    }
+  const renderTableWithPagination = () => {
+    if (isLoading) return <LoadingSpinner loadingText="Loading ECL Data..." />;
 
-    const { ecl_totals } = statisticsData.data;
-    const { ecl_summary } = ecl_totals;
-
-    return createStatsData(
-      ecl_summary["Total ECL"],
-      ecl_summary["ECL Stage 1"],
-      ecl_summary["ECL Stage 2"],
-      ecl_summary["ECL Stage 3"],
-      500000,
-    );
-  }, [statisticsData, statisticsFilterData]);
-
-  // Transform data for table display
-  const tableRows = useMemo(() => {
-    if (!data?.data || data.data.length === 0) return [];
-
-    const allRows: { [key: string]: React.ReactNode }[] = [];
-
-    data.data.forEach((item: ECLApiResponseItem) => {
-      item.file_content.forEach((content: ECLFileContentItem) => {
-        const row: { [key: string]: React.ReactNode } = {
-          "LOAN UNIQUE ID": (
-            <span className="text-[#003A1B] font-medium">
-              {content["LOAN UNIQUE ID"]}
-            </span>
-          ),
-          "CLIENT NAME": (
-            <span className="text-[#003A1B] font-medium">
-              {content["CLIENT NAME"]}
-            </span>
-          ),
-          "FUND TYPE": (
-            <span className="text-[#444846]">{content["FUND TYPE"]}</span>
-          ),
-          LOAN_TYPE: (
-            <span className="text-[#444846]">{content["LOAN_TYPE"]}</span>
-          ),
-          "PRINCIPAL LOAN AMOUNT": (
-            <span className="text-[#444846] font-medium">
-              {formatCurrency(content["PRINCIPAL LOAN AMOUNT"] as number)}
-            </span>
-          ),
-          EAD: (
-            <span className="text-[#444846]">
-              {formatCurrency(content["EAD"] as number)}
-            </span>
-          ),
-          STAGE: <span>{content["STAGE"]}</span>,
-          "FINAL ECL": (
-            <span className="text-[#444846] font-semibold">
-              {formatCurrency(content["FINAL ECL"] as number)}
-            </span>
-          ),
-          "FINAL LGD": (
-            <span className="text-[#444846]">
-              {formatPercentage(content["FINAL LGD"] as number)}
-            </span>
-          ),
-          "EFFECTIVE INT RATE (%)": (
-            <span className="text-[#444846]">
-              {formatPercentage(
-                (content["EFFECTIVE INT RATE (%)"] as number) / 100,
-              )}
-            </span>
-          ),
-          "DISBURSEMENT DATE (MM/DD/YYYY)": (
-            <span className="text-[#444846]">
-              {formatDate(content["DISBURSEMENT DATE (MM/DD/YYYY)"] as string)}
-            </span>
-          ),
-          "EXPIRY DATE (MM/DD/YYYY)": (
-            <span className="text-[#444846]">
-              {formatDate(content["EXPIRY DATE (MM/DD/YYYY)"] as string)}
-            </span>
-          ),
-          REPAYMENT_FREQUENCY: (
-            <span className="text-[#444846]">
-              {content["REPAYMENT_FREQUENCY"]}
-            </span>
-          ),
-          PMT: (
-            <span className="text-[#444846]">
-              {formatCurrency(content["PMT"] as number)}
-            </span>
-          ),
-        };
-
-        allRows.push(row);
-      });
-    });
-
-    return allRows;
-  }, [data]);
-
-  // Generate columns
-  const getColumns = useCallback(() => {
-    if (!data?.data || data.data.length === 0) {
-      return DEFAULT_COLUMNS;
-    }
-
-    const firstItem = data.data[0];
-    if (!firstItem.file_content || firstItem.file_content.length === 0) {
-      return DEFAULT_COLUMNS;
-    }
-
-    return IMPORTANT_COLUMNS.map((key) => ({
-      key,
-      label: eclformatColumnHeader(key),
-      width: COLUMN_WIDTHS[key] || "w-[120px]",
-    }));
-  }, [data]);
-
-  const tabContent = useMemo(() => {
     return (
-      <div className="space-y-6">
-        {/* ECL Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {statsData.map((stat, i) => (
-            <StatCard key={`ecl-${i}`} {...stat} />
-          ))}
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-4 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+          <StatCard
+            title="Total ECL"
+            icon={<CustomerSvg />}
+            value={formatNumber(totalECL)}
+          />
+          <StatCard
+            title="Stage 1"
+            icon={<EadSvg />}
+            value={formatNumber(stage1ECL)}
+          />
+          <StatCard
+            title="Stage 2"
+            icon={<EclSvg />}
+            value={formatNumber(stage2ECL)}
+          />
+          <StatCard
+            title="Stage 3"
+            icon={<LGDSvg />}
+            value={formatNumber(stage3ECL)}
+          />
+          <StatCard
+            title="NPL"
+            icon={<NPLSvg />}
+            value={formatPercentage(npl)}
+          />
         </div>
 
-        {/* Data Table */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <CustomTable
-              columns={getColumns()}
-              rows={tableRows}
-              tableHeaderClassName="bg-[#F9FAFB]"
-              emptyMessage="No ECL data available"
-            />
-          </div>
+          <CustomTable
+            columns={ECL_PER_ASSET_COLUMNS}
+            rows={tableRows}
+            tableHeaderClassName="bg-[#F9FAFB]"
+            emptyMessage={`No ${activeTabConfig.label} data available`}
+          />
         </div>
 
-        {/* Pagination */}
-        {data?.data && data.data.length > 0 && (
+        {(pagedData?.total_logs ?? 0) > 0 && (
           <div className="mt-6">
             <Pagination
-              totalCount={data.total_count || 1}
-              activePage={String(data.page || 1)}
+              totalCount={pagedData?.total_logs ?? 0}
+              activePage={String(pagedData?.current_page ?? 1)}
               setPageNumber={setPageNumber}
-              itemsPerPage={itemsPerPage}
+              itemsPerPage={ITEMS_PER_PAGE}
             />
           </div>
         )}
-      </div>
+      </>
     );
-  }, [tableRows, statsData, getColumns, data, setPageNumber, itemsPerPage]);
-
-  const renderTabContent = (content: React.ReactNode) => {
-    if (isLoading) {
-      return <LoadingSpinner loadingText="Fetching Reports..." />;
-    }
-    return content;
   };
 
-  // In your Reporting component, update the tabOptions to pass currentTab:
-  const tabOptions = [
-    {
-      value: "ecl",
-      label: "ECL",
-      content: renderTabContent(<>{tabContent}</>),
-    },
-    {
-      value: "baseline",
-      label: "Baseline",
-      content: renderTabContent(<>{tabContent}</>),
-    },
-    {
-      value: "fli-model",
-      label: "FLI Scalar",
-      content: renderTabContent(<>{tabContent}</>),
-    },
-    {
-      value: "best-case",
-      label: "Best Case",
-      content: renderTabContent(<>{tabContent}</>),
-    },
-    {
-      value: "worst-case",
-      label: "Worst Case",
-      content: renderTabContent(<>{tabContent}</>),
-    },
-  ];
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-[1.4rem] font-bold text-[#003A1B]">
-            ECL Model Output
-          </h1>
-        </div>
-        <LoadingSpinner loadingText="Loading ECL Data..." />
-      </div>
-    );
-  }
+  const tabOptions = TAB_CONFIG.map((tab) => ({
+    value: tab.value,
+    label: tab.label,
+    content: tab.value === activeTab ? renderTableWithPagination() : null,
+  }));
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
-
       <Link
         href="#"
         onClick={() => router.back()}
-        className="me-auto rounded-md border flex items-center  justify-center w-[28px] h-[28px] text-sm text-[#667085]"
+        className="me-auto rounded-md border flex items-center justify-center w-[28px] h-[28px] text-sm text-[#667085]"
       >
-        <ChevronLeft className=" w-5 h-5" />
+        <ChevronLeft className="w-5 h-5" />
       </Link>
-      <div className="flex flex-wrap items-center justify-between gap-4">
+
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[1.4rem] font-bold text-[#003A1B]">
-            ECL Model Report - File6765
+          <h1 className="text-[1.4rem] text-[#111827] font-[700]">
+            ECL Model Report - {dataName ?? id}
           </h1>
           <p className="font-[600] text-base text-[#5B5F5E] mt-1">
             View full ECL report
           </p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Export Trigger */}
+        <div className="ms-auto">
           <ExportTrigger
             exportApiUrl={fileUrl}
             emailExportApiUrl={emailExportApiUrl}
@@ -321,11 +225,12 @@ const ECLModelOutput: React.FC = () => {
           />
         </div>
       </div>
+
       <CustomTabs
         defaultValue={activeTab}
         options={tabOptions}
         onValueChange={(value) => {
-          setActiveTab(value);
+          setActiveTab(value as TabValue);
           setPageNumber(1);
         }}
         className="border-none"

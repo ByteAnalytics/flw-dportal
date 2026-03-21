@@ -18,30 +18,17 @@ import {
 } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useSearchParams } from "next/navigation";
+import { getFilterValue } from "@/lib/reporting-utils";
 
 const Reporting = () => {
   const params = useSearchParams();
   const model_execution_id = params.get("model_execution_id");
   const [activeTab, setActiveTab] = useState("all");
   const [pageNumber, setPageNumber] = useState(1);
-
   const itemsPerPage = 10;
 
-  const getFilterValue = (tabValue: string): string | null => {
-    const filterMap: { [key: string]: string } = {
-      "pd-model": ExecutableModels.PD,
-      "lgd-model": ExecutableModels.LGD,
-      "ead-model": ExecutableModels.EAD,
-      "ccf-model": ExecutableModels.CCF,
-      "fli-model": ExecutableModels.FLI,
-      "ecl-model": ExecutableModels.ECL,
-      "joint-model": ExecutableModels.ECL,
-    };
-    return filterMap[tabValue] || null;
-  };
-
   const buildApiUrl = () => {
-    let baseUrl = `/crr/logs/?page=${pageNumber}&limit=${itemsPerPage}`;
+    let baseUrl = `/crr/logs/?page=${pageNumber}&page_size=${itemsPerPage}`;
     const filterValue = getFilterValue(activeTab);
 
     if (model_execution_id) {
@@ -49,7 +36,7 @@ const Reporting = () => {
     }
 
     if (activeTab !== "all" && filterValue) {
-      return `${baseUrl}&filter=${filterValue}`;
+      return `${baseUrl}&model_type=${filterValue}`;
     }
     return baseUrl;
   };
@@ -58,7 +45,6 @@ const Reporting = () => {
     ["execution-models", pageNumber?.toString(), activeTab],
     buildApiUrl(),
     {
-      // Add these options to ensure refetching
       refetchOnMount: "always",
       refetchOnWindowFocus: true,
       staleTime: 0,
@@ -101,8 +87,6 @@ const Reporting = () => {
         switch (modelType) {
           case ExecutableModels.PD:
             return "PD Model";
-          case ExecutableModels.JOINT:
-            return "ECL Model";
           case ExecutableModels.LGD:
             return "LGD Model";
           case ExecutableModels.EAD:
@@ -139,7 +123,6 @@ const Reporting = () => {
   const totalPages = transformedData.pages;
   const currentPage = transformedData.page;
 
-  // Remove client-side filtering since we're now filtering from API
   const getFilteredData = () => {
     return reports;
   };
@@ -151,7 +134,6 @@ const Reporting = () => {
     return content;
   };
 
-  // In your Reporting component, update the tabOptions to pass currentTab:
   const tabOptions = [
     {
       value: "all",

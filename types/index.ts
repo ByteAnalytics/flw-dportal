@@ -80,17 +80,15 @@ export interface ApiError {
   };
 }
 export interface ApiValidationError {
-  loc: string[]; // e.g. ["body", "password"]
-  msg: string; // e.g. "Value error, Password must be at least 8 characters long"
-  type: string; // e.g. "value_error"
+  loc: string[];
+  msg: string;
+  type: string;
 }
 
-// Pagination parameters
 export interface PaginationParams {
   page?: number;
   limit?: number;
   [key: string]: any;
 }
 
-// Full API response with pagination
 export type ApiPaginatedResponse<T> = ApiResponse<PaginatedResponse<T>>;

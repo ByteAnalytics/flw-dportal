@@ -1,12 +1,12 @@
 import { ExecutableModels } from "@/types/model-execution";
 
 export const models = [
-  {
-    id: ExecutableModels.CCF,
-    title: "Credit Conversion Factor",
-    description:
-      "The percentage of an unused credit loan that is likely to be drawn down if the borrower defaults",
-  },
+  // {
+  //   id: ExecutableModels.CCF,
+  //   title: "Credit Conversion Factor",
+  //   description:
+  //     "The percentage of an unused credit loan that is likely to be drawn down if the borrower defaults",
+  // },
   {
     id: ExecutableModels.EAD,
     title: "Exposure at Default",

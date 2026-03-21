@@ -1,109 +1,401 @@
+import { number } from "zod";
 import { ExecutableModels } from "./model-execution";
 
-export interface EADFileContent {
-  "LOAN UNIQUE ID": string;
-  "CLIENT UNIQUE ID": string;
-  "CLIENT NAME": string;
-  "LOAN CLASS": string;
-  "OUTSTANDING BALANCE": number;
-  "PRINCIPAL LOAN AMOUNT": number;
-  "DISBURSEMENT DATE (MM/DD/YYYY)": string;
-  "EXPIRY DATE (MM/DD/YYYY)": string;
-  LOAN_TYPE: string;
-  "EFFECTIVE INT RATE (%)": number;
-  REPAYMENT_FREQUENCY: string;
-  "OBLIGOR RISK RATING": string | null;
-  PERFORMANCE_STATUS: string;
-  "DAYS PAST DUE": number;
-  "COLLATERAL DESCRIPTION": string;
-  COLLATERAL_TYPE: string;
-  COLLATERAL_LOCATION_CLASSIFICATION: string;
-  "COLLATERAL CURRENCY": string;
-  "COLLATERAL AMOUNT": number;
-  "LAST VALUATION DATE": string | null;
-  PERFECTION_STATUS: string | null;
-  STAGE: number;
-  "STAGING OVERRIDE": string | null;
-  "DAYS PAST DUE STAGING": number;
-  "PERFORMANCE STATUS STAGING": number;
-  "IFRS 9 Stage": number;
-  "FINAL STAGING": string;
-  "TENOR (DAYS)": number;
-  "TIME TO MATURITY": number;
-  "EIR ADJUSTED": number;
-  UNDRAWN: number;
-  MATURED: string;
-  "TERM IN FORCE": number;
-  TENOR: number;
-  "NO. OF TIMES IN A YEAR": number;
-  "PERIODIC EIR": number;
-  "NO OF MONTHS BEFORE PAYMENT": number;
-  NPER: number;
-  PMT: number;
-  "MONTHLY EIR": number;
-  // Monthly columns
-  "Nov 2025": number;
-  "Dec 2025": number;
-  "Jan 2026": number;
-  // ... and other monthly columns
-  [key: string]: string | number | null;
-}
-
 export interface EADApiItem {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  file_name: string;
-  file_content: EADFileContent[];
-  model_execution_log_id: string;
-}
-
-export interface EADOutputApiResponse {
-  data: EADApiItem[];
-  page: number;
-  page_size: number;
-  total_count: number;
-}
-
-export interface LGDFileContent {
-  "CLIENT UNIQUE ID": string;
-  "LOAN UNIQUE ID": string;
-  "CLIENT NAME": string;
-  "LOAN CLASS": string;
-  STAGE: string;
-  "OUTSTANDING BALANCE": number;
-  "EFFECTIVE INT RATE (%)": number;
-  "EIR ADJUSTED": number;
-  COLLATERAL_TYPE: string | null;
-  "COLLATERAL AMOUNT": number;
-  REMAPPED_COLLATERAL_TYPE: string | null;
-  HAIRCUT: number;
-  "TIME TO RECOVERY": number;
-  "DISCOUNTED COLLATERAL VALUE": number;
-  "COLLATERAL ALLOCATED": number;
-  "COLLATERAL UTILIZED": number;
-  "SECURED RECOVERY": number;
-  "SECURED LGD": number;
-  "UNSECURED LGD": number;
-  "FINAL LGD": number;
-  [key: string]: string | number | null;
+  model_execution_id: string;
+  model_type: string;
+  execution_status: reportStatus;
+  ead_df: {
+    data: {
+      Obligor: string;
+      "2025-12-31": number;
+      "2026-01-31": number;
+      "2026-02-28": number;
+      "2026-03-31": number;
+      "2026-04-30": number;
+      "2026-05-31": number;
+      "2026-06-30": number;
+      "2026-07-31": number;
+      "2026-08-31": number;
+      "2026-09-30": number;
+      "2026-10-31": number;
+      "2026-11-30": number;
+      "2026-12-31": number;
+      "2027-01-31": number;
+      "2027-02-28": number;
+      "2027-03-31": number;
+      "2027-04-30": number;
+      "2027-05-31": number;
+      "2027-06-30": number;
+      "2027-07-31": number;
+      "2027-08-31": number;
+      "2027-09-30": number;
+      "2027-10-31": number;
+      "2027-11-30": number;
+      "2027-12-31": number;
+      "2028-01-31": number;
+      "2028-02-29": number;
+      "2028-03-31": number;
+      "2028-04-30": number;
+      "2028-05-31": number;
+      "2028-06-30": number;
+      "2028-07-31": number;
+      "2028-08-31": number;
+      "2028-09-30": number;
+      "2028-10-31": number;
+      "2028-11-30": number;
+      "2028-12-31": number;
+      "2029-01-31": number;
+      "2029-02-28": number;
+      "2029-03-31": number;
+      "2029-04-30": number;
+      "2029-05-31": number;
+      "2029-06-30": number;
+      "2029-07-31": number;
+      "2029-08-31": number;
+      "2029-09-30": number;
+      "2029-10-31": number;
+      "2029-11-30": number;
+      "2029-12-31": number;
+      "2030-01-31": number;
+      "2030-02-28": number;
+      "2030-03-31": number;
+      "2030-04-30": number;
+      "2030-05-31": number;
+      "2030-06-30": number;
+      "2030-07-31": number;
+      "2030-08-31": number;
+      "2030-09-30": number;
+      "2030-10-31": number;
+      "2030-11-30": number;
+      "2030-12-31": number;
+    }[];
+    total_logs: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+  };
 }
 
 export interface LGDApiItem {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  file_name: string;
-  file_content: LGDFileContent[];
-  model_execution_log_id: string;
+  model_execution_id: string;
+  model_type: string;
+  execution_status: reportStatus;
+  lgd_df: {
+    data: {
+      "Asset Description": string;
+      "Total Exposure": number;
+      "Adjusted Collateral": number;
+      "Secured Recovery": number;
+      "Secured LGD": number;
+      "Unsecured LGD": number;
+      "Final LGD": number;
+    }[];
+    total_logs: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+  };
+  lgd_summary: {
+    KPMG_Average_Final_LGD: number;
+    Average_Final_Recovery_Rate: number;
+    KPMG_Weighted_Average_Final_LGD: number;
+    Moody_Senior_Unsecured_Recovery: number;
+    Moody_Senior_Unsecured_LGD: number;
+  };
 }
 
-export interface LGDOutputApiResponse {
-  data: LGDApiItem[];
-  page: number;
+export interface PDApiItem {
+  model_execution_id: string;
+  model_type: string;
+  execution_status: reportStatus;
+  pd_yearly_combo_metrics: {
+    data: {
+      rating_index: number;
+      Rating: string;
+      PD_Metric: string;
+      "Year 1": number;
+      "Year 2": number;
+      "Year 3": number;
+      "Year 4": number;
+      "Year 5": number;
+      "Year 6": number;
+      "Year 7": number;
+      "Year 8": number;
+      "Year 9": number;
+      "Year 10": number;
+      "Year 11": number;
+      "Year 12": number;
+      "Year 13": number;
+      "Year 14": number;
+      "Year 15": number;
+    }[];
+    total_logs: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+  };
+  pd_monthly_combo_metrics: {
+    data: {
+      rating_index: number;
+      Rating: string;
+      PD_Metric: string;
+      Scenario: string;
+      M1: number;
+      M2: number;
+      M3: number;
+      M4: number;
+      M5: number;
+      M6: number;
+      M7: number;
+      M8: number;
+      M9: number;
+      M10: number;
+      M11: number;
+      M12: number;
+      M13: number;
+      M14: number;
+      M15: number;
+      M16: number;
+      M17: number;
+      M18: number;
+      M19: number;
+      M20: number;
+      M21: number;
+      M22: number;
+      M23: number;
+      M24: number;
+      M25: number;
+      M26: number;
+      M27: number;
+      M28: number;
+      M29: number;
+      M30: number;
+      M31: number;
+      M32: number;
+      M33: number;
+      M34: number;
+      M35: number;
+      M36: number;
+      M37: number;
+      M38: number;
+      M39: number;
+      M40: number;
+      M41: number;
+      M42: number;
+      M43: number;
+      M44: number;
+      M45: number;
+      M46: number;
+      M47: number;
+      M48: number;
+      M49: number;
+      M50: number;
+      M51: number;
+      M52: number;
+      M53: number;
+      M54: number;
+      M55: number;
+      M56: number;
+      M57: number;
+      M58: number;
+      M59: number;
+      M60: number;
+    }[];
+  };
+  total_logs: number;
+  total_pages: number;
+  current_page: number;
   page_size: number;
-  total_count: number;
-  pages: number;
+}
+
+export interface ECLStageSummary {
+  total_assets: number;
+  EAD: number;
+  ECL: number;
+}
+
+export interface ECLScenarioSummary {
+  total_assets: number;
+  total_ead: number;
+  total_ecl: number;
+  summary_per_stage: {
+    "Stage 1": ECLStageSummary;
+    "Stage 2": ECLStageSummary;
+    "Stage 3": ECLStageSummary;
+  };
+}
+
+export interface ECLSummaryDfRow {
+  Scenario: string;
+  "Prob  of Scenarios": number;
+  "ECL Stage 1": number;
+  "ECL Stage 2": number;
+  "ECL Stage 3": number;
+  "TOTAL ECL": number;
+  "Weighted ECL": number;
+}
+
+export interface ECLWeightedSummaryRow {
+  "Carrying Amount": number;
+  "Weighted Stage 1": number;
+  "Weighted Stage 2": number;
+  "Weighted Stage 3": number;
+  "Weighted Total ECL": number;
+  "OVERALL Weighted ECL": number;
+}
+
+export interface ECLPerAssetRow {
+  "Counter Party": string;
+  "Carrying Amount": number;
+  Baseline: number;
+  "Best Case": number;
+  "Worst Case": number;
+  "Probability Weighted ECL": number;
+  "ECL with Scalar": number;
+  "ECL Ratio": number;
+}
+
+interface ECLDfRow {
+  Scenario: string;
+  "Counter Party": string;
+  Rating: string;
+  Stage: number;
+  ECL: number;
+  M0: number;
+  M1: number;
+  M2: number;
+  M3: number;
+  M4: number;
+  M5: number;
+  M6: number;
+  M7: number;
+  M8: number;
+  M9: number;
+  M10: number;
+  M11: number;
+  M12: number;
+  M13: number;
+  M14: number;
+  M15: number;
+  M16: number;
+  M17: number;
+  M18: number;
+  M19: number;
+  M20: number;
+  M21: number;
+  M22: number;
+  M23: number;
+  M24: number;
+  M25: number;
+  M26: number;
+  M27: number;
+  M28: number;
+  M29: number;
+  M30: number;
+  M31: number;
+  M32: number;
+  M33: number;
+  M34: number;
+  M35: number;
+  M36: number;
+  M37: number;
+  M38: number;
+  M39: number;
+  M40: number;
+  M41: number;
+  M42: number;
+  M43: number;
+  M44: number;
+  M45: number;
+  M46: number;
+  M47: number;
+  M48: number;
+  M49: number;
+  M50: number;
+  M51: number;
+  M52: number;
+  M53: number;
+  M54: number;
+  M55: number;
+  M56: number;
+  M57: number;
+  M58: number;
+  M59: number;
+  M60: number;
+}
+
+export interface ECLApiItem {
+  model_execution_id: string;
+  model_type: string;
+  execution_status: reportStatus;
+  ecl_summary: {
+    Baseline: ECLScenarioSummary;
+    "Best Case": ECLScenarioSummary;
+    "Worst Case": ECLScenarioSummary;
+  };
+  dashboard_summary: {
+    ecl_summary_per_scenario: {
+      Baseline: ECLScenarioSummary;
+      "Best Case": ECLScenarioSummary;
+      "Worst Case": ECLScenarioSummary;
+    };
+    report_summary_page: {
+      ecl_summary_df: ECLSummaryDfRow[];
+      weighted_summary_df: ECLWeightedSummaryRow[];
+      summary_per_asset: ECLPerAssetRow[];
+    };
+  };
+  ecl_df_all_scenario: {
+    data: ECLDfRow[];
+    total_logs: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+  };
+  ecl_per_asset: {
+    data: ECLPerAssetRow[];
+    total_logs: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+  };
+}
+export interface FLIApiItem {
+  model_execution_id: string;
+  model_type: string;
+  execution_status: reportStatus;
+  scenario_weights: {
+    best_case_weight: number[];
+    base_case_weight: number[];
+    worst_case_weight: number[];
+  };
+  fli_scenarios_pd: {
+    data: {
+      Year: number;
+      "Best Case": number;
+      Baseline: number;
+      "Worst Case": number;
+      Probability_Weighted: number;
+    }[];
+    total_logs: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+  };
+  fli_scenarios_ead: {
+    data: {
+      Year: number;
+      "Best Case": number;
+      Baseline: number;
+      "Worst Case": number;
+      Probability_Weighted: number;
+    }[];
+    total_logs: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+  };
 }
 
 export interface FileContentItem {

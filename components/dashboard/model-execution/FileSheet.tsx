@@ -19,6 +19,7 @@ import { models } from "@/constants/model-execution";
 import { formatFileSize } from "@/lib/utils";
 import { ExecutableModels } from "@/types/model-execution";
 import type { ModelFormData, ThreeFileSet } from "@/types/model-execution";
+import { extractModelType } from "@/lib/model-execution-utils";
 
 interface IFileSheetProps {
   isOpen: boolean;
@@ -26,6 +27,8 @@ interface IFileSheetProps {
   selectedModels: string[];
   modelFormData: ModelFormData;
   setModelFormData: React.Dispatch<React.SetStateAction<ModelFormData>>;
+  sharedFileData: ThreeFileSet;
+  setSharedFileData: React.Dispatch<React.SetStateAction<ThreeFileSet>>;
   onSubmit: () => void;
 }
 
@@ -162,12 +165,16 @@ export const FileSheet: React.FC<IFileSheetProps> = ({
   selectedModels,
   modelFormData,
   setModelFormData,
+  sharedFileData,
+  setSharedFileData,
   onSubmit,
 }) => {
+  const isMultiModel = selectedModels.length >= 2;
   const filteredModels = models.filter((m) => selectedModels.includes(m.id));
-  const allRunnable = filteredModels.every((m) =>
-    isModelRunnable(m.id, modelFormData),
-  );
+
+  const allRunnable = isMultiModel
+    ? hasAllThreeFiles(sharedFileData)
+    : filteredModels.every((m) => isModelRunnable(m.id, modelFormData));
 
   const updateModel = <K extends keyof ModelFormData>(
     key: K,
@@ -188,36 +195,68 @@ export const FileSheet: React.FC<IFileSheetProps> = ({
     return null;
   };
 
+  const updateSharedFile = (
+    key: "amortization_file" | "asset_information_file" | "collateral_file",
+    file: File | null,
+  ) => {
+    setSharedFileData((prev) => ({ ...prev, [key]: file }));
+  };
+
   return (
     <SheetWrapper title="Add Files" open={isOpen} setOpen={setIsOpen}>
       <div className="flex flex-col gap-6 h-[95%] pb-6">
         <div className="flex flex-col gap-8 flex-1 overflow-y-auto">
-          {filteredModels.map((model) => {
-            const sectionKey = getSectionKey(model.id);
-            if (!sectionKey) return null;
-
-            return (
-              <div key={model.id} className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-px flex-1 bg-[#E1E3E2]" />
-                  <span className="text-xs font-[700] text-[#5B5F5E] uppercase tracking-widest">
-                    {model.id?.toUpperCase()} Inputs
-                  </span>
-                  <div className="h-px flex-1 bg-[#E1E3E2]" />
-                </div>
-
-                <ThreeFilesSection
-                  files={modelFormData[sectionKey]}
-                  onFileChange={(key, file) =>
-                    updateModel(sectionKey, { [key]: file })
-                  }
-                  onDateChange={(date) =>
-                    updateModel(sectionKey, { exposure_date: date })
-                  }
-                />
+          {isMultiModel ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-[700] text-[#5B5F5E]">
+                  Add Files
+                </span>
+                <span className="text-xs text-[#A3A3A3]">
+                  These files will be used across all selected models:{" "}
+                  {filteredModels
+                    .map((m) => extractModelType(m.id)?.toUpperCase())
+                    .join(", ")}
+                </span>
               </div>
-            );
-          })}
+
+              <ThreeFilesSection
+                files={sharedFileData}
+                onFileChange={updateSharedFile}
+                onDateChange={(date) =>
+                  setSharedFileData((prev) => ({
+                    ...prev,
+                    exposure_date: date,
+                  }))
+                }
+              />
+            </div>
+          ) : (
+            filteredModels.map((model) => {
+              const sectionKey = getSectionKey(model.id);
+              if (!sectionKey) return null;
+
+              return (
+                <div key={model.id} className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-[700] text-[#5B5F5E]">
+                      Add {extractModelType(model.id)?.toUpperCase()} File
+                    </span>
+                  </div>
+
+                  <ThreeFilesSection
+                    files={modelFormData[sectionKey]}
+                    onFileChange={(key, file) =>
+                      updateModel(sectionKey, { [key]: file })
+                    }
+                    onDateChange={(date) =>
+                      updateModel(sectionKey, { exposure_date: date })
+                    }
+                  />
+                </div>
+              );
+            })
+          )}
         </div>
 
         <CustomButton

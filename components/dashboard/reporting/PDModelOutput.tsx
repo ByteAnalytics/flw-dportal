@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useRouter } from "nextjs-toploader/app";
 import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
 
 import CustomTable from "@/components/ui/custom-table";
 import { CustomTabs } from "@/components/shared/CustomTab";
@@ -12,245 +13,189 @@ import { Pagination } from "@/components/shared/Pagination";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useGet } from "@/hooks/use-queries";
 import {
-  formatColumnHeader,
   formatDate,
   getFileNameFromTab,
+  formatColumnHeader,
 } from "@/lib/utils";
+import { PDApiItem } from "@/types/reporting";
+import { ApiResponse } from "@/types";
 import {
-  FileContentItem,
-  PDModelOutputApiResponse,
-  PDModelOutputApiResponseItem,
-} from "@/types/reporting";
-import {
-  DEFAULT_COLUMNS,
   EXCLUDED_KEYS,
-  formatPDValue,
-  TAB_LABELS,
-  TABS_WITH_PD_METRICS,
+  ITEMS_PER_PAGE,
+  MONTHLY_TAB_METRIC_MAP,
+  TAB_CONFIG,
+  YEARLY_TAB_METRIC_MAP,
 } from "@/constants/pd-model-config";
-import { getRatingOrder } from "@/lib/pd-model-utils";
-import Link from "next/link";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const PDModelOutput = () => {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const id = params?.slug as string;
   const dataName = searchParams.get("name");
   const timeStamp = searchParams.get("time");
-  const id = params?.slug as string;
 
-  const [activeTab, setActiveTab] = useState("annual-pd");
+  const [activeTab, setActiveTab] = useState("Annual_Conditional_PD");
   const [pageNumber, setPageNumber] = useState(1);
 
-  const itemsPerPage = 10;
-  const shouldShowPDMetrics = TABS_WITH_PD_METRICS.includes(activeTab);
+  const activeTabConfig = TAB_CONFIG.find((t) => t.value === activeTab)!;
+  const isYearly = activeTabConfig?.type === "yearly";
+
+  const metricFilter = !isYearly
+    ? MONTHLY_TAB_METRIC_MAP?.[activeTab]
+    : YEARLY_TAB_METRIC_MAP[activeTab];
 
   const buildQueryString = () => {
-    const baseQuery = `model_execution_id=${id}&file_name=${getFileNameFromTab(
-      activeTab,
-    )}&page=${pageNumber}&limit=${itemsPerPage}`;
-
-    return baseQuery;
+    const params = new URLSearchParams();
+    params.set("page", String(pageNumber));
+    params.set("page_size", String(ITEMS_PER_PAGE));
+    if (metricFilter) params.set("pd_metric", metricFilter);
+    return params.toString();
   };
 
-  // Fetch data
-  const { data, isLoading } = useGet<PDModelOutputApiResponse>(
-    ["pd-model-output", id, activeTab, pageNumber.toString()],
-    `/reporting/models/pd?${buildQueryString()}`,
+  const { data, isLoading } = useGet<ApiResponse<PDApiItem>>(
+    [
+      "pd-model-output",
+      id,
+      activeTab,
+      pageNumber.toString(),
+      metricFilter ?? "",
+    ],
+    `/guarantees/runs/${id}/result?${buildQueryString()}`,
   );
 
-  // Export URLs
-  const fileUrl = `/models/${id}/output?model_type=PD`;
+  const pdItem = data?.data;
+
+  const rawRows = useMemo(() => {
+    if (!pdItem) return [];
+    if (isYearly) return pdItem.pd_yearly_combo_metrics?.data ?? [];
+    return pdItem.pd_monthly_combo_metrics?.data ?? [];
+  }, [pdItem, isYearly]);
+
+  const paginatedMeta = useMemo(() => {
+    if (!pdItem) return { total_logs: 0, current_page: 1 };
+    if (isYearly) {
+      return {
+        total_logs: pdItem.pd_yearly_combo_metrics?.total_logs ?? 0,
+        current_page: pdItem.pd_yearly_combo_metrics?.current_page ?? 1,
+      };
+    }
+    return {
+      total_logs: pdItem.total_logs ?? 0,
+      current_page: pdItem.current_page ?? 1,
+    };
+  }, [pdItem, isYearly]);
+
+  const columns = useMemo(() => {
+    if (rawRows.length === 0) return [];
+
+    return Object.keys(rawRows[0])
+      .filter((key) => !EXCLUDED_KEYS.includes(key))
+      .map((key) => ({
+        key,
+        label: formatColumnHeader(key),
+        width:
+          key === "Rating" || key === "PD_Metric" || key === "Scenario"
+            ? "w-[180px]"
+            : "w-[100px]",
+      }));
+  }, [rawRows]);
+
+  const tableRows = useMemo(() => {
+    return rawRows.map((item) => {
+      const row: Record<string, React.ReactNode> = {};
+
+      Object.entries(item).forEach(([key, value]) => {
+        if (EXCLUDED_KEYS.includes(key)) return;
+
+        if (key === "Rating") {
+          row[key] = (
+            <span className="text-[#003A1B] font-medium">
+              {value as string}
+            </span>
+          );
+        } else if (key === "PD_Metric" || key === "Scenario") {
+          row[key] = (
+            <span className="text-[#444846] font-medium">
+              {value as string}
+            </span>
+          );
+        } else {
+          row[key] = (
+            <span className="text-[#444846]">
+              {typeof value === "number"
+                ? `${(value * 100).toFixed(4)}%`
+                : (value as string)}
+            </span>
+          );
+        }
+      });
+
+      return row;
+    });
+  }, [rawRows]);
+
+  const fileUrl = `/crr/${id}/output`;
   const emailExportApiUrl = `/reporting/email/models/pd?model_execution_id=${id}&file_name=${getFileNameFromTab(activeTab)}`;
 
-  const transformedData = useMemo(() => {
-    if (!data?.data || data.data.length === 0) return [];
+  const renderTableWithPagination = () => {
+    if (isLoading) return <LoadingSpinner loadingText="Loading PD Data..." />;
 
-    const allRows: { [key: string]: React.ReactNode; _rating?: string }[] = [];
-
-    data.data.forEach((item: PDModelOutputApiResponseItem) => {
-      item.file_content.forEach((content: FileContentItem) => {
-        const row: { [key: string]: React.ReactNode; _rating?: string } = {
-          rating: (
-            <span className="text-[#003A1B] font-medium">{content.Rating}</span>
-          ),
-          _rating: content.Rating, // Store raw rating for sorting
-        };
-
-        Object.keys(content).forEach((key) => {
-          if (!EXCLUDED_KEYS.includes(key)) {
-            if (
-              key.toLowerCase().includes("pd") &&
-              key.toLowerCase().includes("metrics") &&
-              !shouldShowPDMetrics
-            ) {
-              return;
-            }
-
-            const value = content[key];
-            const formattedValue = formatPDValue(value);
-            row[key] = <span className="text-[#444846]">{formattedValue}</span>;
-          }
-        });
-
-        allRows.push(row);
-      });
-    });
-
-    // Sort rows by rating order
-    return allRows.sort((a, b) => {
-      const ratingA = getRatingOrder(a._rating || "");
-      const ratingB = getRatingOrder(b._rating || "");
-      return ratingA - ratingB;
-    });
-  }, [data, shouldShowPDMetrics]);
-
-  // Generate dynamic columns from API data
-  const getColumns = () => {
-    const baseColumns = [
-      { key: "rating", label: "Rating", width: "w-[180px]" },
-    ];
-
-    if (!data?.data || data.data.length === 0) {
-      // Return default columns if no data
-      DEFAULT_COLUMNS.forEach((col) => {
-        // Skip PD Metrics column if not in combo metrics tabs
-        if (
-          col.toLowerCase().includes("pd") &&
-          col.toLowerCase().includes("metrics") &&
-          !shouldShowPDMetrics
-        ) {
-          return;
-        }
-
-        baseColumns.push({
-          key: col,
-          label: formatColumnHeader(col),
-          width: "w-[100px]",
-        });
-      });
-      return baseColumns;
-    }
-
-    // Dynamically create columns based on the first file_content item
-    const firstItem = data.data[0];
-    if (!firstItem.file_content || firstItem.file_content.length === 0) {
-      return baseColumns;
-    }
-
-    const firstContent = firstItem.file_content[0];
-
-    Object.keys(firstContent).forEach((key) => {
-      if (!EXCLUDED_KEYS.includes(key)) {
-        // Skip PD Metrics column if not in combo metrics tabs
-        if (key.includes("PD_Metric") && !shouldShowPDMetrics) {
-          return;
-        }
-
-        baseColumns.push({
-          key: key,
-          label: formatColumnHeader(key),
-          width: "w-[100px]",
-        });
-      }
-    });
-
-    return baseColumns;
-  };
-
-  // Get empty message based on active tab
-  const getEmptyMessage = () => {
-    const tabLabel = TAB_LABELS[activeTab] || "data";
-    return `No ${tabLabel} data available`;
-  };
-
-  // Render tab content with loading state
-  const renderTabContent = (content: React.ReactNode) => {
-    if (isLoading) {
-      return <LoadingSpinner loadingText="Loading PD Data..." />;
-    }
-    return content;
-  };
-
-  // Render table and pagination
-  const renderTableWithPagination = () => (
-    <>
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <CustomTable
-          columns={getColumns()}
-          rows={transformedData}
-          tableHeaderClassName="bg-[#F9FAFB]"
-          emptyMessage={getEmptyMessage()}
-        />
-      </div>
-      {data?.data && data.data.length > 0 && (
-        <div className="mt-6">
-          <Pagination
-            totalCount={data.total_count || 1}
-            activePage={String(data.page || 1)}
-            setPageNumber={setPageNumber}
-            itemsPerPage={itemsPerPage}
+    return (
+      <>
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <CustomTable
+            columns={columns}
+            rows={tableRows}
+            tableHeaderClassName="bg-[#F9FAFB]"
+            emptyMessage={`No ${activeTabConfig?.label} data available`}
           />
         </div>
-      )}
-    </>
-  );
 
-  // Tab configuration
-  const tabOptions = [
-    {
-      value: "annual-pd",
-      label: "Annual PD",
-      content: renderTabContent(renderTableWithPagination()),
-    },
-    {
-      value: "monthly-pd",
-      label: "Monthly PD",
-      content: renderTabContent(renderTableWithPagination()),
-    },
-    {
-      value: "scaled-monthly-conditional",
-      label: "Scaled Monthly Conditional",
-      content: renderTabContent(renderTableWithPagination()),
-    },
-    {
-      value: "monthly-cumulative",
-      label: "Monthly Cumulative",
-      content: renderTabContent(renderTableWithPagination()),
-    },
-    {
-      value: "monthly-marginal",
-      label: "Monthly Marginal",
-      content: renderTabContent(renderTableWithPagination()),
-    },
-  ];
+        {paginatedMeta.total_logs > 0 && (
+          <div className="mt-6">
+            <Pagination
+              totalCount={paginatedMeta.total_logs}
+              activePage={String(paginatedMeta.current_page)}
+              setPageNumber={setPageNumber}
+              itemsPerPage={ITEMS_PER_PAGE}
+            />
+          </div>
+        )}
+      </>
+    );
+  };
+
+  const tabOptions = TAB_CONFIG.map((tab) => ({
+    value: tab.value,
+    label: tab.label,
+    content: renderTableWithPagination(),
+  }));
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
       <div>
         <Link
           href="#"
           onClick={() => router.back()}
-          className="me-auto rounded-md border flex items-center  justify-center w-[28px] h-[28px] text-sm text-[#667085]"
+          className="me-auto rounded-md border flex items-center justify-center w-[28px] h-[28px] text-sm text-[#667085]"
         >
-          <ChevronLeft className=" w-5 h-5" />
+          <ChevronLeft className="w-5 h-5" />
         </Link>
       </div>
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-[1.4rem] text-[#111827] font-[700]">
-            PD Model Report - File6765
+            PD Model Report - {dataName ?? id}
           </h1>
           <p className="font-[600] text-base text-[#5B5F5E] mt-1">
             View full PD report
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="ms-auto">
           <ExportTrigger
             exportApiUrl={fileUrl}
             exportFileName={`${dataName}_${formatDate(timeStamp)}_PD_Model`}
@@ -259,7 +204,6 @@ const PDModelOutput = () => {
         </div>
       </div>
 
-      {/* Tabs Section */}
       <CustomTabs
         defaultValue={activeTab}
         options={tabOptions}

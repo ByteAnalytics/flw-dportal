@@ -23,3 +23,21 @@ export interface CaseOverviewData {
   rejected_cases: number;
   avg_rating: string;
 }
+
+export type PeriodValues = Record<string, string>;
+export type AutoComputedValues = Record<string, string>;
+
+export type CFFinancialsData = {
+  balanceSheet: { current: PeriodValues; previous: PeriodValues };
+  incomeStatement: {
+    current: PeriodValues;
+    previous: PeriodValues;
+    autoComputed: AutoComputedValues;
+  };
+  otherInput: {
+    current: PeriodValues;
+    previous: PeriodValues;
+    autoComputed: AutoComputedValues;
+  };
+  nonFinancials: Record<string, string>;
+};

@@ -84,9 +84,6 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
           {filteredModels.map((model) => {
             const file = selectedModelFiles[model.id];
             if (!file) return null;
-
-            // ✅ Each model uses its own state, falling back to overall state
-            // while perModelState hasn't been populated yet (first render)
             const modelState = perModelState[model.id] ?? executionState;
 
             return (
@@ -101,7 +98,6 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
                   progress={modelState.progress}
                   onRemove={!isRunning ? onCancel : undefined}
                   onReplace={!isRunning ? onCancel : undefined}
-                  // ✅ Only show error log action on models that actually failed
                   onViewErrorLog={
                     modelState.status === "error" ? onViewErrorLog : undefined
                   }
@@ -123,7 +119,6 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
             className="w-full border-red-300 text-red-600 bg-red-50 rounded-[1.25rem]"
           />
         ) : hasAnyError ? (
-          // ✅ Show dismiss instead of full success if any model failed
           <CustomButton
             title="Dismiss"
             onClick={onCancel}

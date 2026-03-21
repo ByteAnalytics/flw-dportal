@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 
 interface NewCaseSheetProps {
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (dreProject?: string) => void;
 }
 
 const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
@@ -59,22 +59,22 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
 
   const onSubmit = async (data: NewCaseFormData) => {
     try {
-      const response = await createCase.mutateAsync(data);
-      toast.success(extractSuccessMessage(response));
-      await queryClient.invalidateQueries({
-        queryKey: ["recent-cases"],
-        exact: false,
-        refetchType: "all",
-      });
-      onSuccess?.();
-      onClose();
+      // const response = await createCase.mutateAsync(data);
+      // toast.success(extractSuccessMessage(response));
+      // await queryClient.invalidateQueries({
+      //   queryKey: ["recent-cases"],
+      //   exact: false,
+      //   refetchType: "all",
+      // });
+      onSuccess?.("dre_a");
+      // onClose();
     } catch (error: any) {
       toast.error(extractErrorMessage(error));
     }
   };
 
   return (
-    <div className="flex flex-col gap-6 h-[88%] ">
+    <div className="flex flex-col gap-6 mb-6">
       <Form {...form}>
         <form
           onSubmit={handleSubmit(onSubmit)}

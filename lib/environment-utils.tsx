@@ -1,4 +1,4 @@
-import BrandLogo from "@/public/assets/Brand.svg";
+import BrandLogo from "@/public/assets/LOGO (1).svg";
 import ByteLogo from "@/public/assets/byte-logo-white.svg";
 import { StaticImageData } from "next/image";
 
