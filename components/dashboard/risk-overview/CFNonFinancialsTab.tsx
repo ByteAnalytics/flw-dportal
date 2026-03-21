@@ -1,4 +1,4 @@
-import React from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export default function CFNonFinancialsTab({ values, onChange }: any) {
   const sections = [

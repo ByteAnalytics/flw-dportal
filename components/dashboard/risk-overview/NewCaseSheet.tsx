@@ -19,7 +19,8 @@ import {
   projectTypeOptions,
   yesNoOptions,
 } from "@/constants/risk-overview";
-import { Button } from "@/components/ui/button";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface NewCaseSheetProps {
   onClose: () => void;
