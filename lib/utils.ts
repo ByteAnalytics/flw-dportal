@@ -108,8 +108,6 @@ export function getModelLabel(model: string): string {
   switch (model) {
     case ExecutableModels.PD:
       return "PD Model";
-    case ExecutableModels.JOINT:
-      return "Joint Model";
     case ExecutableModels.LGD:
       return "LGD Model";
     case ExecutableModels.EAD:
