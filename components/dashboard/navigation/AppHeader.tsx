@@ -11,6 +11,7 @@ import { ModelTypeEnum } from "@/types/model-type-store";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { UserRole } from "@/types";
+import { cn } from "@/lib/utils";
 
 const MODEL_OPTIONS: ModelTypeEnum[] = Object.values(ModelTypeEnum);
 
@@ -22,6 +23,7 @@ const AppHeader: React.FC = () => {
   const { user } = useAuthStore((s) => s);
 
   const isAdmin = user?.role === UserRole?.ADMIN;
+  const isCCRSection = pathname.startsWith(CCR_BASE);
 
   const selectedModel = pathname.startsWith(CCR_BASE)
     ? ModelTypeEnum.CreditRiskRating
@@ -36,7 +38,12 @@ const AppHeader: React.FC = () => {
   };
 
   return (
-    <header className="w-full h-16 md:h-18 bg-[#F3F3F3] flex items-center pe-4 md:pe-10 md:ps-0 ps-4">
+    <header
+      className={cn(
+        "w-full h-16 md:h-18 bg-[#F3F3F3] flex items-center pe-4 md:pe-10 md:ps-0 ps-4",
+        isCCRSection && "md:ps-4",
+      )}
+    >
       {!isAdmin ? (
         <CustomDropdown
           className="w-52"

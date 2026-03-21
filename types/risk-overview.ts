@@ -38,6 +38,5 @@ export type CFFinancialsData = {
     current: PeriodValues;
     previous: PeriodValues;
     autoComputed: AutoComputedValues;
-  };
-  nonFinancials: Record<string, string>;
+  }
 };

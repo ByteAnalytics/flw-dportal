@@ -27,11 +27,11 @@ const FinancialInputTable: React.FC<Props> = ({
   return (
     <div className="flex flex-col">
       {/* Add new column */}
-      <div className="flex justify-end mb-2">
+      <div className="flex justify-end mb-4 ">
         <button
           type="button"
           onClick={onAddColumn}
-          className="flex items-center gap-1 text-[13px] font-semibold text-emerald-600 hover:text-emerald-700"
+          className="flex items-center gap-1 text-[13px] font-semibold text-InfraGreen italic cursor-pointer hover:text-emerald-700"
         >
           Add new column <Plus className="w-3.5 h-3.5" />
         </button>
@@ -40,15 +40,15 @@ const FinancialInputTable: React.FC<Props> = ({
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm min-w-[700px]">
-          <thead>
+          <thead className="bg-InfraBorder">
             <tr className="border-b border-gray-200">
-              <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 uppercase tracking-wide w-[200px] min-w-[180px]">
+              <th className="text-left py-2 pr-4 pl-2 text-[14px] font-semibold text-gray-500 uppercase tracking-wide w-[200px] min-w-[180px]">
                 LINE ITEM
               </th>
               {years.map((year) => (
                 <th
                   key={year}
-                  className="text-center py-2 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wide min-w-[110px]"
+                  className="text-center py-2 px-2 text-[14px] font-semibold text-gray-500 uppercase tracking-wide min-w-[110px]"
                 >
                   {year}
                 </th>
@@ -59,7 +59,7 @@ const FinancialInputTable: React.FC<Props> = ({
             {rows.map((row) => (
               <tr
                 key={row.key}
-                className="border-b border-gray-100 last:border-0"
+                className="border-b border-gray-100 last:border-0 pl-2"
               >
                 <td className="py-2 pr-4 text-[13px] font-medium w-[200px] min-w-[180px]">
                   <span

@@ -158,8 +158,8 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     );
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex items-start justify-between border-b border-gray-200 gap-4">
+    <div className="flex flex-col min-h-[82vh] w-full">
+      <div className="flex items-start justify-between border-b border-gray-200 gap-4 flex-1">
         <CustomTabs
           defaultValue="Balance Sheet"
           options={tabOptions}
@@ -190,7 +190,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
       <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-6">
         <button
           onClick={onSaveAsDraft}
-          className="bg-white  border text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px]"
+          className="bg-white  border-InfraBorder bg-white h-[40px] text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px]"
         >
           Save as draft
         </button>

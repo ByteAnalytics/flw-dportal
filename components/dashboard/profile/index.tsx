@@ -20,10 +20,17 @@ const ProfileDetails = () => {
   const { logout } = useAuthStore((s) => s);
   const logoutApi = usePost<ApiResponse<string>, null>("/auth/logout");
 
-  const { data, isLoading } = useGet<TeamUserResponse>(
-    ["profile"],
+  const { data, isLoading, isFetching } = useGet<TeamUserResponse>(
+    ["user-profile-me"],
     "/users/me",
+    {
+      staleTime: 0,
+      gcTime: 0,
+      refetchOnMount: "always",
+      placeholderData: undefined,
+    },
   );
+
 
   const userProfile = data?.data;
 

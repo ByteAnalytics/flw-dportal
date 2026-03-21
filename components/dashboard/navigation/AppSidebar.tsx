@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import {
   Sidebar,
@@ -20,6 +21,7 @@ import AlertModal from "@/components/shared/AlertModal";
 import { useAuthStore } from "@/stores/auth-store";
 import { usePost } from "@/hooks/use-queries";
 import { ApiResponse } from "@/types";
+import { CCR_BASE } from "@/constants/model-management";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   data: AppSidebarData;
@@ -29,10 +31,12 @@ export function AppSidebar({ data, ...props }: AppSidebarProps) {
   const { toggleSidebar, state } = useSidebar();
   const { navMain, logoIcon: LogoComponent } = data;
   const router = useRouter();
+  const pathname = usePathname();
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
 
   const isCollapsed = state === "collapsed";
+  const isCCRSection = pathname.startsWith(CCR_BASE);
 
   const logout = useAuthStore((s) => s.logout);
   const logoutApi = usePost<ApiResponse<string>, null>("/auth/logout");
@@ -49,7 +53,18 @@ export function AppSidebar({ data, ...props }: AppSidebarProps) {
   };
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar
+      collapsible="icon"
+      {...props}
+      style={
+        {
+          "--sidebar": isCCRSection ? "#021E07" : "#F3F3F3",
+          "--sidebar-foreground": isCCRSection
+            ? "oklch(0.985 0 0)"
+            : "oklch(0.145 0 0)",
+        } as React.CSSProperties
+      }
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

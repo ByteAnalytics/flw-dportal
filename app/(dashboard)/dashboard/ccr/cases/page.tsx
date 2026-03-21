@@ -1,5 +1,4 @@
 import RiskCases from "@/components/dashboard/risk-cases";
-import CaseOverviewPage from "@/components/dashboard/risk-overview";
 import { EnvironmentHelper } from "@/lib/environment-utils";
 import { Metadata } from "next";
 
