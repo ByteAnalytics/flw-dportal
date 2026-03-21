@@ -1,5 +1,6 @@
-import React from "react";
 import CFInputRow from "./CFInputRow";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export const CF_BALANCE_ROWS = [
   { key: "totalNonCurrentAssets", label: "Total Non Current Assets" },

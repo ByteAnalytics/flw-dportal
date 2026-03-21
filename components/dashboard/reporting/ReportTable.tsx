@@ -27,7 +27,7 @@ const ReportTable = ({
   const { downloadFile, isDownloading } = useFileDownload();
 
   const handleViewDetails = (item: ReportData) => {
-    let categorySlug =
+    const categorySlug =
       currentTab === "all"
         ? item.modelCategory.toLowerCase().replace(/\s+/g, "-")
         : currentTab;

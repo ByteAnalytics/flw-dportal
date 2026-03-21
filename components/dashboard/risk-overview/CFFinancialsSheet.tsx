@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CustomTabs } from "@/components/shared/CustomTab";
-import { cn } from "@/lib/utils";
 
 import CFBalanceSheetTab from "./CFBalanceSheetTab";
 import CFIncomeStatementTab from "./CFIncomeStatementTab";
 import CFOtherInputTab from "./CFOtherInputTab";
 import CFNonFinancialsTab from "./CFNonFinancialsTab";
 import { CFFinancialsData } from "@/types/risk-overview";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface CFFinancialsSheetProps {
   onClose: () => void;
