@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sheet";
 import NewCaseSheet from "./NewCaseSheet";
 import { SheetWrapper } from "@/components/ui/custom-sheet";
+import CaseSheetFlow from "./CaseSheetFlow";
 
 const CaseOverviewPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -162,19 +163,7 @@ const CaseOverviewPage = () => {
           />
         )}
       </div>
-
-      {/* New Case Sheet */}
-      <SheetWrapper
-        title="Model Information"
-        open={isSheetOpen}
-        setOpen={setIsSheetOpen}
-        width="sm:max-w-[500px]"
-      >
-        <NewCaseSheet
-          onClose={() => setIsSheetOpen(false)}
-          onSuccess={() => setIsSheetOpen(false)}
-        />
-      </SheetWrapper>
+      <CaseSheetFlow open={isSheetOpen} onClose={() => setIsSheetOpen(false)} />
     </div>
   );
 };

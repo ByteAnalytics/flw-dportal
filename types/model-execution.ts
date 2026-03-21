@@ -6,7 +6,6 @@ export type ModelManagementApiResponse = {
 
 export enum ExecutableModels {
   PD = "guarantees_pd",
-  JOINT = "guarantees_joint",
   LGD = "guarantees_lgd",
   EAD = "guarantees_ead",
   CCF = "guarantees_ccf",
@@ -31,7 +30,6 @@ export interface ExecutionModel {
   finished_at: string | null;
 }
 
-// Alternative: Create a specific type for your execution models response
 export interface ExecutionModelsResponse {
   model_data: ExecutionModel[];
   total_logs: number;
@@ -54,8 +52,6 @@ export interface ReportData {
   executionStatus: string;
   id: string;
 }
-
-// Shared types for model execution form state
 
 export type ThreeFileSet = {
   amortization_file: File | null;

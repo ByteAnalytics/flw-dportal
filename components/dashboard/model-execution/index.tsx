@@ -4,6 +4,7 @@ import React, { useCallback, useState } from "react";
 import { useRouter } from "nextjs-toploader/app";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 import CustomButton from "@/components/ui/custom-button";
 import ModelCard from "./ModelCard";
@@ -22,20 +23,48 @@ import { ApiResponse } from "@/types";
 import {
   ExecutableModels,
   ModelManagementApiResponse,
+  ThreeFileSet,
 } from "@/types/model-execution";
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { extractValidationPayload } from "@/lib/parse-validation-error";
 import type { ValidationErrorPayload } from "@/lib/parse-validation-error";
 import { ModelFormData, defaultModelFormData } from "@/types/model-execution";
-import { buildModelPayload } from "@/lib/model-execution-utils";
+import { buildModelPayload, extractModelType } from "@/lib/model-execution-utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+const defaultSharedFileData = (): ThreeFileSet => ({
+  exposure_date: new Date(),
+  amortization_file: null,
+  asset_information_file: null,
+  collateral_file: null,
+});
+
+const buildSharedPayload = (
+  modelNames: string[],
+  data: ThreeFileSet,
+): FormData => {
+  const fd = new FormData();
+  fd.append("models", JSON.stringify(modelNames));
+  fd.append("exposure_date", format(data.exposure_date, "yyyy-MM-dd"));
+  if (data.amortization_file)
+    fd.append("amortization_file", data.amortization_file);
+  if (data.asset_information_file)
+    fd.append("asset_information_file", data.asset_information_file);
+  if (data.collateral_file) fd.append("collateral_file", data.collateral_file);
+  return fd;
+};
 
 const ModelExecution = () => {
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [isFileSheetOpen, setIsFileSheetOpen] = useState(false);
+
   const [modelFormData, setModelFormData] = useState<ModelFormData>(
     defaultModelFormData(),
+  );
+
+  const [sharedFileData, setSharedFileData] = useState<ThreeFileSet>(
+    defaultSharedFileData(),
   );
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,6 +108,11 @@ const ModelExecution = () => {
     ["execution-models"],
   );
 
+  const executeRun = usePost<ApiResponse<ModelManagementApiResponse>, any>(
+    `/guarantees/run`,
+    ["execution-models"],
+  );
+
   const getExecutorForModel = (modelId: string) => {
     const mid = modelId?.toLowerCase();
     if (ExecutableModels.LGD.startsWith(mid)) return executeLGD;
@@ -119,6 +153,7 @@ const ModelExecution = () => {
   const resetAllState = useCallback(() => {
     setSelectedModels([]);
     setModelFormData(defaultModelFormData());
+    setSharedFileData(defaultSharedFileData());
     setIsFileSheetOpen(false);
     setIsModalOpen(false);
     setExecutionState({ status: "idle", progress: 0 });
@@ -141,7 +176,79 @@ const ModelExecution = () => {
     }
   }, []);
 
-  const runAllModels = async () => {
+  const runCombinedModels = async () => {
+    setExecutionState({ status: "uploading", progress: 10 });
+    const cleanupProgress = startProgress();
+
+    const initialPerModelState: Record<string, ModelExecutionState> = {};
+    selectedModels.forEach((id) => {
+      initialPerModelState[id] = { status: "uploading", progress: 10 };
+    });
+    setPerModelState(initialPerModelState);
+
+    const modelNames = selectedModels.map((id) =>
+      extractModelType(id)?.toLowerCase(),
+    );
+    const payload = buildSharedPayload(modelNames, sharedFileData);
+
+    try {
+      const response = await executeRun.mutateAsync(payload);
+
+      const successState: Record<string, ModelExecutionState> = {};
+      selectedModels.forEach((id) => {
+        successState[id] = { status: "success", progress: 100 };
+      });
+      setPerModelState(successState);
+
+      toast.success(extractSuccessMessage(response));
+
+      completeProgress();
+      setExecutionState({ status: "success", progress: 100 });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["execution-models"],
+        exact: false,
+        refetchType: "active",
+      });
+
+      setTimeout(() => setShowSuccess(true), 1500);
+    } catch (error: unknown) {
+      setUploadStep("error");
+
+      const validationPayload = extractValidationPayload(error);
+
+      const errorState: Record<string, ModelExecutionState> = {};
+      selectedModels.forEach((id) => {
+        errorState[id] = {
+          status: "error",
+          progress: 0,
+          errorMessage: validationPayload
+            ? "Validation failed"
+            : extractErrorMessage(error),
+        };
+      });
+      setPerModelState(errorState);
+
+      if (validationPayload) {
+        setValidationError(validationPayload);
+        toastIdRef.current = toast.error("Validation failed", {
+          description: "Your uploaded file contains validation issues",
+          duration: Infinity,
+        });
+      } else {
+        toastIdRef.current = toast.error(extractErrorMessage(error), {
+          duration: Infinity,
+        });
+      }
+
+      completeProgress();
+      setExecutionState({ status: "error", progress: 0 });
+    } finally {
+      cleanupProgress();
+    }
+  };
+
+  const runSingleModels = async () => {
     setExecutionState({ status: "uploading", progress: 10 });
     const cleanupProgress = startProgress();
 
@@ -157,7 +264,6 @@ const ModelExecution = () => {
 
     const progressStep = Math.floor(80 / orderedModels.length);
 
-    // ✅ Initialise every model as "uploading" before the loop starts
     const initialPerModelState: Record<string, ModelExecutionState> = {};
     orderedModels.forEach((id) => {
       initialPerModelState[id] = { status: "uploading", progress: 10 };
@@ -188,7 +294,6 @@ const ModelExecution = () => {
       try {
         const response = await executor.mutateAsync(payload);
 
-        // ✅ This model succeeded — mark it individually
         setPerModelState((prev) => ({
           ...prev,
           [modelId]: { status: "success", progress: 100 },
@@ -204,7 +309,6 @@ const ModelExecution = () => {
         const validationPayload = extractValidationPayload(error);
 
         if (validationPayload) {
-          // ✅ Store first validation error encountered
           setValidationError((prev) => prev ?? validationPayload);
 
           setPerModelState((prev) => ({
@@ -224,7 +328,6 @@ const ModelExecution = () => {
             },
           );
         } else {
-          // ✅ This model failed — mark it individually, continue the loop
           setPerModelState((prev) => ({
             ...prev,
             [modelId]: {
@@ -244,7 +347,6 @@ const ModelExecution = () => {
 
     cleanupProgress();
 
-    // ✅ Overall state is determined after ALL models have run
     if (hasAnyFailure) {
       completeProgress();
       setExecutionState({ status: "error", progress: currentProgress });
@@ -259,6 +361,14 @@ const ModelExecution = () => {
       });
 
       setTimeout(() => setShowSuccess(true), 1500);
+    }
+  };
+
+  const runAllModels = async () => {
+    if (selectedModels.length >= 2) {
+      await runCombinedModels();
+    } else {
+      await runSingleModels();
     }
   };
 
@@ -278,17 +388,23 @@ const ModelExecution = () => {
   };
 
   const selectedModelFiles: Record<string, File | null> = {};
-  selectedModels.forEach((id) => {
-    const mid = id?.toLowerCase();
-    if (ExecutableModels.LGD.startsWith(mid))
-      selectedModelFiles[id] = modelFormData.lgd.amortization_file;
-    else if (ExecutableModels.EAD.startsWith(mid))
-      selectedModelFiles[id] = modelFormData.ead.amortization_file;
-    else if (ExecutableModels.ECL.startsWith(mid))
-      selectedModelFiles[id] = modelFormData.ecl.amortization_file;
-    else if (ExecutableModels.CCF.startsWith(mid))
-      selectedModelFiles[id] = modelFormData.ccf.amortization_file;
-  });
+  if (selectedModels.length >= 2) {
+    selectedModels.forEach((id) => {
+      selectedModelFiles[id] = sharedFileData.amortization_file;
+    });
+  } else {
+    selectedModels.forEach((id) => {
+      const mid = id?.toLowerCase();
+      if (ExecutableModels.LGD.startsWith(mid))
+        selectedModelFiles[id] = modelFormData.lgd.amortization_file;
+      else if (ExecutableModels.EAD.startsWith(mid))
+        selectedModelFiles[id] = modelFormData.ead.amortization_file;
+      else if (ExecutableModels.ECL.startsWith(mid))
+        selectedModelFiles[id] = modelFormData.ecl.amortization_file;
+      else if (ExecutableModels.CCF.startsWith(mid))
+        selectedModelFiles[id] = modelFormData.ccf.amortization_file;
+    });
+  }
 
   return (
     <div>
@@ -340,6 +456,8 @@ const ModelExecution = () => {
         selectedModels={selectedModels}
         modelFormData={modelFormData}
         setModelFormData={setModelFormData}
+        sharedFileData={sharedFileData}
+        setSharedFileData={setSharedFileData}
         onSubmit={handleSheetSubmit}
       />
 

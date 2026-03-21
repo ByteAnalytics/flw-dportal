@@ -1,33 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export const TAB_LABELS: Record<string, string> = {
-  "monthly-combo-metrics": "monthly combo metrics",
-  "yearly-combo-metrics": "yearly combo metrics",
-  "monthly-marginal": "monthly marginal PD",
-  "monthly-cumulative": "monthly cumulative PD",
-  "scaled-monthly-conditional": "scaled monthly conditional PD",
-  "monthly-pd": "monthly PD",
-  "annual-pd": "annual PD",
-};
-
-export const DEFAULT_COLUMNS = [
-  "Obligor Type",
-  "Month No",
-  "Year",
-  "M1",
-  "M2",
-  "M3",
-  "M4",
-  "M5",
-  "M6",
-  "M7",
-  "M8",
-  "M9",
-  "M10",
-  "M11",
-  "M12",
-];
-
 export const RISK_OPTIONS = [
   { label: "AAA", value: "AAA" },
   { label: "AA+", value: "AA+" },
@@ -49,7 +21,7 @@ export const RISK_OPTIONS = [
   { label: "CCC/C", value: "CCC/C" },
 ];
 
-export const EXCLUDED_KEYS = ["Rating", "rating_index", "index"];
+export const EXCLUDED_KEYS = ["rating_index", "index", "PD_Metric"];
 
 export const TABS_WITH_PD_METRICS = [
   "monthly-combo-metrics",
@@ -97,3 +69,28 @@ export const RATING_ORDER: { [key: string]: number } = {
   BC: 17,
   "CCC/C": 18,
 };
+
+export const ITEMS_PER_PAGE = 10;
+
+export const MONTHLY_TAB_METRIC_MAP: Record<string, string | null> = {
+  // "monthly-pd": null,
+  "scaled-monthly-conditional": "Scaled_Monthly_Conditional_PD",
+  "monthly-cumulative": "Monthly_Cummulative_PD",
+  "monthly-marginal": "Monthly_Marginal_PD",
+  Annual_Conditional_PD: "Annual_Conditional_PD",
+};
+
+export const YEARLY_TAB_METRIC_MAP: Record<string, string | null> = {
+  Annual_Conditional_PD: "Annual_Conditional_PD",
+};
+
+export const TAB_CONFIG = [
+  { value: "Annual_Conditional_PD", label: "Annual PD", type: "yearly" },
+  { value: "monthly-marginal", label: "Marginal", type: "monthly" },
+  {
+    value: "scaled-monthly-conditional",
+    label: "Conditional",
+    type: "monthly",
+  },
+  { value: "monthly-cumulative", label: "Cumulative", type: "monthly" },
+];

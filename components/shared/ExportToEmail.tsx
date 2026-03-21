@@ -10,7 +10,7 @@ import {
 } from "@/schema/export-to-email";
 import CustomButton from "@/components/ui/custom-button";
 import { Form } from "@/components/ui/form";
-import { ApiResponse, FormFieldType } from "@/types";
+import { ApiResponse, FormFieldType, UserRole } from "@/types";
 import { useGet, usePost } from "@/hooks/use-queries";
 import { TeamUsersResponse } from "@/types/team-management";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +19,7 @@ import { LoadingSpinner } from "../ui/loading-spinner";
 import { toast } from "sonner";
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import CustomInputField from "../ui/custom-input-field";
+import { useAuthStore } from "@/stores/auth-store";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -33,9 +34,16 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
   setIsEmailPromptOpen,
   emailExportApiUrl,
 }) => {
+  const { user } = useAuthStore((s) => s);
+
+  const isAdmin = user?.role === UserRole?.ADMIN;
+
   const { data, isLoading } = useGet<TeamUsersResponse>(
     ["users", "email-recipients"],
     "/users/email_recipients",
+    {
+      enabled: isAdmin,
+    },
   );
 
   const sendToEmail = usePost<ApiResponse<null>, any>(emailExportApiUrl, [
