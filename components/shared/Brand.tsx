@@ -19,7 +19,7 @@ export const Brand: React.FC<BrandProps> = ({ style, src }) => {
     <CustomImage
       src={src ?? EnvironmentHelper.getBrandLogo()}
       priority
-      style={cn("w-[96px] h-[71px]", style, isByte && "w-[126px] h-[90px]")}
+      style={cn("w-[196px] h-[71px]", style, isByte && "w-[126px] h-[90px]")}
       clickFunc={navigateToHome}
     />
   );
