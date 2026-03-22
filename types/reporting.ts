@@ -340,6 +340,23 @@ export interface ECLApiItem {
       "Best Case": ECLScenarioSummary;
       "Worst Case": ECLScenarioSummary;
     };
+    portfolio_summary: {
+      total_customers: number;
+      total_ead: number;
+      total_ecl: number;
+      average_lgd: number;
+      top_obligors: {
+        "Counter Party": string;
+        EAD: number;
+        LGD: number;
+        ECL: number;
+        identifier: string;
+      }[];
+      npl_ratio: {
+        non_performing_loan_perc: number;
+        performing_loan_perc: number;
+      };
+    };
     report_summary_page: {
       ecl_summary_df: ECLSummaryDfRow[];
       weighted_summary_df: ECLWeightedSummaryRow[];

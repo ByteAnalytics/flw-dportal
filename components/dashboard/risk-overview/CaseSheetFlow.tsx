@@ -6,7 +6,6 @@ import NewCaseSheet from "./NewCaseSheet";
 import PFFinancialsSheet, { PFFinancialsData } from "./PFFinancialsSheet";
 import CFFinancialsSheet from "./CFFinancialsSheet";
 import PFReportsSheet, { ReportSummaryData } from "./PFReportSheets";
-import CFScoringSheet from "./CFScoringSheet";
 import { CFFinancialsData } from "@/types/risk-overview";
 import PFNonFinancialsTab, { PFNonFinancialsData } from "./PFNonFinancialsTab";
 import CombinedReportsSheet, { CombinedReportData } from "./CFReportsSheet";
@@ -136,24 +135,16 @@ const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
   };
 
   const handleCFNonFinancialsNext = (data: PFNonFinancialsData) => {
-    if (path === "combined") {
-      setStep("combined_reports");
-    } else {
-      setStep("cf_scoring");
-    }
-  };
-
-  const handleCFScoringNext = () => {
-    handleClose();
+    setStep("combined_reports");
   };
 
   const handleSubmitForValidation = () => {
-    setStep("validation_review");
+     handleClose();
   };
 
-  const handleApproveRating = () => {
-    setStep("cf_scoring");
-  };
+  // const handleApproveRating = () => {
+  //   setStep("cf_scoring");
+  // };
 
   const renderContent = () => {
     switch (step) {
@@ -211,11 +202,6 @@ const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
           />
         );
 
-      case "cf_scoring":
-        return (
-          <CFScoringSheet onClose={handleClose} onNext={handleCFScoringNext} />
-        );
-
       case "combined_reports":
         return (
           <CombinedReportsSheet
@@ -225,15 +211,15 @@ const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
             onSaveAsDraft={() => {}}
           />
         );
-      case "validation_review":
-        return (
-          <ValidationReviewSheet
-            onClose={handleClose}
-            reportData={MOCK_COMBINED_REPORT}
-            onReturnForRevision={() => setStep("combined_reports")}
-            onApproveRating={handleApproveRating}
-          />
-        );
+      // case "validation_review":
+      //   return (
+      //     <ValidationReviewSheet
+      //       onClose={handleClose}
+      //       reportData={MOCK_COMBINED_REPORT}
+      //       onReturnForRevision={() => setStep("combined_reports")}
+      //       onApproveRating={handleApproveRating}
+      //     />
+      //   );
 
       default:
         return null;

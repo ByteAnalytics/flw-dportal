@@ -1,3 +1,5 @@
+import { ECLScenarioSummary,  reportStatus } from "./reporting";
+
 export interface LegendItem {
   label: string;
   value: string;
@@ -62,3 +64,33 @@ export const defaultDashboardData: DashboardData = {
   top_obligors: [],
   ecl_summary_per_stage: [],
 };
+
+export interface DashboardApiItem {
+  model_execution_id: string;
+  model_type: string;
+  execution_status: reportStatus;
+  dashboard_summary: {
+    ecl_summary_per_scenario: {
+      Baseline: ECLScenarioSummary;
+      "Best Case": ECLScenarioSummary;
+      "Worst Case": ECLScenarioSummary;
+    };
+    portfolio_summary: {
+      total_customers: number;
+      total_ead: number;
+      total_ecl: number;
+      average_lgd: number;
+      top_obligors: {
+        "Counter Party": string;
+        EAD: number;
+        LGD: number;
+        ECL: number;
+        identifier: string;
+      }[];
+      npl_ratio: {
+        non_performing_loan_perc: number;
+        performing_loan_perc: number;
+      };
+    };
+  };
+}

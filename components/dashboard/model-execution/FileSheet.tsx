@@ -169,31 +169,9 @@ export const FileSheet: React.FC<IFileSheetProps> = ({
   setSharedFileData,
   onSubmit,
 }) => {
-  const isMultiModel = selectedModels.length >= 2;
   const filteredModels = models.filter((m) => selectedModels.includes(m.id));
 
-  const allRunnable = isMultiModel
-    ? hasAllThreeFiles(sharedFileData)
-    : filteredModels.every((m) => isModelRunnable(m.id, modelFormData));
-
-  const updateModel = <K extends keyof ModelFormData>(
-    key: K,
-    patch: Partial<ModelFormData[K]>,
-  ) => {
-    setModelFormData((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], ...patch },
-    }));
-  };
-
-  const getSectionKey = (modelId: string): keyof ModelFormData | null => {
-    const id = modelId?.toLowerCase();
-    if (ExecutableModels.LGD.startsWith(id)) return "lgd";
-    if (ExecutableModels.EAD.startsWith(id)) return "ead";
-    if (ExecutableModels.ECL.startsWith(id)) return "ecl";
-    if (ExecutableModels.CCF.startsWith(id)) return "ccf";
-    return null;
-  };
+  const allRunnable = hasAllThreeFiles(sharedFileData);
 
   const updateSharedFile = (
     key: "amortization_file" | "asset_information_file" | "collateral_file",
@@ -206,57 +184,28 @@ export const FileSheet: React.FC<IFileSheetProps> = ({
     <SheetWrapper title="Add Files" open={isOpen} setOpen={setIsOpen}>
       <div className="flex flex-col gap-6 h-[95%] pb-6">
         <div className="flex flex-col gap-8 flex-1 overflow-y-auto">
-          {isMultiModel ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <span className="text-sm font-[700] text-[#5B5F5E]">
-                  Add Files
-                </span>
-                <span className="text-xs text-[#A3A3A3]">
-                  These files will be used across all selected models:{" "}
-                  {filteredModels
-                    .map((m) => extractModelType(m.id)?.toUpperCase())
-                    .join(", ")}
-                </span>
-              </div>
-
-              <ThreeFilesSection
-                files={sharedFileData}
-                onFileChange={updateSharedFile}
-                onDateChange={(date) =>
-                  setSharedFileData((prev) => ({
-                    ...prev,
-                    exposure_date: date,
-                  }))
-                }
-              />
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-[700] text-[#5B5F5E]">
+                Add Files
+              </span>
+              <span className="text-xs text-[#A3A3A3]">
+                {filteredModels.length > 1
+                  ? `These files will be used across all selected models: ${filteredModels
+                      .map((m) => extractModelType(m.id)?.toUpperCase())
+                      .join(", ")}`
+                  : `Files for ${extractModelType(filteredModels[0]?.id)?.toUpperCase()} model`}
+              </span>
             </div>
-          ) : (
-            filteredModels.map((model) => {
-              const sectionKey = getSectionKey(model.id);
-              if (!sectionKey) return null;
 
-              return (
-                <div key={model.id} className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-[700] text-[#5B5F5E]">
-                      Add {extractModelType(model.id)?.toUpperCase()} File
-                    </span>
-                  </div>
-
-                  <ThreeFilesSection
-                    files={modelFormData[sectionKey]}
-                    onFileChange={(key, file) =>
-                      updateModel(sectionKey, { [key]: file })
-                    }
-                    onDateChange={(date) =>
-                      updateModel(sectionKey, { exposure_date: date })
-                    }
-                  />
-                </div>
-              );
-            })
-          )}
+            <ThreeFilesSection
+              files={sharedFileData}
+              onFileChange={updateSharedFile}
+              onDateChange={(date) =>
+                setSharedFileData((prev) => ({ ...prev, exposure_date: date }))
+              }
+            />
+          </div>
         </div>
 
         <CustomButton
