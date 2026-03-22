@@ -169,7 +169,7 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="w-full px-6 py-8">
-          <p className="text-gray-500 text-[13px]">{`© ${isByte ? "Byte" : "InfraCredit"}  2025`}</p>
+          <p className="text-gray-500 text-[13px]">{`© ${isByte ? "Byte" : "InfraCredit"}  2026`}</p>
         </div>
       </div>
     </div>
