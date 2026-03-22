@@ -13,5 +13,6 @@ export const buildModelPayload = (data: ThreeFileSet): FormData => {
 };
 
 export const extractModelType = (value: string): string => {
+  if (!value) return "";
   return value.replace(/^guarantees_/, "");
 };

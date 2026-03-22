@@ -24,7 +24,7 @@ export const ECL_PER_ASSET_COLUMNS = [
 ];
 
 export const TAB_CONFIG = [
-  { value: "ecl", label: "ECL", scenario: null },
+  { value: "ecl", label: "ECL Summary", scenario: null },
   { value: "baseline", label: "Baseline", scenario: "Baseline" },
   { value: "best-case", label: "Best Case", scenario: "Best Case" },
   { value: "worst-case", label: "Worst Case", scenario: "Worst Case" },

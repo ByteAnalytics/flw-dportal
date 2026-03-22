@@ -26,7 +26,7 @@ import {
 type TabValue = (typeof TAB_CONFIG)[number]["value"];
 type FLIScenarioRow = FLIApiItem["fli_scenarios_pd"]["data"][number];
 
-const formatScenarioValue = (value: number) => `${(value * 100).toFixed(4)}%`;
+// const formatScenarioValue = (value: number) => `${(value * 100).toFixed(4)}%`;
 
 const FLIModelOutput = () => {
   const params = useParams();
@@ -57,22 +57,22 @@ const FLIModelOutput = () => {
       Year: <span className="text-[#003A1B] font-medium">{item.Year}</span>,
       "Best Case": (
         <span className="text-[#444846]">
-          {formatScenarioValue(item["Best Case"])}
+          {item["Best Case"]}
         </span>
       ),
       Baseline: (
         <span className="text-[#444846]">
-          {formatScenarioValue(item.Baseline)}
+          {item.Baseline}
         </span>
       ),
       "Worst Case": (
         <span className="text-[#444846]">
-          {formatScenarioValue(item["Worst Case"])}
+          {item["Worst Case"]}
         </span>
       ),
       Probability_Weighted: (
         <span className="text-[#444846]">
-          {formatScenarioValue(item.Probability_Weighted)}
+          {item.Probability_Weighted}
         </span>
       ),
     }));
@@ -151,21 +151,21 @@ const FLIModelOutput = () => {
             title="Best Case Weights"
             icon={<CustomerSvg />}
             value={scenarioWeights.best_case_weight
-              ?.map((w) => `${(w * 100)?.toFixed(1)}%`)
+              ?.map((w) => `${(w )?.toFixed(4)}`)
               ?.join(", ")}
           />
           <StatCard
             title="Base Case Weights"
             icon={<EadSvg />}
             value={scenarioWeights.base_case_weight
-              .map((w) => `${(w * 100).toFixed(1)}%`)
+              .map((w) => `${(w).toFixed(4)}`)
               .join(", ")}
           />
           <StatCard
             title="Worst Case Weights"
             icon={<EclSvg />}
             value={scenarioWeights.worst_case_weight
-              .map((w) => `${(w * 100).toFixed(1)}%`)
+              .map((w) => `${(w).toFixed(4)}`)
               .join(", ")}
           />
         </div>

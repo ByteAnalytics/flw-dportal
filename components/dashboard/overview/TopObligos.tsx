@@ -9,23 +9,28 @@ import { useGet } from "@/hooks/use-queries";
 import { formatCurrency, formatPercentage } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
-interface TopDebtor {
-  "CLIENT NAME": string;
+interface TopObligorsResponse {
+  total_count: number;
+  page: number;
+  page_size: number;
+  data: {
+    "CLIENT NAME": string;
+    EAD: number;
+    LGD: number;
+    ECL: number;
+    identifier: string;
+  }[];
+}
+interface TopObligor {
+  "Counter Party": string;
   EAD: number;
   LGD: number;
   ECL: number;
   identifier: string;
 }
 
-interface TopObligorsResponse {
-  total_count: number;
-  page: number;
-  page_size: number;
-  data: TopDebtor[];
-}
-
 interface Top20DebtorsTableProps {
-  filteredObligors?: TopDebtor[];
+  filteredObligors?: TopObligor[];
 }
 
 export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
@@ -37,9 +42,7 @@ export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
   const { data: obligorsData, isLoading } = useGet<TopObligorsResponse>(
     ["top-obligors", selectedMetric, currentPage.toString()],
     `/reporting/models/dashboard?section=top_obligors&metric=${selectedMetric}&page=${currentPage}&page_size=10`,
-    {
-      enabled: !filteredObligors,
-    },
+    { enabled: !filteredObligors },
   );
 
   const columns: TableColumn[] = [
@@ -47,72 +50,37 @@ export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
     { key: "ead", label: "EAD", align: "left" },
     { key: "lgd", label: "LGD", align: "left" },
     { key: "ecl", label: "ECL", align: "left" },
-    { key: "pd", label: "PD", align: "left" },
   ];
 
   const tableRows = useMemo(() => {
     if (filteredObligors && filteredObligors.length > 0) {
-      const startIndex = (currentPage - 1) * 10;
-      const paginatedData = filteredObligors.slice(startIndex, startIndex + 10);
-
-      return paginatedData.map((obligor) => ({
+      const start = (currentPage - 1) * 10;
+      return filteredObligors.slice(start, start + 10).map((o) => ({
         name: (
           <span className="text-[#003A1B] font-medium">
-            {obligor["CLIENT NAME"]}
+            {o["Counter Party"]}
           </span>
         ),
-        ead: formatCurrency(obligor.EAD),
-        lgd: formatPercentage(obligor.LGD),
-        ecl: formatCurrency(obligor.ECL),
+        ead: formatCurrency(o.EAD),
+        lgd: formatPercentage(o.LGD),
+        ecl: formatCurrency(o.ECL),
       }));
     }
 
     if (!obligorsData?.data) return [];
-
-    return obligorsData.data.map((obligor) => ({
+    return obligorsData.data.map((o) => ({
       name: (
-        <span className="text-[#003A1B] font-medium">
-          {obligor["CLIENT NAME"]}
-        </span>
+        <span className="text-[#003A1B] font-medium">{o["CLIENT NAME"]}</span>
       ),
-      ead: formatCurrency(obligor.EAD),
-      lgd: formatPercentage(obligor.LGD),
-      ecl: formatCurrency(obligor.ECL),
+      ead: formatCurrency(o.EAD),
+      lgd: formatPercentage(o.LGD),
+      ecl: formatCurrency(o.ECL),
     }));
-  }, [obligorsData, filteredObligors, selectedMetric, currentPage]);
-
-  const filterItems: DropdownItem[] = [
-    {
-      label: "By ECL",
-      onClick: () => {
-        setSelectedMetric("ECL");
-        setCurrentPage(1);
-      },
-    },
-    {
-      label: "By EAD",
-      onClick: () => {
-        setSelectedMetric("EAD");
-        setCurrentPage(1);
-      },
-    },
-  ];
+  }, [obligorsData, filteredObligors, currentPage]);
 
   const totalPages = filteredObligors
     ? Math.ceil(filteredObligors.length / 10)
     : Math.ceil((obligorsData?.total_count || 0) / 10);
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
 
   return (
     <div className="bg-none rounded-[20px] p-0">
@@ -121,19 +89,35 @@ export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
           <h3 className="text-[15px] font-semibold text-gray-900">
             Top 20 Obligos
           </h3>
-
-          <CustomDropdown
-            trigger={
-              <Button
-                variant="outline"
-                className="flex items-center gap-1 text-[12px] sm:px-3 sm:py-2 font-medium text-gray-600"
-              >
-                By {selectedMetric}
-                <ChevronDown className="w-4 h-4" />
-              </Button>
-            }
-            items={filterItems}
-          />
+          {!filteredObligors && (
+            <CustomDropdown
+              trigger={
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-1 text-[12px] sm:px-3 sm:py-2 font-medium text-gray-600"
+                >
+                  By {selectedMetric}
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              }
+              items={[
+                {
+                  label: "By ECL",
+                  onClick: () => {
+                    setSelectedMetric("ECL");
+                    setCurrentPage(1);
+                  },
+                },
+                {
+                  label: "By EAD",
+                  onClick: () => {
+                    setSelectedMetric("EAD");
+                    setCurrentPage(1);
+                  },
+                },
+              ]}
+            />
+          )}
         </div>
 
         {totalPages > 0 && (
@@ -141,23 +125,24 @@ export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
             <span className="text-sm text-gray-600">
               Page {currentPage} of {totalPages}
             </span>
-            <div className="flex items-center gap-1 h-10 border border-InfraBorder bg-[#F3F3F3] rounded-[10px] px-3 text-sm text-gray-600 hover:text-gray-700 font-medium">
+            <div className="flex items-center gap-1 h-10 border border-InfraBorder bg-[#F3F3F3] rounded-[10px] px-3 text-sm text-gray-600 font-medium">
               <ChevronLeft
-                className={`w-4 h-4 cursor-pointer ${
-                  currentPage === 1 ? "text-gray-400 cursor-not-allowed" : ""
-                }`}
-                onClick={handlePrevPage}
+                className={`w-4 h-4 cursor-pointer ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : ""}`}
+                onClick={() => currentPage > 1 && setCurrentPage((p) => p - 1)}
               />
-              <span className="cursor-pointer" onClick={handleNextPage}>
+              <span
+                className="cursor-pointer"
+                onClick={() =>
+                  currentPage < totalPages && setCurrentPage((p) => p + 1)
+                }
+              >
                 Next
               </span>
               <ChevronRight
-                className={`w-4 h-4 cursor-pointer ${
-                  currentPage === totalPages
-                    ? "text-gray-400 cursor-not-allowed"
-                    : ""
-                }`}
-                onClick={handleNextPage}
+                className={`w-4 h-4 cursor-pointer ${currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : ""}`}
+                onClick={() =>
+                  currentPage < totalPages && setCurrentPage((p) => p + 1)
+                }
               />
             </div>
           </div>

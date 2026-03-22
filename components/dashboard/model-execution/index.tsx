@@ -29,10 +29,6 @@ import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { extractValidationPayload } from "@/lib/parse-validation-error";
 import type { ValidationErrorPayload } from "@/lib/parse-validation-error";
 import { ModelFormData, defaultModelFormData } from "@/types/model-execution";
-import {
-  buildModelPayload,
-  extractModelType,
-} from "@/lib/model-execution-utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -43,45 +39,24 @@ const defaultSharedFileData = (): ThreeFileSet => ({
   collateral_file: null,
 });
 
-const buildSharedPayload = (
-  modelNames: string[],
-  data: ThreeFileSet,
-): FormData => {
-  const fd = new FormData();
-  fd.append("models", JSON.stringify(modelNames));
-  fd.append("exposure_date", format(data.exposure_date, "yyyy-MM-dd"));
-  if (data.amortization_file)
-    fd.append("amortization_file", data.amortization_file);
-  if (data.asset_information_file)
-    fd.append("asset_information_file", data.asset_information_file);
-  if (data.collateral_file) fd.append("collateral_file", data.collateral_file);
-  return fd;
-};
-
 const ModelExecution = () => {
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [isFileSheetOpen, setIsFileSheetOpen] = useState(false);
-
   const [modelFormData, setModelFormData] = useState<ModelFormData>(
     defaultModelFormData(),
   );
-
   const [sharedFileData, setSharedFileData] = useState<ThreeFileSet>(
     defaultSharedFileData(),
   );
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [executionState, setExecutionState] = useState<ModelExecutionState>({
     status: "idle",
     progress: 0,
   });
-
   const [perModelState, setPerModelState] = useState<
     Record<string, ModelExecutionState>
   >({});
-
   const [showSuccess, setShowSuccess] = useState(false);
-
   const [errorSheetOpen, setErrorSheetOpen] = useState(false);
   const [validationError, setValidationError] =
     useState<ValidationErrorPayload | null>(null);
@@ -111,11 +86,6 @@ const ModelExecution = () => {
     ["execution-models"],
   );
 
-  const executeRun = usePost<ApiResponse<ModelManagementApiResponse>, any>(
-    `/guarantees/run`,
-    ["execution-models"],
-  );
-
   const getExecutorForModel = (modelId: string) => {
     const mid = modelId?.toLowerCase();
     if (ExecutableModels.LGD.startsWith(mid)) return executeLGD;
@@ -123,6 +93,24 @@ const ModelExecution = () => {
     if (ExecutableModels.ECL.startsWith(mid)) return executeECL;
     if (ExecutableModels.CCF.startsWith(mid)) return executeCCF;
     return executeLGD;
+  };
+
+  const buildPayload = (): FormData => {
+    const fd = new FormData();
+    fd.append(
+      "exposure_date",
+      format(sharedFileData.exposure_date, "yyyy-MM-dd"),
+    );
+    if (sharedFileData.amortization_file)
+      fd.append("amortization_file", sharedFileData.amortization_file);
+    if (sharedFileData.asset_information_file)
+      fd.append(
+        "asset_information_file",
+        sharedFileData.asset_information_file,
+      );
+    if (sharedFileData.collateral_file)
+      fd.append("collateral_file", sharedFileData.collateral_file);
+    return fd;
   };
 
   const toggleModelSelection = useCallback((id: string) => {
@@ -179,7 +167,7 @@ const ModelExecution = () => {
     }
   }, []);
 
-  const runCombinedModels = async () => {
+  const runAllModels = useCallback(async () => {
     setExecutionState({ status: "uploading", progress: 10 });
     const cleanupProgress = startProgress();
 
@@ -189,119 +177,23 @@ const ModelExecution = () => {
     });
     setPerModelState(initialPerModelState);
 
-    const modelNames = selectedModels.map((id) =>
-      extractModelType(id)?.toLowerCase(),
-    );
-    const payload = buildSharedPayload(modelNames, sharedFileData);
-
-    try {
-      const response = await executeRun.mutateAsync(payload);
-
-      const successState: Record<string, ModelExecutionState> = {};
-      selectedModels.forEach((id) => {
-        successState[id] = { status: "success", progress: 100 };
-      });
-      setPerModelState(successState);
-
-      toast.success(extractSuccessMessage(response));
-
-      completeProgress();
-      setExecutionState({ status: "success", progress: 100 });
-
-      await queryClient.invalidateQueries({
-        queryKey: ["execution-models"],
-        exact: false,
-        refetchType: "active",
-      });
-
-      setTimeout(() => setShowSuccess(true), 1500);
-    } catch (error: unknown) {
-      setUploadStep("error");
-
-      const validationPayload = extractValidationPayload(error);
-
-      const errorState: Record<string, ModelExecutionState> = {};
-      selectedModels.forEach((id) => {
-        errorState[id] = {
-          status: "error",
-          progress: 0,
-          errorMessage: validationPayload
-            ? "Validation failed"
-            : extractErrorMessage(error),
-        };
-      });
-      setPerModelState(errorState);
-
-      if (validationPayload) {
-        setValidationError(validationPayload);
-        toastIdRef.current = toast.error("Validation failed", {
-          description: "Your uploaded file contains validation issues",
-          duration: Infinity,
-        });
-      } else {
-        toastIdRef.current = toast.error(extractErrorMessage(error), {
-          duration: Infinity,
-        });
-      }
-
-      completeProgress();
-      setExecutionState({ status: "error", progress: 0 });
-    } finally {
-      cleanupProgress();
-    }
-  };
-
-  const runSingleModels = async () => {
-    setExecutionState({ status: "uploading", progress: 10 });
-    const cleanupProgress = startProgress();
-
-    const orderedModels = selectedModels.filter((id) => {
-      const mid = id?.toLowerCase();
-      return (
-        ExecutableModels.LGD.startsWith(mid) ||
-        ExecutableModels.EAD.startsWith(mid) ||
-        ExecutableModels.ECL.startsWith(mid) ||
-        ExecutableModels.CCF.startsWith(mid)
-      );
-    });
-
-    const progressStep = Math.floor(80 / orderedModels.length);
-
-    const initialPerModelState: Record<string, ModelExecutionState> = {};
-    orderedModels.forEach((id) => {
-      initialPerModelState[id] = { status: "uploading", progress: 10 };
-    });
-    setPerModelState(initialPerModelState);
-
+    const progressStep = Math.floor(80 / selectedModels.length);
     let currentProgress = 10;
     let hasAnyFailure = false;
 
-    for (const modelId of orderedModels) {
-      let payload: any;
-      const mid = modelId?.toLowerCase();
-
-      if (ExecutableModels.LGD.startsWith(mid)) {
-        payload = buildModelPayload(modelFormData.lgd);
-      } else if (ExecutableModels.EAD.startsWith(mid)) {
-        payload = buildModelPayload(modelFormData.ead);
-      } else if (ExecutableModels.ECL.startsWith(mid)) {
-        payload = buildModelPayload(modelFormData.ecl);
-      } else if (ExecutableModels.CCF.startsWith(mid)) {
-        payload = buildModelPayload(modelFormData.ccf);
-      }
-
+    for (const modelId of selectedModels) {
       const executor = getExecutorForModel(modelId);
+      const payload = buildPayload();
+
       currentProgress += progressStep;
       setExecutionState({ status: "uploading", progress: currentProgress });
 
       try {
         const response = await executor.mutateAsync(payload);
-
         setPerModelState((prev) => ({
           ...prev,
           [modelId]: { status: "success", progress: 100 },
         }));
-
         toast.success(
           `${modelId.toUpperCase()}: ${extractSuccessMessage(response)}`,
         );
@@ -313,7 +205,6 @@ const ModelExecution = () => {
 
         if (validationPayload) {
           setValidationError((prev) => prev ?? validationPayload);
-
           setPerModelState((prev) => ({
             ...prev,
             [modelId]: {
@@ -322,7 +213,6 @@ const ModelExecution = () => {
               errorMessage: "Validation failed",
             },
           }));
-
           toastIdRef.current = toast.error(
             `${modelId.toUpperCase()}: Validation failed`,
             {
@@ -339,10 +229,11 @@ const ModelExecution = () => {
               errorMessage: extractErrorMessage(error),
             },
           }));
-
           toastIdRef.current = toast.error(
             `${modelId.toUpperCase()}: ${extractErrorMessage(error)}`,
-            { duration: Infinity },
+            {
+              duration: Infinity,
+            },
           );
         }
       }
@@ -356,24 +247,14 @@ const ModelExecution = () => {
     } else {
       completeProgress();
       setExecutionState({ status: "success", progress: 100 });
-
       await queryClient.invalidateQueries({
         queryKey: ["execution-models"],
         exact: false,
         refetchType: "active",
       });
-
       setTimeout(() => setShowSuccess(true), 1500);
     }
-  };
-
-  const runAllModels = useCallback(async () => {
-    if (selectedModels.length >= 2) {
-      await runCombinedModels();
-    } else {
-      await runSingleModels();
-    }
-  }, [selectedModels]);
+  }, [selectedModels, sharedFileData]);
 
   const handleSheetSubmit = useCallback(() => {
     setIsFileSheetOpen(false);
@@ -391,23 +272,9 @@ const ModelExecution = () => {
   };
 
   const selectedModelFiles: Record<string, File | null> = {};
-  if (selectedModels.length >= 2) {
-    selectedModels.forEach((id) => {
-      selectedModelFiles[id] = sharedFileData.amortization_file;
-    });
-  } else {
-    selectedModels.forEach((id) => {
-      const mid = id?.toLowerCase();
-      if (ExecutableModels.LGD.startsWith(mid))
-        selectedModelFiles[id] = modelFormData.lgd.amortization_file;
-      else if (ExecutableModels.EAD.startsWith(mid))
-        selectedModelFiles[id] = modelFormData.ead.amortization_file;
-      else if (ExecutableModels.ECL.startsWith(mid))
-        selectedModelFiles[id] = modelFormData.ecl.amortization_file;
-      else if (ExecutableModels.CCF.startsWith(mid))
-        selectedModelFiles[id] = modelFormData.ccf.amortization_file;
-    });
-  }
+  selectedModels.forEach((id) => {
+    selectedModelFiles[id] = sharedFileData.amortization_file;
+  });
 
   return (
     <div>

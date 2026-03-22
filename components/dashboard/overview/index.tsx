@@ -9,94 +9,75 @@ import { LoanPerformanceCard } from "./LoanPerformance";
 import { CustomerSegmentationCard } from "./CustomerSegmentation";
 import { Top20DebtorsTable } from "./TopObligos";
 import { useGet } from "@/hooks/use-queries";
-import { formatNumber, formatPercentage } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate, formatNumber, formatPercentage } from "@/lib/utils";
 import {
   ChartCardSkeleton,
   StatCardSkeleton,
   TableSkeleton,
 } from "@/skeleton/overview";
-import { DashboardData, defaultDashboardData } from "@/types/overview";
-import { Portfolio } from "@/types";
-import { ECLStatisticsFilteredData } from "@/types/reporting";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerSvg, EadSvg, EclSvg, LGDSvg, NPLSvg } from "@/svg";
+import { ApiResponse } from "@/types";
+import {
+  ExecutionModelsResponse,
+  ExecutableModels,
+} from "@/types/model-execution";
+import { DashboardApiItem } from "@/types/overview";
+
+const ITEMS_PER_PAGE = 20;
+
+const MODEL_TYPE = ExecutableModels.ECL;
 
 const DashboardOverviewPage = () => {
-  const [selectedDateInterval, setselectedDateInterval] = useState("");
-  const [selectedDateIntervalLabel, setSelectedDateIntervalLabel] =
-    useState("This Month");
+  const [selectedExecutionId, setSelectedExecutionId] = useState<string>("");
+  const [selectedExecutionLabel, setSelectedExecutionLabel] =
+    useState<string>("Filter By Date");
 
-  const { data: dashboardData, isLoading } = useGet<{ data: DashboardData }>(
-    ["dashboard-overview", selectedDateInterval],
-    `/reporting/models/dashboard${selectedDateInterval ? `?portfolio=${selectedDateInterval}` : ""}`,
-  );
-
-  const { data: dashboardFilterData } = useGet<{
-    data: ECLStatisticsFilteredData;
-  }>(
-    ["dashboard-overview-filter", selectedDateInterval],
-    `/reporting/models/dashboard?section=total_cust_per_loan_class_and_stage${selectedDateInterval ? `&metric=${selectedDateInterval}` : ""}`,
+  const { data: logsData, isLoading: logsLoading } = useGet<
+    ApiResponse<ExecutionModelsResponse>
+  >(
+    ["execution-logs-dropdown"],
+    `/crr/logs/?page=1&page_size=${ITEMS_PER_PAGE}&model_type=${MODEL_TYPE}`,
     {
-      enabled: !!selectedDateInterval,
+      staleTime: 0,
+      refetchOnMount: "always",
     },
   );
 
-  const dateDropdown: DropdownItem[] = [
+  const { data: dashboardData, isLoading: dashboardLoading } = useGet<
+    ApiResponse<DashboardApiItem>
+  >(
+    ["ccr-dashboard-overview", selectedExecutionId],
+    `/guarantees/dashboard${selectedExecutionId ? `?execution_id=${selectedExecutionId}` : ""}`,
     {
-      label: "This Month",
-      onClick: () => {
-        setselectedDateInterval("");
-        setSelectedDateIntervalLabel("This Month");
-      },
+      staleTime: 0,
+      refetchOnMount: "always",
     },
-    {
-      label: "This Week",
+  );
+
+  const executionDropdown: DropdownItem[] = useMemo(() => {
+    if (!logsData?.data?.model_data) return [];
+    return logsData.data.model_data.map((log) => ({
+      label: `${formatDate(log.timestamp)}_${log.file_name}`,
       onClick: () => {
-        setselectedDateInterval(Portfolio.AHF);
-        setSelectedDateIntervalLabel("This Week");
+        setSelectedExecutionId(log.id);
+        setSelectedExecutionLabel(
+          `${log.executed_model_type?.toUpperCase()} — ${log.file_name ?? log.id}`,
+        );
       },
-    },
-    {
-      label: "This Year",
-      onClick: () => {
-        setselectedDateInterval(Portfolio.HTO);
-        setSelectedDateIntervalLabel("This Year");
-      },
-    },
-  ];
+    }));
+  }, [logsData]);
 
-  const computedData = useMemo(() => {
-    if (selectedDateInterval && dashboardFilterData?.data) {
-      const {
-        total_customer,
-        total_ead,
-        total_ecl,
-        performing_loan_perc,
-        non_performing_loan_perc,
-        stage_1_summary,
-        stage_2_summary,
-        stage_3_summary,
-      } = dashboardFilterData.data;
+  const portfolioSummary =
+    dashboardData?.data?.dashboard_summary?.portfolio_summary;
+  const eclSummaryPerScenario =
+    dashboardData?.data?.dashboard_summary?.ecl_summary_per_scenario;
 
-      return {
-        total_customer,
-        total_ead,
-        total_ecl,
-        performing_loan_perc,
-        non_performing_loan_perc,
-        ecl_totals: {
-          ecl_summary: {
-            "ECL Stage 1": stage_1_summary.ECL,
-            "ECL Stage 2": stage_2_summary.ECL,
-            "ECL Stage 3": stage_3_summary.ECL,
-            "Total ECL": total_ecl,
-          },
-        },
-      };
-    }
+  const performingPerc = portfolioSummary?.npl_ratio?.performing_loan_perc ?? 0;
+  const nonPerformingPerc =
+    portfolioSummary?.npl_ratio?.non_performing_loan_perc ?? 0;
 
-    return dashboardData?.data || defaultDashboardData;
-  }, [dashboardData, dashboardFilterData, selectedDateInterval]);
+  const isLoading = logsLoading || (!!selectedExecutionId && dashboardLoading);
 
   if (isLoading) {
     return (
@@ -112,9 +93,7 @@ const DashboardOverviewPage = () => {
           <StatCardSkeleton />
           <StatCardSkeleton />
         </div>
-
         <TableSkeleton />
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <ChartCardSkeleton />
           <ChartCardSkeleton />
@@ -123,17 +102,8 @@ const DashboardOverviewPage = () => {
     );
   }
 
-  const {
-    total_customer,
-    total_ead,
-    total_ecl,
-    performing_loan_perc,
-    non_performing_loan_perc,
-  } = computedData;
-
   return (
     <div className="min-h-screen">
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex flex-col gap-1">
           <h1 className="text-[1.4rem] font-bold text-gray-900">Overview</h1>
@@ -146,13 +116,14 @@ const DashboardOverviewPage = () => {
           trigger={
             <Button
               variant="outline"
-              className="flex items-center gap-2 text-gray-500 font-semibold text-[12px] md:text-[14px]"
+              className="flex items-center gap-2 text-gray-500 font-semibold text-[12px] md:text-[14px] max-w-[260px] truncate"
             >
-              {selectedDateIntervalLabel}
-              <ChevronDown className="w-4 h-4" />
+              <span className="truncate">{selectedExecutionLabel}</span>
+              <ChevronDown className="w-4 h-4 flex-shrink-0" />
             </Button>
           }
-          items={dateDropdown}
+          className="max-w-[200px] sm:max-w-[400px] w-full"
+          items={executionDropdown}
         />
       </div>
 
@@ -160,50 +131,39 @@ const DashboardOverviewPage = () => {
         <StatCard
           title="Total Customers"
           icon={<CustomerSvg />}
-          value={formatNumber(total_customer ?? 0)}
+          value={formatNumber(portfolioSummary?.total_customers ?? 0)}
         />
         <StatCard
-          icon={<EadSvg />}
           title="Total EAD"
-          value={formatNumber(total_ecl ?? 0)}
+          icon={<EadSvg />}
+          value={formatNumber(portfolioSummary?.total_ead ?? 0)}
         />
         <StatCard
-          icon={<EclSvg />}
           title="Total ECL"
-          value={formatNumber(total_ead ?? 0)}
+          icon={<EclSvg />}
+          value={formatNumber(portfolioSummary?.total_ecl ?? 0)}
         />
         <StatCard
-          icon={<LGDSvg />}
           title="Avg LGD"
-          value={formatNumber(total_ead ?? 0)}
+          icon={<LGDSvg />}
+          value={formatPercentage(portfolioSummary?.average_lgd ?? 0)}
         />
         <StatCard
-          icon={<NPLSvg />}
           title="NPL"
-          value={formatPercentage(non_performing_loan_perc)}
+          icon={<NPLSvg />}
+          value={formatPercentage(nonPerformingPerc)}
         />
       </div>
 
-      <Top20DebtorsTable
-        filteredObligors={
-          selectedDateInterval && dashboardFilterData?.data?.total_obligors
-            ? dashboardFilterData.data.total_obligors
-            : undefined
-        }
-      />
+      <Top20DebtorsTable filteredObligors={portfolioSummary?.top_obligors} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <LoanPerformanceCard
-          performingPercentage={performing_loan_perc ?? 0}
-          nonPerformingPercentage={non_performing_loan_perc ?? 0}
+          performingPercentage={performingPerc}
+          nonPerformingPercentage={nonPerformingPerc}
         />
         <CustomerSegmentationCard
-          selectedDateInterval={selectedDateInterval}
-          filteredCustomerCategory={
-            selectedDateInterval && dashboardFilterData?.data?.customer_category
-              ? dashboardFilterData.data.customer_category
-              : undefined
-          }
+          eclSummaryPerScenario={eclSummaryPerScenario}
         />
       </div>
     </div>

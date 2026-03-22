@@ -47,6 +47,7 @@ const ECLModelOutput: React.FC = () => {
 
   const activeTabConfig = TAB_CONFIG.find((t) => t.value === activeTab)!;
   const summaryKey = TAB_TO_SUMMARY_KEY[activeTab];
+  const isEclTab = activeTab === "ecl";
 
   const buildQueryString = () => {
     const p = new URLSearchParams();
@@ -63,30 +64,34 @@ const ECLModelOutput: React.FC = () => {
     `/guarantees/runs/${id}/result?${buildQueryString()}`,
   );
 
+
+
   const eclItem = data?.data;
+
+  console.log(eclItem)
   const eclSummary = eclItem?.ecl_summary;
   const pagedData = eclItem?.ecl_per_asset;
   const rawRows = pagedData?.data ?? [];
 
   const activeScenarioSummary = summaryKey ? eclSummary?.[summaryKey] : null;
 
-  const totalECL =
-    activeScenarioSummary?.total_ecl ?? eclSummary?.Baseline?.total_ecl ?? 0;
-  const totalEAD =
-    activeScenarioSummary?.total_ead ?? eclSummary?.Baseline?.total_ead ?? 0;
-  const stage1ECL =
-    activeScenarioSummary?.summary_per_stage?.["Stage 1"]?.ECL ??
-    eclSummary?.Baseline?.summary_per_stage?.["Stage 1"]?.ECL ??
-    0;
-  const stage2ECL =
-    activeScenarioSummary?.summary_per_stage?.["Stage 2"]?.ECL ??
-    eclSummary?.Baseline?.summary_per_stage?.["Stage 2"]?.ECL ??
-    0;
-  const stage3ECL =
-    activeScenarioSummary?.summary_per_stage?.["Stage 3"]?.ECL ??
-    eclSummary?.Baseline?.summary_per_stage?.["Stage 3"]?.ECL ??
-    0;
-  const npl = totalEAD > 0 ? (stage2ECL + stage3ECL) / totalEAD : 0;
+  const weightedSummary =
+    eclItem?.dashboard_summary?.report_summary_page?.weighted_summary_df?.[0];
+
+  const eclTabTotalEAD = weightedSummary?.["Carrying Amount"] ?? 0;
+  const eclTabWeightedECL = weightedSummary?.["OVERALL Weighted ECL"] ?? 0;
+  const eclTabWeightedStage1 = weightedSummary?.["Weighted Stage 1"] ?? 0;
+  const eclTabWeightedStage2 = weightedSummary?.["Weighted Stage 2"] ?? 0;
+  const eclTabWeightedStage3 = weightedSummary?.["Weighted Stage 3"] ?? 0;
+
+  const scenarioTotalECL = activeScenarioSummary?.total_ecl ?? 0;
+  const scenarioTotalEAD = activeScenarioSummary?.total_ead ?? 0;
+  const scenarioStage1ECL =
+    activeScenarioSummary?.summary_per_stage?.["Stage 1"]?.ECL ?? 0;
+  const scenarioStage2ECL =
+    activeScenarioSummary?.summary_per_stage?.["Stage 2"]?.ECL ?? 0;
+  const scenarioStage3ECL =
+    activeScenarioSummary?.summary_per_stage?.["Stage 3"]?.ECL ?? 0;
 
   const tableRows = useMemo(() => {
     return rawRows.map((item) => ({
@@ -136,38 +141,85 @@ const ECLModelOutput: React.FC = () => {
   const fileUrl = `/crr/${id}/output`;
   const emailExportApiUrl = `/reporting/email/models/ecl?model_execution_id=${id}`;
 
+  const renderEclTabCards = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+      <StatCard
+        title="Total ECL"
+        icon={<CustomerSvg />}
+        value={formatNumber(weightedSummary?.["OVERALL Weighted ECL"] ?? 0)}
+      />
+      <StatCard
+        title="Stage 1"
+        icon={<EclSvg />}
+        value={formatNumber(weightedSummary?.["Weighted Stage 1"] ?? 0)}
+      />
+      <StatCard
+        title="Stage 2"
+        icon={<LGDSvg />}
+        value={formatNumber(weightedSummary?.["Weighted Stage 2"] ?? 0)}
+      />
+      <StatCard
+        title="Stage 3"
+        icon={<NPLSvg />}
+        value={formatNumber(weightedSummary?.["Weighted Stage 3"] ?? 0)}
+      />
+    </div>
+  );
+
+  const renderScenarioCards = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
+      <StatCard
+        title="Total EAD"
+        icon={<CustomerSvg />}
+        value={formatNumber(activeScenarioSummary?.total_ead ?? 0)}
+      />
+      <StatCard
+        title="Total ECL"
+        icon={<EadSvg />}
+        value={formatNumber(activeScenarioSummary?.total_ecl ?? 0)}
+      />
+      <StatCard
+        title="Stage 1"
+        icon={<EclSvg />}
+        value={formatNumber(
+          activeScenarioSummary?.summary_per_stage?.["Stage 1"]?.ECL ?? 0,
+        )}
+        subLabel="EAD:"
+        subValue={formatNumber(
+          activeScenarioSummary?.summary_per_stage?.["Stage 1"]?.EAD ?? 0,
+        )}
+      />
+      <StatCard
+        title="Stage 2"
+        icon={<LGDSvg />}
+        value={formatNumber(
+          activeScenarioSummary?.summary_per_stage?.["Stage 2"]?.ECL ?? 0,
+        )}
+        subLabel="EAD:"
+        subValue={formatNumber(
+          activeScenarioSummary?.summary_per_stage?.["Stage 2"]?.EAD ?? 0,
+        )}
+      />
+      <StatCard
+        title="Stage 3"
+        icon={<NPLSvg />}
+        value={formatNumber(
+          activeScenarioSummary?.summary_per_stage?.["Stage 3"]?.ECL ?? 0,
+        )}
+        subLabel="EAD:"
+        subValue={formatNumber(
+          activeScenarioSummary?.summary_per_stage?.["Stage 3"]?.EAD ?? 0,
+        )}
+      />
+    </div>
+  );
+
   const renderTableWithPagination = () => {
     if (isLoading) return <LoadingSpinner loadingText="Loading ECL Data..." />;
 
     return (
       <>
-        <div className="grid grid-cols-1 md:grid-cols-4 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-          <StatCard
-            title="Total ECL"
-            icon={<CustomerSvg />}
-            value={formatNumber(totalECL)}
-          />
-          <StatCard
-            title="Stage 1"
-            icon={<EadSvg />}
-            value={formatNumber(stage1ECL)}
-          />
-          <StatCard
-            title="Stage 2"
-            icon={<EclSvg />}
-            value={formatNumber(stage2ECL)}
-          />
-          <StatCard
-            title="Stage 3"
-            icon={<LGDSvg />}
-            value={formatNumber(stage3ECL)}
-          />
-          <StatCard
-            title="NPL"
-            icon={<NPLSvg />}
-            value={formatPercentage(npl)}
-          />
-        </div>
+        {isEclTab ? renderEclTabCards() : renderScenarioCards()}
 
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <CustomTable
