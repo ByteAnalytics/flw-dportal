@@ -155,7 +155,7 @@ const DashboardOverviewPage = () => {
         />
       </div>
 
-      <Top20DebtorsTable filteredObligors={portfolioSummary?.top_obligors} />
+      <Top20DebtorsTable executionId={selectedExecutionId} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <LoanPerformanceCard
