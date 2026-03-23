@@ -36,7 +36,7 @@ export default function CFNonFinancialsTab({
             {section.title}
           </h3>
 
-          <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+          <div className="grid md:grid-cols-2 grid-cols-1 gap-x-6 gap-y-5">
             {section.fields.map((field) => (
               <div key={field.key} className="flex flex-col gap-1.5">
                 <label className="text-[14px] font-[500] text-InfraSoftBlack">

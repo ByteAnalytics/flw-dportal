@@ -8,19 +8,8 @@ import CustomDropdown, { DropdownItem } from "@/components/ui/custom-dropdown";
 import { useGet } from "@/hooks/use-queries";
 import { formatCurrency, formatPercentage } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ApiResponse } from "@/types";
 
-interface TopObligorsResponse {
-  total_count: number;
-  page: number;
-  page_size: number;
-  data: {
-    "CLIENT NAME": string;
-    EAD: number;
-    LGD: number;
-    ECL: number;
-    identifier: string;
-  }[];
-}
 interface TopObligor {
   "Counter Party": string;
   EAD: number;
@@ -29,21 +18,34 @@ interface TopObligor {
   identifier: string;
 }
 
-interface Top20DebtorsTableProps {
-  filteredObligors?: TopObligor[];
+interface TopObligorsApiResponse {
+  top_obligors: TopObligor[];
 }
 
+interface Top20DebtorsTableProps {
+  executionId?: string;
+}
+
+const PAGE_SIZE = 10;
+
 export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
-  filteredObligors,
+  executionId,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedMetric, setSelectedMetric] = useState<"ECL" | "EAD">("ECL");
 
-  const { data: obligorsData, isLoading } = useGet<TopObligorsResponse>(
-    ["top-obligors", selectedMetric, currentPage.toString()],
-    `/reporting/models/dashboard?section=top_obligors&metric=${selectedMetric}&page=${currentPage}&page_size=10`,
-    { enabled: !filteredObligors },
-  );
+  const buildUrl = () => {
+    let url = `/guarantees/dashboard?section=top_obligors&identifier=${selectedMetric}`;
+    if (executionId) url += `&execution_id=${executionId}`;
+    return url;
+  };
+
+  const { data: obligorsData, isLoading } = useGet<
+    ApiResponse<TopObligorsApiResponse>
+  >(["top-obligors", selectedMetric, executionId ?? ""], buildUrl(), {
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
 
   const columns: TableColumn[] = [
     { key: "name", label: "CUSTOMER NAME", width: "md:w-[450px] w-[250px]" },
@@ -52,35 +54,44 @@ export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
     { key: "ecl", label: "ECL", align: "left" },
   ];
 
-  const tableRows = useMemo(() => {
-    if (filteredObligors && filteredObligors.length > 0) {
-      const start = (currentPage - 1) * 10;
-      return filteredObligors.slice(start, start + 10).map((o) => ({
-        name: (
-          <span className="text-[#003A1B] font-medium">
-            {o["Counter Party"]}
-          </span>
-        ),
-        ead: formatCurrency(o.EAD),
-        lgd: formatPercentage(o.LGD),
-        ecl: formatCurrency(o.ECL),
-      }));
-    }
+  const allRows = useMemo(() => {
+    return obligorsData?.data?.top_obligors ?? [];
+  }, [obligorsData]);
 
-    if (!obligorsData?.data) return [];
-    return obligorsData.data.map((o) => ({
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return allRows.slice(start, start + PAGE_SIZE);
+  }, [allRows, currentPage]);
+
+  const tableRows = useMemo(() => {
+    return paginatedRows.map((o) => ({
       name: (
-        <span className="text-[#003A1B] font-medium">{o["CLIENT NAME"]}</span>
+        <span className="text-[#003A1B] font-medium">{o["Counter Party"]}</span>
       ),
       ead: formatCurrency(o.EAD),
       lgd: formatPercentage(o.LGD),
       ecl: formatCurrency(o.ECL),
     }));
-  }, [obligorsData, filteredObligors, currentPage]);
+  }, [paginatedRows]);
 
-  const totalPages = filteredObligors
-    ? Math.ceil(filteredObligors.length / 10)
-    : Math.ceil((obligorsData?.total_count || 0) / 10);
+  const totalPages = Math.ceil(allRows.length / PAGE_SIZE);
+
+  const filterItems: DropdownItem[] = [
+    {
+      label: "By ECL",
+      onClick: () => {
+        setSelectedMetric("ECL");
+        setCurrentPage(1);
+      },
+    },
+    {
+      label: "By EAD",
+      onClick: () => {
+        setSelectedMetric("EAD");
+        setCurrentPage(1);
+      },
+    },
+  ];
 
   return (
     <div className="bg-none rounded-[20px] p-0">
@@ -89,35 +100,19 @@ export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
           <h3 className="text-[15px] font-semibold text-gray-900">
             Top 20 Obligos
           </h3>
-          {!filteredObligors && (
-            <CustomDropdown
-              trigger={
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-1 text-[12px] sm:px-3 sm:py-2 font-medium text-gray-600"
-                >
-                  By {selectedMetric}
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              }
-              items={[
-                {
-                  label: "By ECL",
-                  onClick: () => {
-                    setSelectedMetric("ECL");
-                    setCurrentPage(1);
-                  },
-                },
-                {
-                  label: "By EAD",
-                  onClick: () => {
-                    setSelectedMetric("EAD");
-                    setCurrentPage(1);
-                  },
-                },
-              ]}
-            />
-          )}
+
+          <CustomDropdown
+            trigger={
+              <Button
+                variant="outline"
+                className="flex items-center gap-1 text-[12px] sm:px-3 sm:py-2 font-medium text-gray-600"
+              >
+                By {selectedMetric}
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            }
+            items={filterItems}
+          />
         </div>
 
         {totalPages > 0 && (
@@ -125,9 +120,11 @@ export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
             <span className="text-sm text-gray-600">
               Page {currentPage} of {totalPages}
             </span>
-            <div className="flex items-center gap-1 h-10 border border-InfraBorder bg-[#F3F3F3] rounded-[10px] px-3 text-sm text-gray-600 font-medium">
+            <div className="flex items-center gap-1 h-10 border border-InfraBorder bg-[#F3F3F3] rounded-[10px] px-3 text-sm text-gray-600 hover:text-gray-700 font-medium">
               <ChevronLeft
-                className={`w-4 h-4 cursor-pointer ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : ""}`}
+                className={`w-4 h-4 cursor-pointer ${
+                  currentPage === 1 ? "text-gray-400 cursor-not-allowed" : ""
+                }`}
                 onClick={() => currentPage > 1 && setCurrentPage((p) => p - 1)}
               />
               <span
@@ -139,7 +136,11 @@ export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
                 Next
               </span>
               <ChevronRight
-                className={`w-4 h-4 cursor-pointer ${currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : ""}`}
+                className={`w-4 h-4 cursor-pointer ${
+                  currentPage === totalPages
+                    ? "text-gray-400 cursor-not-allowed"
+                    : ""
+                }`}
                 onClick={() =>
                   currentPage < totalPages && setCurrentPage((p) => p + 1)
                 }
@@ -149,7 +150,7 @@ export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
         )}
       </div>
 
-      {isLoading && !filteredObligors ? (
+      {isLoading ? (
         <div className="flex justify-center items-center py-8">
           <LoadingSpinner loadingText="Loading obligors..." />
         </div>
