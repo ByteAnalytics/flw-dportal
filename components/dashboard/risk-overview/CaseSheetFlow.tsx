@@ -11,6 +11,7 @@ import PFNonFinancialsTab, { PFNonFinancialsData } from "./PFNonFinancialsTab";
 import CombinedReportsSheet, { CombinedReportData } from "./CFReportsSheet";
 import CFNonFinancialsTab from "./CFNonFinancialsTab";
 import ValidationReviewSheet from "./ValidationReviewSheet";
+import { facilityTypeOptions } from "@/constants/risk-overview";
 
 type Step =
   | "model_info"
@@ -23,7 +24,7 @@ type Step =
   | "combined_reports"
   | "validation_review";
 
-type ProjectPath = "pf_only" | "cf_only" | "combined";
+type ProjectPath = "Pure PF" | "Combined (PF and Corporate)"
 
 interface CaseSheetFlowProps {
   open: boolean;
@@ -92,7 +93,7 @@ const SHEET_TITLE: Record<Step, string> = {
 
 const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
   const [step, setStep] = useState<Step>("model_info");
-  const [path, setPath] = useState<ProjectPath>("pf_only");
+  const [path, setPath] = useState<ProjectPath>("Pure PF");
 
   const [pfFinancialsData, setPFFinancialsData] =
     useState<PFFinancialsData | null>(null);
@@ -106,11 +107,11 @@ const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
     setTimeout(() => setStep("model_info"), 300);
   };
 
-  const handleModelInfoSuccess = (projectType?: string) => {
-    if (projectType === "corporate") {
-      setPath("combined");
+  const handleModelInfoSuccess = (facilityType?: string) => {
+    if (facilityType === "Combined (PF and Corporate)") {
+      setPath("Combined (PF and Corporate)");
     } else {
-      setPath("pf_only");
+      setPath("Pure PF");
     }
     setStep("pf_financials");
   };
@@ -122,7 +123,7 @@ const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
 
   const handlePFNonFinancialsNext = (data: PFNonFinancialsData) => {
     setPFNonFinancialsData(data);
-    if (path === "combined") {
+    if (path === "Combined (PF and Corporate)") {
       setStep("cf_financials");
     } else {
       setStep("pf_reports");

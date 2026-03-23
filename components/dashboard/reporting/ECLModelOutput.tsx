@@ -13,7 +13,7 @@ import { Pagination } from "@/components/shared/Pagination";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { StatCard } from "@/components/shared/StatCard";
 import { useGet } from "@/hooks/use-queries";
-import { formatDate, formatNumber, formatPercentage } from "@/lib/utils";
+import { formatDate, formatNumber } from "@/lib/utils";
 import { ECLApiItem } from "@/types/reporting";
 import { ApiResponse } from "@/types";
 import { CustomerSvg, EadSvg, EclSvg, LGDSvg, NPLSvg } from "@/svg";
@@ -22,6 +22,7 @@ import {
   ITEMS_PER_PAGE,
   TAB_CONFIG,
 } from "@/constants/ecl-model-config";
+import { extractModelType } from "@/lib/model-execution-utils";
 
 type TabValue = (typeof TAB_CONFIG)[number]["value"];
 type SummaryKey = "Baseline" | "Best Case" | "Worst Case";
@@ -68,7 +69,6 @@ const ECLModelOutput: React.FC = () => {
 
   const eclItem = data?.data;
 
-  console.log(eclItem)
   const eclSummary = eclItem?.ecl_summary;
   const pagedData = eclItem?.ecl_per_asset;
   const rawRows = pagedData?.data ?? [];
@@ -77,21 +77,6 @@ const ECLModelOutput: React.FC = () => {
 
   const weightedSummary =
     eclItem?.dashboard_summary?.report_summary_page?.weighted_summary_df?.[0];
-
-  const eclTabTotalEAD = weightedSummary?.["Carrying Amount"] ?? 0;
-  const eclTabWeightedECL = weightedSummary?.["OVERALL Weighted ECL"] ?? 0;
-  const eclTabWeightedStage1 = weightedSummary?.["Weighted Stage 1"] ?? 0;
-  const eclTabWeightedStage2 = weightedSummary?.["Weighted Stage 2"] ?? 0;
-  const eclTabWeightedStage3 = weightedSummary?.["Weighted Stage 3"] ?? 0;
-
-  const scenarioTotalECL = activeScenarioSummary?.total_ecl ?? 0;
-  const scenarioTotalEAD = activeScenarioSummary?.total_ead ?? 0;
-  const scenarioStage1ECL =
-    activeScenarioSummary?.summary_per_stage?.["Stage 1"]?.ECL ?? 0;
-  const scenarioStage2ECL =
-    activeScenarioSummary?.summary_per_stage?.["Stage 2"]?.ECL ?? 0;
-  const scenarioStage3ECL =
-    activeScenarioSummary?.summary_per_stage?.["Stage 3"]?.ECL ?? 0;
 
   const tableRows = useMemo(() => {
     return rawRows.map((item) => ({
@@ -102,44 +87,36 @@ const ECLModelOutput: React.FC = () => {
       ),
       "Carrying Amount": (
         <span className="text-[#444846]">
-          {formatNumber(item["Carrying Amount"])}
+          {item["Carrying Amount"].toFixed(4)}
         </span>
       ),
       Baseline: (
-        <span className="text-[#444846]">
-          {formatPercentage(item.Baseline)}
-        </span>
+        <span className="text-[#444846]">{item.Baseline.toFixed(4)}</span>
       ),
       "Best Case": (
-        <span className="text-[#444846]">
-          {formatPercentage(item["Best Case"])}
-        </span>
+        <span className="text-[#444846]">{item["Best Case"].toFixed(4)}</span>
       ),
       "Worst Case": (
-        <span className="text-[#444846]">
-          {formatPercentage(item["Worst Case"])}
-        </span>
+        <span className="text-[#444846]">{item["Worst Case"].toFixed(4)}</span>
       ),
       "Probability Weighted ECL": (
         <span className="text-[#444846]">
-          {formatPercentage(item["Probability Weighted ECL"])}
+          {item["Probability Weighted ECL"].toFixed(4)}
         </span>
       ),
       "ECL with Scalar": (
         <span className="text-[#444846]">
-          {formatPercentage(item["ECL with Scalar"])}
+          {item["ECL with Scalar"].toFixed(4)}
         </span>
       ),
       "ECL Ratio": (
-        <span className="text-[#444846]">
-          {formatPercentage(item["ECL Ratio"])}
-        </span>
+        <span className="text-[#444846]">{item["ECL Ratio"].toFixed(4)}</span>
       ),
     }));
   }, [rawRows]);
 
   const fileUrl = `/crr/${id}/output`;
-  const emailExportApiUrl = `/reporting/email/models/ecl?model_execution_id=${id}`;
+  const emailExportApiUrl = `/guarantees/email?model_name=${extractModelType(data?.data?.model_type ?? "")}&model_execution_id=${id}`;
 
   const renderEclTabCards = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">

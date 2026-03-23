@@ -50,9 +50,9 @@ export default function CFNonFinancialsTab({
                     <SelectValue placeholder="select answer" />
                   </SelectTrigger>
                   <SelectContent>
-                    {[1, 2, 3, 4, 5].map((v) => (
-                      <SelectItem key={v} value={String(v)}>
-                        {v}
+                    {field.options.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

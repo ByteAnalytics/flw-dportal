@@ -10,7 +10,7 @@ import { Pagination } from "@/components/shared/Pagination";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 import { useGet } from "@/hooks/use-queries";
-import { formatDate, formatNumber, formatPercentage } from "@/lib/utils";
+import { formatDate, formatNumber } from "@/lib/utils";
 import { LGDApiItem } from "@/types/reporting";
 import { StatCard } from "../../shared/StatCard";
 import { CustomerSvg, EadSvg, EclSvg, LGDSvg, NPLSvg } from "@/svg";
@@ -18,6 +18,7 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { ApiResponse } from "@/types";
 import { LGD_COLUMNS } from "@/constants/lgd-model-config";
+import { extractModelType } from "@/lib/model-execution-utils";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -33,12 +34,13 @@ const LGDModelOutput = () => {
   const [pageNumber, setPageNumber] = useState(1);
 
   const fileUrl = `/crr/${id}/output`;
-  const emailExportApiUrl = `/reporting/email/models/lgd?model_execution_id=${id}`;
 
   const { data, isLoading } = useGet<ApiResponse<LGDApiItem>>(
     ["lgd-model-output", id, pageNumber.toString()],
     `/guarantees/runs/${id}/result?page=${pageNumber}&page_size=${ITEMS_PER_PAGE}`,
   );
+
+  const emailExportApiUrl = `/guarantees/email?model_name=${extractModelType(data?.data?.model_type ?? "")}&model_execution_id=${id}`;
 
   const lgdItem = data?.data;
   const lgdDf = lgdItem?.lgd_df;
@@ -54,12 +56,12 @@ const LGDModelOutput = () => {
       ),
       "Total Exposure": (
         <span className="font-medium">
-          {formatNumber(item["Total Exposure"]??0)}
+          {formatNumber(item["Total Exposure"] ?? 0)}
         </span>
       ),
       "Adjusted Collateral": (
         <span className="font-medium">
-          {formatNumber(item["Adjusted Collateral"]??0)}
+          {formatNumber(item["Adjusted Collateral"] ?? 0)}
         </span>
       ),
       "Secured Recovery": (
@@ -67,9 +69,9 @@ const LGDModelOutput = () => {
           {item["Secured Recovery"].toLocaleString()}
         </span>
       ),
-      "Secured LGD": formatPercentage(item["Secured LGD"]),
-      "Unsecured LGD": formatPercentage(item["Unsecured LGD"]),
-      "Final LGD": formatPercentage(item["Final LGD"]),
+      "Secured LGD": item["Secured LGD"]?.toFixed(4),
+      "Unsecured LGD": item["Unsecured LGD"]?.toFixed(4),
+      "Final LGD": item["Final LGD"]?.toFixed(4),
     }));
   }, [lgdRows]);
 
@@ -105,31 +107,42 @@ const LGDModelOutput = () => {
         <StatCard
           title="Average Final LGD"
           icon={<CustomerSvg />}
-          value={formatPercentage(lgdSummary?.KPMG_Average_Final_LGD ?? 0)}
+          value={
+            lgdSummary?.KPMG_Average_Final_LGD?.toFixed(4)?.toString() ?? ""
+          }
         />
         <StatCard
           title="Average Recovery Rate"
           icon={<EadSvg />}
-          value={formatPercentage(lgdSummary?.Average_Final_Recovery_Rate ?? 0)}
+          value={
+            lgdSummary?.Average_Final_Recovery_Rate?.toFixed(4)?.toString() ??
+            ""
+          }
         />
         <StatCard
           title="Weighted Final LGD"
           icon={<EclSvg />}
-          value={formatPercentage(
-            lgdSummary?.KPMG_Weighted_Average_Final_LGD ?? 0,
-          )}
+          value={
+            lgdSummary?.KPMG_Weighted_Average_Final_LGD?.toFixed(
+              4,
+            )?.toString() ?? ""
+          }
         />
         <StatCard
           title="Unsecured Recovery Rate"
           icon={<LGDSvg />}
-          value={formatPercentage(
-            lgdSummary?.Moody_Senior_Unsecured_Recovery ?? 0,
-          )}
+          value={
+            lgdSummary?.Moody_Senior_Unsecured_Recovery?.toFixed(
+              4,
+            )?.toString() ?? ""
+          }
         />
         <StatCard
           title="Unsecured LGD"
           icon={<NPLSvg />}
-          value={formatPercentage(lgdSummary?.Moody_Senior_Unsecured_LGD ?? 0)}
+          value={
+            lgdSummary?.Moody_Senior_Unsecured_LGD?.toFixed(4)?.toString() ?? ""
+          }
         />
       </div>
 

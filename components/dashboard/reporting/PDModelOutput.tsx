@@ -26,6 +26,7 @@ import {
   TAB_CONFIG,
   YEARLY_TAB_METRIC_MAP,
 } from "@/constants/pd-model-config";
+import { extractModelType } from "@/lib/model-execution-utils";
 
 const PDModelOutput = () => {
   const params = useParams();
@@ -137,8 +138,7 @@ const PDModelOutput = () => {
   }, [rawRows]);
 
   const fileUrl = `/crr/${id}/output`;
-  const emailExportApiUrl = `/reporting/email/models/pd?model_execution_id=${id}&file_name=${getFileNameFromTab(activeTab)}`;
-
+  const emailExportApiUrl = `/guarantees/email?model_name=${extractModelType(data?.data?.model_type ?? "")}&model_execution_id=${id}`;
   const renderTableWithPagination = () => {
     if (isLoading) return <LoadingSpinner loadingText="Loading PD Data..." />;
 

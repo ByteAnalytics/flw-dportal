@@ -103,13 +103,8 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
       content: (
         <CFOtherInputTab
           currentValues={oiCurrent}
-          previousValues={oiPrevious}
-          autoComputed={isAutoComputed}
           onCurrentChange={(k: string, v: string) =>
             setOiCurrent((p) => ({ ...p, [k]: v }))
-          }
-          onPreviousChange={(k: string, v: string) =>
-            setOiPrevious((p) => ({ ...p, [k]: v }))
           }
         />
       ),
