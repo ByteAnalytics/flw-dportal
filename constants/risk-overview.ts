@@ -27,17 +27,12 @@ export const ratingOptions = [
   { label: "CCC", value: "CCC" },
 ];
 
-export const projectTypeOptions = [
-  { label: "Project Finance", value: "project_finance" },
-  { label: "Corporate", value: "corporate" },
-  { label: "SME", value: "sme" },
-];
-
 export const facilityTypeOptions = [
-  { label: "Mixed", value: "mixed" },
-  { label: "Term Loan", value: "term_loan" },
-  { label: "Overdraft", value: "overdraft" },
-  { label: "Revolving Credit", value: "revolving_credit" },
+  { label: "Pure PF", value: "Pure PF" },
+  {
+    label: "Combined (PF and Corporate)",
+    value: "Combined (PF and Corporate)",
+  },
 ];
 
 export const yesNoOptions = [
@@ -46,14 +41,16 @@ export const yesNoOptions = [
 ];
 
 export const marketEventOptions = [
-  { label: "Natural Disaster", value: "natural_disaster" },
-  { label: "Pandemic", value: "pandemic" },
-  { label: "Political Unrest", value: "political_unrest" },
-  { label: "Economic Shock", value: "economic_shock" },
+  { label: "Natural Disaster", value: "Natural Disaster" },
+  { label: "War", value: "War" },
+  { label: "Terrorist attacks", value: "Terrorist attacks" },
+  { label: "Militancy", value: "Militancy" },
+  { label: "Unexpected legislation", value: "Unexpected legislation" },
 ];
 
 export const dreProjectOptions = [
-  { label: "DRE Type A", value: "dre_a" },
-  { label: "DRE Type B", value: "dre_b" },
-  { label: "DRE Type C", value: "dre_c" },
+  { label: "Solar", value: "Solar" },
+  { label: "Wind", value: "Wind" },
+  { label: "Hydro", value: "Hydro" },
+  { label: "Biomass", value: "Biomass" },
 ];

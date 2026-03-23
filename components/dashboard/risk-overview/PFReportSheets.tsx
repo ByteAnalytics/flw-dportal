@@ -4,8 +4,6 @@ import React, { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// ─── Shared types ─────────────────────────────────────────────────────────────
-
 export type ReportSummaryData = {
   customer: string;
   projectType: string;

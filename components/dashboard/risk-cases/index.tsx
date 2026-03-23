@@ -8,11 +8,14 @@ import CustomDropdown, { DropdownItem } from "@/components/ui/custom-dropdown";
 import { useGet } from "@/hooks/use-queries";
 import { TableSkeleton } from "@/skeleton/overview";
 import { CasesResponse } from "@/types/risk-overview";
-import { RECENT_RISK_CASES_COLUMN } from "@/constants/risk-overview";
+import {
+  facilityTypeOptions,
+  RECENT_RISK_CASES_COLUMN,
+} from "@/constants/risk-overview";
 import { SheetWrapper } from "@/components/ui/custom-sheet";
 import { ChevronDown } from "lucide-react";
 import NewCaseSheet from "../risk-overview/NewCaseSheet";
-import { FACILITY_TYPES, STATUS_OPTIONS } from "@/constants/risk-cases";
+import { STATUS_OPTIONS } from "@/constants/risk-cases";
 
 const RiskCases = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,13 +65,15 @@ const RiskCases = () => {
 
   const totalPages = Math.ceil((casesData?.total_count ?? 0) / 10);
 
-  const facilityDropdownItems: DropdownItem[] = FACILITY_TYPES.map((f) => ({
-    label: f,
-    onClick: () => {
-      setSelectedFacility(f);
-      setCurrentPage(1);
-    },
-  }));
+  const facilityDropdownItems: DropdownItem[] = facilityTypeOptions.map(
+    (f) => ({
+      label: f.label,
+      onClick: () => {
+        setSelectedFacility(f.value);
+        setCurrentPage(1);
+      },
+    }),
+  );
 
   const statusDropdownItems: DropdownItem[] = STATUS_OPTIONS.map((s) => ({
     label: s,

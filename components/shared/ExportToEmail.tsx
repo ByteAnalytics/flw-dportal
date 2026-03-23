@@ -34,16 +34,16 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
   setIsEmailPromptOpen,
   emailExportApiUrl,
 }) => {
-  const { user } = useAuthStore((s) => s);
+  // const { user } = useAuthStore((s) => s);
 
-  const isAdmin = user?.role === UserRole?.ADMIN;
+  // const isAdmin = user?.role === UserRole?.ADMIN;
 
   const { data, isLoading } = useGet<TeamUsersResponse>(
     ["users", "email-recipients"],
     "/users/email_recipients",
-    {
-      enabled: isAdmin,
-    },
+    // {
+    //   enabled: isAdmin,
+    // },
   );
 
   const sendToEmail = usePost<ApiResponse<null>, any>(emailExportApiUrl, [

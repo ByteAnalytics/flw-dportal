@@ -16,7 +16,6 @@ import {
   dreProjectOptions,
   facilityTypeOptions,
   marketEventOptions,
-  projectTypeOptions,
   yesNoOptions,
 } from "@/constants/risk-overview";
 
@@ -33,14 +32,14 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
   const form = useForm<NewCaseFormData>({
     resolver: zodResolver(NewCaseSchema),
     defaultValues: {
-      project_type: "",
+      Is_this_a_DRE_project: "",
       customer_name: "",
       facility_type: "",
       revenue_growth: "",
-      counterparty_losses: "",
+      counterparty_losses: "yes",
       market_events: "",
       dre_project: "",
-      manual_weightages: "",
+      manual_weightages: "yes",
       pf_weight: "",
       cf_weight: "",
     },
@@ -52,6 +51,10 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
     formState: { isSubmitting },
   } = form;
 
+  const lossIsDrivenByMarketEvent = form.watch("counterparty_losses") === "yes";
+
+  const manuallyInputWeightages = form.watch("manual_weightages") === "yes";
+
   const createCase = usePost<ApiResponse<null>, NewCaseFormData>("/cases/", [
     "recent-cases",
   ]);
@@ -60,7 +63,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
 
   const onSubmit = async (data: NewCaseFormData) => {
     try {
-      onSuccess?.(data.project_type);
+      onSuccess?.(data.facility_type);
     } catch (error: any) {
       toast.error(extractErrorMessage(error));
     }
@@ -77,11 +80,11 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
             <CustomInputField
               control={control}
               fieldType={FormFieldType.SELECT}
-              name="project_type"
-              label="Select project type"
-              placeholder="select project sector"
+              name="Is_this_a_DRE_project"
+              label="Is this a DRE project?"
+              placeholder="select answer"
               className="bg-InfraBorder rounded-[10px] h-[44px]"
-              options={projectTypeOptions}
+              options={yesNoOptions}
               disabled={isLoading}
             />
 
@@ -128,16 +131,18 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
               disabled={isLoading}
             />
 
-            <CustomInputField
-              control={control}
-              fieldType={FormFieldType.SELECT}
-              name="market_events"
-              label="Select applicable market events/force majeure"
-              placeholder="select market event/force majeure"
-              className="bg-InfraBorder rounded-[10px] h-[44px]"
-              options={marketEventOptions}
-              disabled={isLoading}
-            />
+            {lossIsDrivenByMarketEvent && (
+              <CustomInputField
+                control={control}
+                fieldType={FormFieldType.SELECT}
+                name="market_events"
+                label="Select applicable market events/force majeure"
+                placeholder="select market event/force majeure"
+                className="bg-InfraBorder rounded-[10px] h-[44px]"
+                options={marketEventOptions}
+                disabled={isLoading}
+              />
+            )}
 
             <CustomInputField
               control={control}
@@ -162,27 +167,29 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
             />
 
             {/* PF Weight + CF Weight — side by side */}
-            <div className="grid grid-cols-2 gap-3">
-              <CustomInputField
-                control={control}
-                fieldType={FormFieldType.INPUT}
-                name="pf_weight"
-                label="PF Weight"
-                placeholder="enter weight"
-                className="bg-InfraBorder rounded-[10px] h-[44px]"
-                disabled={isLoading}
-              />
+            {manuallyInputWeightages && (
+              <div className="grid grid-cols-2 gap-3">
+                <CustomInputField
+                  control={control}
+                  fieldType={FormFieldType.INPUT}
+                  name="pf_weight"
+                  label="PF Weight"
+                  placeholder="enter weight"
+                  className="bg-InfraBorder rounded-[10px] h-[44px]"
+                  disabled={isLoading}
+                />
 
-              <CustomInputField
-                control={control}
-                fieldType={FormFieldType.INPUT}
-                name="cf_weight"
-                label="CF Weight"
-                placeholder="enter weight"
-                className="bg-InfraBorder rounded-[10px] h-[44px]"
-                disabled={isLoading}
-              />
-            </div>
+                <CustomInputField
+                  control={control}
+                  fieldType={FormFieldType.INPUT}
+                  name="cf_weight"
+                  label="CF Weight"
+                  placeholder="enter weight"
+                  className="bg-InfraBorder rounded-[10px] h-[44px]"
+                  disabled={isLoading}
+                />
+              </div>
+            )}
           </div>
 
           <div className="pt-6 flex justify-end items-center">

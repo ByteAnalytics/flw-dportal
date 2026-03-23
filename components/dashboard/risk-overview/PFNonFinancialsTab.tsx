@@ -49,13 +49,13 @@ export default function PFNonFinancialsTab({
                   value={values[field.key] ?? ""}
                   onValueChange={(val) => handleChange(field.key, val)}
                 >
-                  <SelectTrigger className="h-[45px] bg-[#F3F3F3] italic rounded-[10px] w-full border border-[#e5e5e5] bg-InfraBorder text-[#A3A3A3] text-[12px]">
+                  <SelectTrigger className="h-[45px] italic rounded-[10px] w-full border border-[#e5e5e5] bg-InfraBorder text-[#A3A3A3] text-[12px]">
                     <SelectValue placeholder="select answer" />
                   </SelectTrigger>
                   <SelectContent>
-                    {[1, 2, 3, 4, 5].map((v) => (
-                      <SelectItem key={v} value={String(v)}>
-                        {v}
+                    {field.options.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

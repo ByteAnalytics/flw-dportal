@@ -22,6 +22,7 @@ import {
   ITEMS_PER_PAGE,
   TAB_CONFIG,
 } from "@/constants/fli-details-config";
+import { extractModelType } from "@/lib/model-execution-utils";
 
 type TabValue = (typeof TAB_CONFIG)[number]["value"];
 type FLIScenarioRow = FLIApiItem["fli_scenarios_pd"]["data"][number];
@@ -79,7 +80,7 @@ const FLIModelOutput = () => {
   }, [rawRows]);
 
   const fileUrl = `/crr/${id}/output`;
-  const emailExportApiUrl = `/reporting/email/models/fli?model_execution_id=${id}`;
+  const emailExportApiUrl =`/guarantees/email?model_name=${extractModelType(data?.data?.model_type ?? "")}&model_execution_id=${id}`;
 
   const renderTableWithPagination = () => {
     if (isLoading) return <LoadingSpinner loadingText="Loading FLI Data..." />;

@@ -16,6 +16,7 @@ import { formatDate, formatNumber, getFileNameFromTab } from "@/lib/utils";
 import { EADApiItem } from "@/types/reporting";
 import { ApiResponse } from "@/types";
 import { EAD_TABS } from "@/constants/ead-model-config";
+import { extractModelType } from "@/lib/model-execution-utils";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -78,7 +79,7 @@ const EADModelOutput = () => {
   }, [eadRows]);
 
   const fileUrl = `/crr/${id}/output`;
-  const emailExportApiUrl = `/reporting/email/models/ead?model_execution_id=${id}&file_name=${getFileNameFromTab(activeTab)}`;
+  const emailExportApiUrl = `/guarantees/email?model_name=${extractModelType(data?.data?.model_type ?? "")}&model_execution_id=${id}`;
 
   const renderTableWithPagination = () => {
     if (isLoading) return <LoadingSpinner loadingText="Loading EAD Data..." />;
