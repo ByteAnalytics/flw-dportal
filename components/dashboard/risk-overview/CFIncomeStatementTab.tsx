@@ -1,41 +1,113 @@
+"use client";
+
+import { useEffect, useCallback } from "react";
 import CFInputRow from "./CFInputRow";
+import {
+  CF_INCOME_ROWS,
+  evaluateFormulaWithRows,
+} from "@/constants/risk-overview-constants";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-const INCOME_ROWS = [
-  { key: "revenue", label: "Revenue" },
-  { key: "costOfSale", label: "Cost Of Sale" },
-  { key: "sgaExpenses", label: "SG&A Expenses" },
-  { key: "depreciationAmortisation", label: "Depreciation & Amortisation" },
-  { key: "otherOperatingIncome", label: "Other Operating Income/(Expenses)" },
-  { key: "exceptionalItems", label: "Exceptional Items" },
-  { key: "otherIncome", label: "Other Income" },
-  { key: "interestReceivable", label: "Interest Receivable" },
-  { key: "interestPayable", label: "Interest Payable" },
-  { key: "tax", label: "Tax" },
-  { key: "dividendsPaid", label: "Dividends Paid" },
-  { key: "grossProfit", label: "Gross Profit", isCalculated: true },
-  { key: "profitAfterTax", label: "Profit After Tax", isCalculated: true },
-];
+interface CFIncomeStatementTabProps {
+  currentValues: Record<string, string>;
+  previousValues: Record<string, string>;
+  autoComputed?: Record<string, string>;
+  onCurrentChange: (key: string, value: string) => void;
+  onPreviousChange: (key: string, value: string) => void;
+}
 
 export default function CFIncomeStatementTab({
   currentValues,
   previousValues,
   onCurrentChange,
   onPreviousChange,
-}: any) {
+}: CFIncomeStatementTabProps) {
+  const updateCalculatedFields = useCallback(
+    (
+      changedKey: string,
+      setter: (key: string, value: string) => void,
+      currentVals: Record<string, string>,
+    ) => {
+      const dependentRows = CF_INCOME_ROWS.filter(
+        (row) => row.isCalculated && row.dependencies?.includes(changedKey),
+      );
+
+      dependentRows.forEach((dependentRow) => {
+        if (dependentRow.formula) {
+          const computedValue = evaluateFormulaWithRows(
+            dependentRow.formula,
+            currentVals,
+            CF_INCOME_ROWS,
+          );
+
+          const currentValue = currentVals[dependentRow.key];
+          if (currentValue !== computedValue.toString()) {
+            setter(dependentRow.key, computedValue.toString());
+          }
+        }
+      });
+    },
+    [],
+  );
+
+  const handleCurrentChange = (key: string, value: string) => {
+    onCurrentChange(key, value);
+
+    setTimeout(() => {
+      updateCalculatedFields(key, onCurrentChange, {
+        ...currentValues,
+        [key]: value,
+      });
+    }, 0);
+  };
+
+  const handlePreviousChange = (key: string, value: string) => {
+    onPreviousChange(key, value);
+
+    setTimeout(() => {
+      updateCalculatedFields(key, onPreviousChange, {
+        ...previousValues,
+        [key]: value,
+      });
+    }, 0);
+  };
+
+  // Initialize calculated fields on mount
+  useEffect(() => {
+    CF_INCOME_ROWS.forEach((row) => {
+      if (row.isCalculated && row.formula) {
+        const computedValue = evaluateFormulaWithRows(
+          row.formula,
+          currentValues,
+          CF_INCOME_ROWS,
+        );
+        if (currentValues[row.key] !== computedValue.toString()) {
+          onCurrentChange(row.key, computedValue.toString());
+        }
+
+        const computedPrevValue = evaluateFormulaWithRows(
+          row.formula,
+          previousValues,
+          CF_INCOME_ROWS,
+        );
+        if (previousValues[row.key] !== computedPrevValue.toString()) {
+          onPreviousChange(row.key, computedPrevValue.toString());
+        }
+      }
+    });
+  }, []);
+
   return (
     <div className="grid sm:grid-cols-2 grid-cols-1 gap-6">
       <div>
         <h3 className="text-[14px] text-InfraSoftBlack font-bold mb-3">
           CURRENT PERIOD
         </h3>
-        {INCOME_ROWS.map((r) => (
+        {CF_INCOME_ROWS.map((r) => (
           <CFInputRow
             key={r.key}
             label={r.label}
             value={currentValues[r.key] ?? ""}
-            onChange={(v) => onCurrentChange(r.key, v)}
+            onChange={(v) => handleCurrentChange(r.key, v)}
             isCalculated={r.isCalculated}
           />
         ))}
@@ -45,12 +117,12 @@ export default function CFIncomeStatementTab({
         <h3 className="text-[14px] text-InfraSoftBlack font-bold mb-3">
           PREVIOUS PERIOD
         </h3>
-        {INCOME_ROWS.map((r) => (
+        {CF_INCOME_ROWS.map((r) => (
           <CFInputRow
             key={r.key}
             label={r.label}
             value={previousValues[r.key] ?? ""}
-            onChange={(v) => onPreviousChange(r.key, v)}
+            onChange={(v) => handlePreviousChange(r.key, v)}
             isCalculated={r.isCalculated}
           />
         ))}

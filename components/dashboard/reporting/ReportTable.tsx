@@ -9,8 +9,7 @@ import StatusBadge from "./StatusBadge";
 import { formatDate, getModelLabel, getModelTypeFromTab } from "@/lib/utils";
 import { useFileDownload } from "@/hooks/us-file-download";
 import { ReportData, reportStatus, ReportTableProps } from "@/types/reporting";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { extractModelType } from "@/lib/model-execution-utils";
 
 const ModelCategoryBadge = ({ category }: { category: string }) => (
   <span className="inline-block px-3 py-1 rounded-md bg-[#F5F7F6] text-[#5B5F5E] text-xs font-medium">
@@ -38,6 +37,7 @@ const ReportTable = ({
   };
 
   const handleDownload = async (item: ReportData) => {
+    console.log(item.modelCategory);
     const modelType =
       currentTab === "all"
         ? getModelTypeFromTab(
@@ -45,13 +45,7 @@ const ReportTable = ({
           )
         : getModelTypeFromTab(currentTab);
 
-    let fileUrl: string;
-
-    if (modelType !== "pd") {
-      fileUrl = `/models/${item.id}/output?model_type=${modelType?.toUpperCase()}`;
-    } else {
-      fileUrl = `/models/${item.id}/output`;
-    }
+    const fileUrl = `/guarantees/email?model_name=${extractModelType(modelType ?? "")}&model_execution_id=${item.id}`;
 
     const filename = `${item.fileName}_${formatDate(item.timeStamp)}`;
 
@@ -190,7 +184,6 @@ const ReportTable = ({
 
   return (
     <div className="space-y-4">
-
       {/* Table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <CustomTable

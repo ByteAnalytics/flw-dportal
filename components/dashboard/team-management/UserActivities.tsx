@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Clock } from "lucide-react";
 import { useInfinitePaginated } from "@/hooks/use-queries";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { formatDate } from "@/lib/utils";

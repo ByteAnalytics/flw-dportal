@@ -112,8 +112,8 @@ export function getModelLabel(model: string): string {
       return "LGD Model";
     case ExecutableModels.EAD:
       return "EAD Model";
-    case ExecutableModels.CCF:
-      return "CCF Model";
+    // case ExecutableModels.CCF:
+    //   return "CCF Model";
     case ExecutableModels.FLI:
       return "FLI Scalar";
     case ExecutableModels.ECL:
@@ -125,12 +125,12 @@ export function getModelLabel(model: string): string {
 
 export const getModelTypeFromTab = (tab: string): string | null => {
   const tabToModelMap: { [key: string]: string } = {
-    "ead-model": "ead",
-    "lgd-model": "lgd",
-    "ecl-model": "ecl",
-    "ccf-model": "ccf",
-    "pd-model": "pd",
-    "fli-model": "fli",
+    "ead-model": "guarantees_ead",
+    "lgd-model": "guarantees_lgd",
+    "ecl-model": "guarantees_ecl",
+    "ccf-model": "guarantees_ccf",
+    "pd-model": "guarantees_pd",
+    "fli-model": "guarantees_fli",
   };
   return tabToModelMap[tab] || null;
 };
@@ -244,4 +244,14 @@ export const formatLabel = (value: string) => {
     .replace(/_/g, " ")
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+export const generateDynamicYears = (): number[] => {
+  const currentYear = new Date().getFullYear();
+  const years: number[] = [];
+  // Generate 7 years backward from current year
+  for (let i = 0; i < 7; i++) {
+    years.push(currentYear - i);
+  }
+  return years;
 };

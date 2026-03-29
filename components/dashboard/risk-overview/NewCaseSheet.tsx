@@ -16,6 +16,7 @@ import {
   dreProjectOptions,
   facilityTypeOptions,
   marketEventOptions,
+  pfWeights,
   yesNoOptions,
 } from "@/constants/risk-overview";
 
@@ -23,7 +24,40 @@ import {
 
 interface NewCaseSheetProps {
   onClose: () => void;
-  onSuccess?: (dreProject?: string) => void;
+  onSuccess?: (facilityType: string, newCaseId: string) => void;
+}
+
+interface Apidata {
+  id: string;
+  case_number: string;
+  customer_name: string;
+  facility_type: string;
+  project_type: string;
+  status: string;
+  rater_name: string;
+  validator_name: string;
+  rating: string;
+  last_updated: string;
+  consistent_revenue_growth: boolean;
+  market_event_losses: boolean;
+  applicable_market_events: string;
+  market_event_description: string;
+  dre_project_selection: string[];
+  manual_weights: boolean;
+  pf_weight: number;
+  cf_weight: number;
+  year_of_financials: number;
+  pf_financials: string;
+  pf_non_financials: string;
+  cf_financials: string;
+  cf_non_financials: string;
+  pf_results: string;
+  cf_results: string;
+  combined_results: string;
+  validator_notes: string;
+  submitted_at: string;
+  reviewed_at: string;
+  created_at: Date;
 }
 
 const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
@@ -42,8 +76,15 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
       manual_weightages: "yes",
       pf_weight: "",
       cf_weight: "",
+      market_event_description: "",
+      year_of_financials: "",
     },
   });
+
+  const createNewCase = usePost<ApiResponse<Apidata>, NewCaseFormData>(
+    "/crr/cases",
+    ["crr-cases"],
+  );
 
   const {
     control,
@@ -55,15 +96,41 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
 
   const manuallyInputWeightages = form.watch("manual_weightages") === "yes";
 
-  const createCase = usePost<ApiResponse<null>, NewCaseFormData>("/cases/", [
-    "recent-cases",
-  ]);
-
-  const isLoading = createCase.isPending || isSubmitting;
+  const isLoading = createNewCase.isPending || isSubmitting;
 
   const onSubmit = async (data: NewCaseFormData) => {
     try {
-      onSuccess?.(data.facility_type);
+      const payload: any = {
+        customer_name: data.customer_name,
+        facility_type: data.facility_type,
+        project_type: data.Is_this_a_DRE_project === "yes" ? "DRE" : "Others",
+        consistent_revenue_growth: data.revenue_growth === "yes" ? "Yes" : "No",
+        market_event_losses: data.counterparty_losses === "yes" ? "Yes" : "No",
+        ...(data.counterparty_losses === "yes" && {
+          applicable_market_events: data.market_events,
+          market_event_description: data.market_event_description ?? "",
+        }),
+        dre_project_selection: data.dre_project
+          ? { [data.dre_project]: "Yes" }
+          : {},
+        manual_weights: data.manual_weightages === "yes" ? "Yes" : "No",
+        ...(data.manual_weightages === "yes" && {
+          pf_weight: Number(data.pf_weight),
+          cf_weight: Number(data.cf_weight),
+        }),
+        year_of_financials: Number(data.year_of_financials ?? 0),
+      };
+
+      const response = await createNewCase.mutateAsync(payload);
+
+      toast.success(extractSuccessMessage(response));
+      await queryClient.invalidateQueries({
+        queryKey: ["crr-cases"],
+        exact: false,
+        refetchType: "all",
+      });
+      const caseId = response?.data?.id;
+      onSuccess?.(data.facility_type, caseId);
     } catch (error: any) {
       toast.error(extractErrorMessage(error));
     }
@@ -132,16 +199,37 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
             />
 
             {lossIsDrivenByMarketEvent && (
-              <CustomInputField
-                control={control}
-                fieldType={FormFieldType.SELECT}
-                name="market_events"
-                label="Select applicable market events/force majeure"
-                placeholder="select market event/force majeure"
-                className="bg-InfraBorder rounded-[10px] h-[44px]"
-                options={marketEventOptions}
-                disabled={isLoading}
-              />
+              <>
+                <CustomInputField
+                  control={control}
+                  fieldType={FormFieldType.SELECT}
+                  name="market_events"
+                  label="Select applicable market events/force majeure"
+                  placeholder="select market event/force majeure"
+                  className="bg-InfraBorder rounded-[10px] h-[44px]"
+                  options={marketEventOptions}
+                  disabled={isLoading}
+                />
+                <CustomInputField
+                  control={control}
+                  fieldType={FormFieldType.INPUT}
+                  name="market_event_description"
+                  label="Market Event Description"
+                  placeholder="Describe the market event"
+                  className="bg-InfraBorder rounded-[10px] h-[44px]"
+                  disabled={isLoading}
+                />
+
+                <CustomInputField
+                  control={control}
+                  fieldType={FormFieldType.INPUT}
+                  name="year_of_financials"
+                  label="Year of Financials"
+                  placeholder="e.g. 2023"
+                  className="bg-InfraBorder rounded-[10px] h-[44px]"
+                  disabled={isLoading}
+                />
+              </>
             )}
 
             <CustomInputField
@@ -171,7 +259,8 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
               <div className="grid grid-cols-2 gap-3">
                 <CustomInputField
                   control={control}
-                  fieldType={FormFieldType.INPUT}
+                  fieldType={FormFieldType.SELECT}
+                  options={pfWeights}
                   name="pf_weight"
                   label="PF Weight"
                   placeholder="enter weight"
@@ -181,7 +270,8 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
 
                 <CustomInputField
                   control={control}
-                  fieldType={FormFieldType.INPUT}
+                  fieldType={FormFieldType.SELECT}
+                  options={pfWeights}
                   name="cf_weight"
                   label="CF Weight"
                   placeholder="enter weight"

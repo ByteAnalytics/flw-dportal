@@ -12,7 +12,7 @@ import ExportTrigger from "@/components/shared/ExportTrigger";
 import { Pagination } from "@/components/shared/Pagination";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useGet } from "@/hooks/use-queries";
-import { formatDate, formatNumber, getFileNameFromTab } from "@/lib/utils";
+import { formatDate, formatNumber } from "@/lib/utils";
 import { EADApiItem } from "@/types/reporting";
 import { ApiResponse } from "@/types";
 import { EAD_TABS } from "@/constants/ead-model-config";

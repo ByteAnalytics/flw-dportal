@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import CustomTable from "@/components/ui/custom-table";
 import CustomDropdown, { DropdownItem } from "@/components/ui/custom-dropdown";
 import { useGet } from "@/hooks/use-queries";
-import { TableSkeleton } from "@/skeleton/overview";
+import { TableSkeleton } from "@/skeleton/Overview";
 import { CasesResponse } from "@/types/risk-overview";
 import {
   facilityTypeOptions,
