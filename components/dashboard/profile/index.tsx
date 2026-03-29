@@ -20,7 +20,7 @@ const ProfileDetails = () => {
   const { logout } = useAuthStore((s) => s);
   const logoutApi = usePost<ApiResponse<string>, null>("/auth/logout");
 
-  const { data, isLoading, isFetching } = useGet<TeamUserResponse>(
+  const { data, isLoading } = useGet<TeamUserResponse>(
     ["user-profile-me"],
     "/users/me",
     {
@@ -30,7 +30,6 @@ const ProfileDetails = () => {
       placeholderData: undefined,
     },
   );
-
 
   const userProfile = data?.data;
 

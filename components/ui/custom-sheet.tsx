@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import {
   Sheet,
   SheetContent,
@@ -27,7 +27,7 @@ interface SheetWrapperProps {
   isAlert?: boolean;
   headerClassName?: string;
   titleClassName?: string;
-  SheetContentClassName?:string;
+  SheetContentClassName?: string;
   descriptionClassName?: string;
 }
 

@@ -1,73 +1,43 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FinancialInputTable, { FinancialRow } from "./FinancialInputTable";
 import { CustomTabs } from "@/components/shared/CustomTab";
-import { cn } from "@/lib/utils";
-
-// ─── Row Definitions ─────────────────────────────────────────────────────────
-
-const BALANCE_SHEET_ROWS: FinancialRow[] = [
-  { key: "totalNonCurrentAssets", label: "Total Non-Current Assets" },
-  { key: "currentAssets", label: "Current Assets" },
-  { key: "totalCurrentLiabilities", label: "Total Current Liabilities" },
-  { key: "longTermLiabilities", label: "Long Term Liabilities" },
-  { key: "shareCapital", label: "Share Capital" },
-  { key: "retainedEarnings", label: "Retained Earnings" },
-  { key: "concessionaryCapital", label: "Concessionary Capital" },
-  { key: "totalAssets", label: "Total Assets", isCalculated: true },
-  { key: "totalLiabilities", label: "Total Liabilities", isCalculated: true },
-  { key: "netAssets", label: "Net Assets", isCalculated: true },
-];
-
-const INCOME_STATEMENT_ROWS: FinancialRow[] = [
-  { key: "revenue", label: "Revenue" },
-  { key: "otherIncomeGrant", label: "Other Income- Grant" },
-  { key: "otherIncomeCharge", label: "Other Income - Charge" },
-  { key: "operatingCosts", label: "Operating Costs" },
-  { key: "depreciation", label: "Depreciation" },
-  { key: "interestIncome", label: "Interest Income" },
-  { key: "tax", label: "Tax" },
-  { key: "ebitda", label: "EBITDA", isCalculated: true },
-  { key: "interestExpense", label: "Interest Expense", isCalculated: true },
-  { key: "ebit", label: "EBIT", isCalculated: true },
-  { key: "grossProfit", label: "Gross Profit", isCalculated: true },
-  { key: "profitBeforeTax", label: "Profit before Tax", isCalculated: true },
-  { key: "profitAfterTax", label: "Profit after Tax", isCalculated: true },
-];
-
-const CASH_FLOW_ROWS: FinancialRow[] = [
-  { key: "seniorLoans", label: "Senior Loans" },
-  { key: "subLoans", label: "SubLoans" },
-  { key: "other", label: "Other" },
-  { key: "equity", label: "Equity" },
-  { key: "capex", label: "CAPEX" },
-  { key: "wcAdjustments", label: "W/C Adjustments" },
-  { key: "interestPaymentSubDebt", label: "Interest Payment - SubDebt" },
-  { key: "principalPaymentSubDebt", label: "Principal Payment - SubDebt" },
-  { key: "interestPaymentSeniorD", label: "Interest Payment - Senior D." },
-  { key: "principalPaymentSeniorD", label: "Principal Payment - Senior D." },
-  { key: "totalFunding", label: "Total Funding", isCalculated: true },
-  { key: "cfads", label: "CFADS", isCalculated: true },
-  { key: "netAssets", label: "Net Assets", isCalculated: true },
-  { key: "totalDebtService", label: "Total Debt Service", isCalculated: true },
-  { key: "netCashflow", label: "Net Cashflow", isCalculated: true },
-];
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { cn, generateDynamicYears } from "@/lib/utils";
+import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
+import { useRiskOverviewStore } from "@/stores/risk-overview-store";
+import {
+  useCaseDetails,
+  useParseTemplate,
+  useSaveDraft,
+} from "@/hooks/use-risk-overview";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import {
+  BALANCE_SHEET_ROWS,
+  INCOME_STATEMENT_ROWS,
+  CASH_FLOW_ROWS,
+  OTHER_INPUTS_ROWS,
+  RATIOS_ROWS,
+  BALANCE_SHEET_KEY_MAP,
+  INCOME_STATEMENT_KEY_MAP,
+  CASH_FLOW_KEY_MAP,
+  RATIOS_KEY_MAP,
+} from "@/constants/risk-overview-constants";
 
 type FinancialValues = Record<string, Record<number, string>>;
-type NonFinancialValues = Record<string, string>;
 
-export type PFFinancialsData = {
+export interface PFFinancialsData {
   balanceSheet: FinancialValues;
   incomeStatement: FinancialValues;
   cashFlow: FinancialValues;
-  nonFinancials: NonFinancialValues;
+  otherInputs: FinancialValues;
+  ratios: FinancialValues;
   years: number[];
-};
+}
 
 interface PFFinancialsSheetProps {
   onClose: () => void;
@@ -75,22 +45,193 @@ interface PFFinancialsSheetProps {
   onSaveAsDraft?: () => void;
 }
 
-const DEFAULT_YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020];
-
-// ─── Component ────────────────────────────────────────────────────────────────
+const DEFAULT_YEARS = generateDynamicYears();
 
 const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   onNext,
   onSaveAsDraft,
 }) => {
+  const searchParams = useSearchParams();
+  const caseId = searchParams.get("caseId");
+
+  const { data: caseData, isLoading: isLoadingCase } = useCaseDetails(
+    caseId || undefined,
+  );
+
   const [activeTab, setActiveTab] = useState("Balance Sheet");
   const [inputMode, setInputMode] = useState<"manual" | "upload">("manual");
   const [years, setYears] = useState<number[]>(DEFAULT_YEARS);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [balanceSheet, setBalanceSheet] = useState<FinancialValues>({});
   const [incomeStatement, setIncomeStatement] = useState<FinancialValues>({});
   const [cashFlow, setCashFlow] = useState<FinancialValues>({});
-  const [nonFinancials, setNonFinancials] = useState<NonFinancialValues>({});
+  const [otherInputs, setOtherInputs] = useState<FinancialValues>({});
+  const [ratios, setRatios] = useState<FinancialValues>({});
+
+  const { setPFFinancialsData } = useRiskOverviewStore();
+
+  const parseTemplate = useParseTemplate();
+  const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
+    "pf_financials",
+    caseId || undefined,
+  );
+
+  const mapArrayToYears = (
+    dataArray: number[],
+    yearsArray: number[],
+  ): Record<number, string> => {
+    const result: Record<number, string> = {};
+    yearsArray.forEach((year, index) => {
+      const value = dataArray[index];
+      result[year] =
+        value !== undefined && !isNaN(value) ? value.toString() : "";
+    });
+    return result;
+  };
+
+  const populateDataFromResponse = (responseData: any, showToast = true) => {
+    const pfData = responseData.pf_financials;
+    if (!pfData) {
+      toast.error("No PF financials data in response");
+      return;
+    }
+
+    const apiYears = pfData.years;
+    setYears(apiYears);
+
+    const newBalanceSheet: FinancialValues = {};
+    Object.entries(pfData.balance_sheet).forEach(([apiKey, values]) => {
+      const mappedKey = BALANCE_SHEET_KEY_MAP[apiKey];
+      const isCalculated = BALANCE_SHEET_ROWS.find(
+        (r) => r.key === mappedKey,
+      )?.isCalculated;
+      if (mappedKey && !isCalculated) {
+        newBalanceSheet[mappedKey] = mapArrayToYears(
+          values as number[],
+          apiYears,
+        );
+      }
+    });
+    setBalanceSheet(newBalanceSheet);
+
+    const newIncomeStatement: FinancialValues = {};
+    Object.entries(pfData.financial_inputs).forEach(([apiKey, values]) => {
+      const mappedKey = INCOME_STATEMENT_KEY_MAP[apiKey];
+      const isCalculated = INCOME_STATEMENT_ROWS.find(
+        (r) => r.key === mappedKey,
+      )?.isCalculated;
+      if (mappedKey && !isCalculated) {
+        newIncomeStatement[mappedKey] = mapArrayToYears(
+          values as number[],
+          apiYears,
+        );
+      }
+    });
+    setIncomeStatement(newIncomeStatement);
+
+    const newCashFlow: FinancialValues = {};
+    Object.entries(pfData.summary_cashflow).forEach(([apiKey, values]) => {
+      const mappedKey = CASH_FLOW_KEY_MAP[apiKey];
+      const isCalculated = CASH_FLOW_ROWS.find(
+        (r) => r.key === mappedKey,
+      )?.isCalculated;
+      if (mappedKey && !isCalculated) {
+        newCashFlow[mappedKey] = mapArrayToYears(values as number[], apiYears);
+      }
+    });
+    setCashFlow(newCashFlow);
+
+    if (pfData.ratios) {
+      const newRatios: FinancialValues = {};
+      Object.entries(pfData.ratios).forEach(([apiKey, values]) => {
+        const mappedKey = RATIOS_KEY_MAP[apiKey];
+        if (mappedKey) {
+          newRatios[mappedKey] = mapArrayToYears(values as number[], apiYears);
+        }
+      });
+      setRatios(newRatios);
+    }
+
+    if (showToast) toast.success("File uploaded and parsed successfully!");
+  };
+
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await parseTemplate.mutateAsync(formData);
+
+      if (response.success && response.data) {
+        populateDataFromResponse(response.data);
+        setInputMode("upload");
+        toast.success(response.message || "File uploaded successfully");
+      } else {
+        toast.error(response.message || "Failed to parse file");
+      }
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error(error?.message || "Failed to upload file. Please try again.");
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const initializeValues = useCallback(
+    (rows: FinancialRow[], currentValues: FinancialValues): FinancialValues => {
+      const newValues = { ...currentValues };
+
+      rows.forEach((row) => {
+        if (!newValues[row.key]) {
+          newValues[row.key] = {};
+        }
+
+        years.forEach((year) => {
+          if (
+            newValues[row.key][year] === undefined ||
+            newValues[row.key][year] === null
+          ) {
+            newValues[row.key][year] = "";
+          }
+        });
+      });
+
+      return newValues;
+    },
+    [years],
+  );
+
+  useEffect(() => {
+    if (!caseData?.data?.pf_financials) return;
+    populateDataFromResponse(
+      { pf_financials: caseData.data.pf_financials },
+      false,
+    );
+  }, [caseData]);
+
+  useEffect(() => {
+    setBalanceSheet((prev) => initializeValues(BALANCE_SHEET_ROWS, prev));
+    setIncomeStatement((prev) => initializeValues(INCOME_STATEMENT_ROWS, prev));
+    setCashFlow((prev) => initializeValues(CASH_FLOW_ROWS, prev));
+    setOtherInputs((prev) => initializeValues(OTHER_INPUTS_ROWS, prev));
+    setRatios((prev) => initializeValues(RATIOS_ROWS, prev));
+  }, [years, initializeValues]);
 
   const handleChange =
     (setter: React.Dispatch<React.SetStateAction<FinancialValues>>) =>
@@ -103,7 +244,8 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
 
   const handleAddColumn = () => {
     const minYear = Math.min(...years);
-    setYears((prev) => [...prev, minYear - 1]);
+    const newYear = minYear - 1;
+    setYears((prev) => [...prev, newYear].sort((a, b) => b - a));
   };
 
   const renderTable = (
@@ -119,6 +261,68 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
       onAddColumn={handleAddColumn}
     />
   );
+
+  const renderRatiosTable = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-sm min-w-[700px]">
+        <thead className="bg-InfraBorder">
+          <tr className="border-b border-gray-200">
+            <th className="text-left py-2 pr-4 pl-2 text-[14px] font-semibold text-gray-500 uppercase tracking-wide w-[200px] min-w-[180px]">
+              RATIO
+            </th>
+            {years.map((year) => (
+              <th
+                key={year}
+                className="text-center py-2 px-2 text-[14px] font-semibold text-gray-500 uppercase tracking-wide min-w-[110px]"
+              >
+                {year}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {RATIOS_ROWS.map((row) => (
+            <tr
+              key={row.key}
+              className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
+            >
+              <td className="py-2 pr-4 pl-2 text-[13px] font-medium w-[200px] min-w-[180px]">
+                <span className="text-emerald-600 font-semibold">
+                  {row.label}
+                </span>
+              </td>
+              {years.map((year) => (
+                <td key={year} className="py-2 px-2 min-w-[110px]">
+                  <div className="w-full h-[32px] px-2 flex items-center justify-end text-right text-[12px] font-medium rounded-[6px] border border-amber-200 bg-amber-50 text-amber-700">
+                    {ratios[row.key]?.[year] || "-"}
+                  </div>
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const handleSaveAsDraft = async () => {
+    const data: PFFinancialsData = {
+      balanceSheet,
+      incomeStatement,
+      cashFlow,
+      otherInputs,
+      ratios,
+      years,
+    };
+
+    setPFFinancialsData(data);
+
+    const success = await saveDraft(data);
+
+    if (success && onSaveAsDraft) {
+      onSaveAsDraft();
+    }
+  };
 
   const tabOptions = [
     {
@@ -143,11 +347,12 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     {
       value: "Other Inputs",
       label: "Other Inputs",
-      content: (
-        <div className="p-4 text-sm text-gray-500">
-          Other Inputs (hook your nonFinancials UI here)
-        </div>
-      ),
+      content: renderTable(OTHER_INPUTS_ROWS, otherInputs, setOtherInputs),
+    },
+    {
+      value: "Ratios",
+      label: "Ratios",
+      content: renderRatiosTable(),
     },
   ];
 
@@ -157,8 +362,29 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
       inputMode === mode ? "bg-white text-black" : "text-InfraMuted",
     );
 
+  const handleNext = () => {
+    onNext({
+      balanceSheet,
+      incomeStatement,
+      cashFlow,
+      otherInputs,
+      ratios,
+      years,
+    });
+  };
+
+  if (isLoadingCase) return <LoadingSpinner />;
+
   return (
     <div className="flex flex-col min-h-[82vh] w-full">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileSelect}
+        accept=".json,.csv,.xlsx,.xls"
+        className="hidden"
+      />
+
       <div className="flex items-start justify-between border-b border-gray-200 gap-4 flex-1">
         <CustomTabs
           defaultValue="Balance Sheet"
@@ -176,11 +402,12 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
                 Manual Input
               </button>
               <button
-                onClick={() => setInputMode("upload")}
+                onClick={triggerFileUpload}
                 className={toggleClass("upload")}
+                disabled={parseTemplate.isPending}
               >
                 <Upload className="w-3 h-3" />
-                Upload File
+                {parseTemplate.isPending ? "Uploading..." : "Upload File"}
               </button>
             </div>
           }
@@ -189,22 +416,15 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
 
       <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-6">
         <button
-          onClick={onSaveAsDraft}
-          className="bg-white  border-InfraBorder bg-white h-[40px] text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px]"
+          onClick={handleSaveAsDraft}
+          disabled={isSavingDraft}
+          className="bg-white border-InfraBorder h-[40px] text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save as draft
+          {isSavingDraft ? "Saving..." : "Save as draft"}
         </button>
 
         <Button
-          onClick={() =>
-            onNext({
-              balanceSheet,
-              incomeStatement,
-              cashFlow,
-              nonFinancials,
-              years,
-            })
-          }
+          onClick={handleNext}
           className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
         >
           Next

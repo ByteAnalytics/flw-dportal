@@ -2,14 +2,16 @@
 "use client";
 
 import React from "react";
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AccordionSection from "@/components/shared/CaseAccordium";
 import FinancialTable from "./FinancialTable";
 import NonFinancialsTable from "./NonFinancialTable";
+import ScoreSummaryCards from "./ScoreSummaryCards";
+import { formatDate } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useCaseDetails } from "@/hooks/use-risk-overview";
 import ShowstoppersTable from "./ShowstoppersTable";
-import { getShowstoppers } from "@/lib/risk-overview-utils";
 import {
   getCfBalanceSheetRows,
   getCfIncomeRows,
@@ -20,18 +22,18 @@ import {
   getPfIncomeRows,
   getPfNonFinancialsRows,
   getPfRatiosRows,
+  getShowstoppers,
 } from "@/lib/risk-overview-utils";
 
 interface Props {
   onClose: () => void;
-  onReturnForRevision: () => void;
-  onApproveRating: () => void;
+  onEditAndResubmit: () => void;
   caseId?: string | null;
 }
 
-const ValidationReviewSheet: React.FC<Props> = ({
-  onReturnForRevision,
-  onApproveRating,
+export const ReturnedCaseSheet: React.FC<Props> = ({
+  onClose,
+  onEditAndResubmit,
   caseId,
 }) => {
   const { data, isLoading } = useCaseDetails(caseId || undefined);
@@ -41,7 +43,7 @@ const ValidationReviewSheet: React.FC<Props> = ({
   const details = data?.data;
 
   if (!details) {
-    return <div className="p-6 text-gray-500">No data</div>;
+    return <div className="p-6 text-gray-500">No case data</div>;
   }
 
   const combined = details.combined_results;
@@ -82,11 +84,27 @@ const ValidationReviewSheet: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col gap-4 pb-6 md:px-6 px-3">
-      {/* HEADER */}
-      <div className="border-b pb-2">
-        <span className="font-semibold text-teal-600">
-          {details.case_number}
-        </span>
+      {/* ALERT */}
+      <div className="rounded-[10px] bg-orange-50 border border-orange-200 p-4">
+        <div className="flex justify-between">
+          <div className="flex gap-3">
+            <AlertCircle className="text-orange-500 w-5 h-5 mt-1" />
+            <div className="flex flex-col gap-2">
+              <span className="font-semibold text-orange-600">
+                Returned by Validator
+              </span>
+              <p className="text-sm">
+                <b>Validator:</b> {details.validator_name ?? "-"}
+              </p>
+              <p className="text-sm">
+                <b>Comment:</b> {details.validator_notes ?? "No comment"}
+              </p>
+            </div>
+          </div>
+          <span className="text-sm text-gray-400">
+            {details.reviewed_at ? formatDate(details.reviewed_at) : "-"}
+          </span>
+        </div>
       </div>
 
       {/* INFO */}
@@ -94,7 +112,7 @@ const ValidationReviewSheet: React.FC<Props> = ({
         <Info label="Customer" value={details.customer_name} />
         <Info label="Project Type" value={details.project_type} />
         <Info label="Rater" value={details.rater_name} />
-        <Info label="Year" value={details.year_of_financials ?? "-"} />
+        <Info label="Validator" value={details.validator_name ?? "-"} />
       </div>
 
       {/* PF FINANCIALS */}
@@ -174,22 +192,14 @@ const ValidationReviewSheet: React.FC<Props> = ({
       )}
 
       {/* SCORES */}
-      {combined && (
-        <div className="bg-blue-600 text-white p-4 rounded-lg grid grid-cols-2 sm:grid-cols-5 gap-4">
-          <Score label="Initial PF" value={combined.initialPFScore} />
-          <Score label="Initial CF" value={combined.initialCFScore} />
-          <Score label="PD" value={String(combined.probabilityOfDefault)} />
-          <Score label="Baseline" value={combined.baselineCreditScore} />
-          <Score label="Final" value={combined.finalCreditScore} />
-        </div>
-      )}
+      {combined && <ScoreSummaryCards reportData={combined} />}
 
       {/* ACTIONS */}
       <div className="flex gap-3 justify-end pt-4">
-        <Button variant="outline" onClick={onReturnForRevision}>
-          Return for Revision
+        <Button variant="outline" onClick={onClose}>
+          Close
         </Button>
-        <Button onClick={onApproveRating}>Approve Rating</Button>
+        <Button onClick={onEditAndResubmit}>Edit & Resubmit</Button>
       </div>
     </div>
   );
@@ -201,12 +211,3 @@ const Info = ({ label, value }: any) => (
     <p className="font-bold">{value}</p>
   </div>
 );
-
-const Score = ({ label, value }: any) => (
-  <div>
-    <p className="text-xs text-blue-200">{label}</p>
-    <p className="text-lg font-bold">{value}</p>
-  </div>
-);
-
-export default ValidationReviewSheet;

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export const LGD_COLUMNS = [
   { key: "Asset Description", label: "ASSET DESCRIPTION", width: "w-[220px]" },
   { key: "Total Exposure", label: "TOTAL EXPOSURE", width: "w-[160px]" },

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export type ReportSummaryData = {

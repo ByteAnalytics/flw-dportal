@@ -38,5 +38,49 @@ export type CFFinancialsData = {
     current: PeriodValues;
     previous: PeriodValues;
     autoComputed: AutoComputedValues;
-  }
+  };
 };
+
+export type FinancialValues = Record<string, Record<number, string>>;
+export type NonFinancialValues = Record<string, string>;
+
+export type PFFinancialsData = {
+  balanceSheet: FinancialValues;
+  incomeStatement: FinancialValues;
+  cashFlow: FinancialValues;
+  nonFinancials: NonFinancialValues;
+  years: number[];
+};
+
+// types/financials.ts
+export interface FinancialFormula {
+  key: string;
+  label: string;
+  formula?: string; // optional, only for calculated fields
+}
+
+export interface FinancialsData {
+  pf_financials: {
+    balance_sheet: {
+      label: string;
+      data_mode: string;
+      fields: FinancialFormula[];
+    };
+    income_statement: {
+      label: string;
+      data_mode: string;
+      fields: FinancialFormula[];
+    };
+    other_inputs?: {
+      label: string;
+      data_mode: string;
+      fields: FinancialFormula[];
+    };
+  };
+}
+
+export type RowReturnType = {
+  label: string;
+  isCalculated?: boolean | undefined;
+  values?: number[] | undefined;
+}[];

@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import CustomButton from "@/components/ui/custom-button";
+import React from "react";
 import { Button } from "@/components/ui/button";
 
 export type ReportSummaryData = {
@@ -40,13 +39,6 @@ export type CombinedReportData = {
   baselineCreditScore: string;
   finalCreditScore: string;
 };
-
-interface PFReportsSheetProps {
-  onClose: () => void;
-  onSubmitForValidation: () => void;
-  onSaveAsDraft?: () => void;
-  reportData: ReportSummaryData;
-}
 
 const InfoCard = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-[12px] border border-gray-200 bg-[#F9FAFB] p-5">

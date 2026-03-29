@@ -1,9 +1,7 @@
 "use client";
 
 import ChartDetailsCard from "@/components/dashboard/overview/ChartDetails";
-import { useGet } from "@/hooks/use-queries";
-import React, { useMemo } from "react";
-import { ChartCardSkeleton } from "@/skeleton/overview";
+import React from "react";
 import { ECLScenarioSummary } from "@/types/reporting";
 
 interface CustomerSegmentationCardProps {

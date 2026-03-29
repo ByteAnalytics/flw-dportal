@@ -1,167 +1,140 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import { SheetWrapper } from "@/components/ui/custom-sheet";
 import NewCaseSheet from "./NewCaseSheet";
-import PFFinancialsSheet, { PFFinancialsData } from "./PFFinancialsSheet";
 import CFFinancialsSheet from "./CFFinancialsSheet";
-import PFReportsSheet, { ReportSummaryData } from "./PFReportSheets";
-import { CFFinancialsData } from "@/types/risk-overview";
-import PFNonFinancialsTab, { PFNonFinancialsData } from "./PFNonFinancialsTab";
-import CombinedReportsSheet, { CombinedReportData } from "./CFReportsSheet";
+import PFReportsSheet from "./PFReportSheets";
+import CombinedReportsSheet from "./CFReportsSheet";
 import CFNonFinancialsTab from "./CFNonFinancialsTab";
-import ValidationReviewSheet from "./ValidationReviewSheet";
-import { facilityTypeOptions } from "@/constants/risk-overview";
+import PFFinancialsSheet from "./PFFinancialsSheet";
+import PFNonFinancialsTab, { PFNonFinancialsData } from "./PFNonFinancialsTab";
+import {
+  useRiskOverviewStore,
+  PFCompleteData,
+} from "@/stores/risk-overview-store";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { CFFinancialsData } from "@/types/risk-overview";
+import {
+  VALID_STEPS,
+  SHEET_CONFIG,
+  type Step,
+} from "@/constants/risk-overview-constants";
+import {
+  MOCK_COMBINED_REPORT,
+  MOCK_PF_REPORT,
+} from "@/constants/risk-overview";
 
-type Step =
-  | "model_info"
-  | "pf_financials"
-  | "pf_non_financials"
-  | "pf_reports"
-  | "cf_financials"
-  | "cf_non_financials"
-  | "cf_scoring"
-  | "combined_reports"
-  | "validation_review";
-
-type ProjectPath = "Pure PF" | "Combined (PF and Corporate)"
-
-interface CaseSheetFlowProps {
+interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-const MOCK_PF_REPORT: ReportSummaryData = {
-  customer: "Abuja Steel Roll",
-  projectType: "DRE Project",
-  yearOfFinancials: "09 Mar 1900",
-  financialRisk: 24.5,
-  operationalRisk: 24.5,
-  structureRisk: 24.5,
-  pfScore: "76%",
-  probabilityOfDefault: 1.96,
-  baselineCreditScore: "AA-",
-  finalCreditScore: "BBB+",
-};
+const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-const MOCK_COMBINED_REPORT: CombinedReportData = {
-  customer: "Abuja Steel Roll",
-  projectType: "DRE Project",
-  yearOfFinancials: "09 Mar 1900",
-  pf: {
-    financialRisk: 24.5,
-    operationalRisk: 24.5,
-    structureRisk: 24.5,
-    pfScore: 24.5,
-  },
-  cf: {
-    financialRisk: 24.5,
-    operationalRisk: 24.5,
-    structureRisk: 24.5,
-    cfScore: 24.5,
-  },
-  initialPFScore: "76%",
-  initialCFScore: "76%",
-  probabilityOfDefault: 1.96,
-  baselineCreditScore: "AA-",
-  finalCreditScore: "BBB+",
-};
+  // Zustand store
+  const {
+    currentStep,
+    caseId,
+    projectPath,
+    setCurrentStep,
+    setCaseId,
+    setProjectPath,
+    setPFFinancialsData,
+    setPFNonFinancialsData,
+    setCFFinancialsData,
+    setCFNonFinancialsData,
+    resetAll,
+  } = useRiskOverviewStore();
 
-const SHEET_WIDTH: Record<Step, string> = {
-  model_info: "sm:max-w-[500px]",
-  pf_financials: "sm:max-w-full",
-  pf_non_financials: "sm:max-w-full",
-  pf_reports: "sm:max-w-full",
-  cf_financials: "sm:max-w-full",
-  cf_non_financials: "sm:max-w-full",
-  cf_scoring: "sm:max-w-full",
-  combined_reports: "sm:max-w-full",
-  validation_review: "sm:max-w-full",
-};
+  /* ================= URL SYNC ================= */
 
-const SHEET_TITLE: Record<Step, string> = {
-  model_info: "Model Information",
-  pf_financials: "PF Financials",
-  pf_non_financials: "PF Non Financials",
-  pf_reports: "PF Reports",
-  cf_financials: "CF Financials",
-  cf_non_financials: "CF Non Financials",
-  cf_scoring: "CF Scoring Sheet",
-  combined_reports: "Combined Reports",
-  validation_review: "Validation Review",
-};
+  const updateUrl = (nextStep: Step, id?: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("step", nextStep);
+    id ? params.set("caseId", id) : params.delete("caseId");
 
-const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
-  const [step, setStep] = useState<Step>("model_info");
-  const [path, setPath] = useState<ProjectPath>("Pure PF");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
-  const [pfFinancialsData, setPFFinancialsData] =
-    useState<PFFinancialsData | null>(null);
-  const [pfNonFinancialsData, setPFNonFinancialsData] =
-    useState<PFNonFinancialsData | null>(null);
-  const [cfFinancialsData, setCFFinancialsData] =
-    useState<CFFinancialsData | null>(null);
+  /* Restore state from URL */
+  useEffect(() => {
+    if (!open) return;
+
+    const urlStep = searchParams.get("step") as Step;
+    const urlCaseId = searchParams.get("caseId");
+
+    if (urlStep && VALID_STEPS.includes(urlStep)) setCurrentStep(urlStep);
+    if (urlCaseId) setCaseId(urlCaseId);
+  }, [open, searchParams, setCurrentStep, setCaseId]);
+
+  const goTo = (next: Step, id?: string | null) => {
+    setCurrentStep(next);
+    updateUrl(next, id ?? caseId);
+  };
 
   const handleClose = () => {
+    router.replace(pathname, { scroll: false });
     onClose();
-    setTimeout(() => setStep("model_info"), 300);
+
+    setTimeout(() => {
+      resetAll();
+    }, 200);
   };
 
-  const handleModelInfoSuccess = (facilityType?: string) => {
-    if (facilityType === "Combined (PF and Corporate)") {
-      setPath("Combined (PF and Corporate)");
-    } else {
-      setPath("Pure PF");
-    }
-    setStep("pf_financials");
+  const handlers = {
+    modelInfo: (facilityType?: string, newCaseId?: string) => {
+      if (newCaseId) setCaseId(newCaseId);
+
+      const isCombined = facilityType === "Combined (PF & CF)";
+      setProjectPath(isCombined ? "Combined (PF & CF)" : "Pure PF");
+
+      setTimeout(() => {
+        goTo("pf_financials", newCaseId);
+      }, 50);
+    },
+
+    pfFinancials: (data: PFCompleteData) => {
+      setPFFinancialsData(data);
+      goTo("pf_non_financials");
+    },
+
+    pfNonFinancials: (data: PFNonFinancialsData) => {
+      setPFNonFinancialsData(data);
+      goTo(
+        projectPath === "Combined (PF & CF)" ? "cf_financials" : "pf_reports",
+      );
+    },
+
+    cfFinancials: (data: CFFinancialsData) => {
+      setCFFinancialsData(data);
+      goTo("cf_non_financials");
+    },
+
+    cfNonFinancials: (data: any) => {
+      setCFNonFinancialsData(data);
+      goTo("combined_reports");
+    },
+
+    submit: handleClose,
   };
 
-  const handlePFFinancialsNext = (data: PFFinancialsData) => {
-    setPFFinancialsData(data);
-    setStep("pf_non_financials");
-  };
-
-  const handlePFNonFinancialsNext = (data: PFNonFinancialsData) => {
-    setPFNonFinancialsData(data);
-    if (path === "Combined (PF and Corporate)") {
-      setStep("cf_financials");
-    } else {
-      setStep("pf_reports");
-    }
-  };
-
-  const handleCFFinancialsNext = (data: CFFinancialsData) => {
-    setCFFinancialsData(data);
-    setStep("cf_non_financials");
-  };
-
-  const handleCFNonFinancialsNext = (data: PFNonFinancialsData) => {
-    setStep("combined_reports");
-  };
-
-  const handleSubmitForValidation = () => {
-     handleClose();
-  };
-
-  // const handleApproveRating = () => {
-  //   setStep("cf_scoring");
-  // };
-
-  const renderContent = () => {
-    switch (step) {
+  const content = useMemo(() => {
+    switch (currentStep) {
       case "model_info":
         return (
-          <NewCaseSheet
-            onClose={handleClose}
-            onSuccess={(projectType) => handleModelInfoSuccess(projectType)}
-          />
+          <NewCaseSheet onClose={handleClose} onSuccess={handlers.modelInfo} />
         );
 
       case "pf_financials":
         return (
           <PFFinancialsSheet
             onClose={handleClose}
-            onNext={handlePFFinancialsNext}
+            onNext={handlers.pfFinancials}
             onSaveAsDraft={() => {}}
           />
         );
@@ -170,7 +143,7 @@ const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
         return (
           <PFNonFinancialsTab
             onClose={handleClose}
-            onNext={handlePFNonFinancialsNext}
+            onNext={handlers.pfNonFinancials}
             onSaveAsDraft={() => {}}
           />
         );
@@ -180,7 +153,7 @@ const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
           <PFReportsSheet
             onClose={handleClose}
             reportData={MOCK_PF_REPORT}
-            onSubmitForValidation={handleSubmitForValidation}
+            onSubmitForValidation={handlers.submit}
             onSaveAsDraft={() => {}}
           />
         );
@@ -189,7 +162,7 @@ const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
         return (
           <CFFinancialsSheet
             onClose={handleClose}
-            onNext={handleCFFinancialsNext}
+            onNext={handlers.cfFinancials}
             onSaveAsDraft={() => {}}
           />
         );
@@ -198,7 +171,7 @@ const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
         return (
           <CFNonFinancialsTab
             onClose={handleClose}
-            onNext={handleCFNonFinancialsNext}
+            onNext={handlers.cfNonFinancials}
             onSaveAsDraft={() => {}}
           />
         );
@@ -208,38 +181,29 @@ const CaseSheetFlow: React.FC<CaseSheetFlowProps> = ({ open, onClose }) => {
           <CombinedReportsSheet
             onClose={handleClose}
             reportData={MOCK_COMBINED_REPORT}
-            onSubmitForValidation={handleSubmitForValidation}
+            onSubmitForValidation={handlers.submit}
             onSaveAsDraft={() => {}}
           />
         );
-      // case "validation_review":
-      //   return (
-      //     <ValidationReviewSheet
-      //       onClose={handleClose}
-      //       reportData={MOCK_COMBINED_REPORT}
-      //       onReturnForRevision={() => setStep("combined_reports")}
-      //       onApproveRating={handleApproveRating}
-      //     />
-      //   );
 
       default:
         return null;
     }
-  };
+  }, [currentStep, projectPath]);
+
+  const config = SHEET_CONFIG[currentStep];
 
   return (
     <SheetWrapper
+      title={config.title}
+      width={config.width}
+      open={open}
+      setOpen={(val) => !val && handleClose()}
       headerClassName="bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] !text-white"
       titleClassName="text-white px-6 py-4"
       SheetContentClassName="p-0"
-      title={SHEET_TITLE[step]}
-      open={open}
-      setOpen={(val) => {
-        if (!val) handleClose();
-      }}
-      width={SHEET_WIDTH[step]}
     >
-      <div className="px-6">{renderContent()}</div>
+      <div className="px-6">{content}</div>
     </SheetWrapper>
   );
 };

@@ -12,11 +12,7 @@ import ExportTrigger from "@/components/shared/ExportTrigger";
 import { Pagination } from "@/components/shared/Pagination";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useGet } from "@/hooks/use-queries";
-import {
-  formatDate,
-  getFileNameFromTab,
-  formatColumnHeader,
-} from "@/lib/utils";
+import { formatDate, formatColumnHeader } from "@/lib/utils";
 import { PDApiItem } from "@/types/reporting";
 import { ApiResponse } from "@/types";
 import {
@@ -126,7 +122,7 @@ const PDModelOutput = () => {
           row[key] = (
             <span className="text-[#444846]">
               {typeof value === "number"
-                ? `${(value * 100).toFixed(4)}%`
+                ? `${(value * 100).toFixed(4)}`
                 : (value as string)}
             </span>
           );

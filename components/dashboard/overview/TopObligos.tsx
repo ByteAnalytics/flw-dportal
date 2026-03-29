@@ -6,7 +6,6 @@ import CustomTable, { TableColumn } from "@/components/ui/custom-table";
 import { Button } from "@/components/ui/button";
 import CustomDropdown, { DropdownItem } from "@/components/ui/custom-dropdown";
 import { useGet } from "@/hooks/use-queries";
-import { formatCurrency, formatPercentage } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ApiResponse } from "@/types";
 
@@ -68,9 +67,9 @@ export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
       name: (
         <span className="text-[#003A1B] font-medium">{o["Counter Party"]}</span>
       ),
-      ead: formatCurrency(o.EAD),
-      lgd: formatPercentage(o.LGD),
-      ecl: formatCurrency(o.ECL),
+      ead: o.EAD?.toFixed(2) ?? "0.00",
+      lgd: o.LGD?.toFixed(2) ?? "0.00",
+      ecl: o.ECL?.toFixed(2) ?? "0.00",
     }));
   }, [paginatedRows]);
 

@@ -7,7 +7,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import CustomButton from "@/components/ui/custom-button";
 import { useState } from "react";
 import { PF_NON_FINANCIALS_SECTIONS } from "@/constants/risk-cases";
 import { Button } from "@/components/ui/button";

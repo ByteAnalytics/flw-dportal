@@ -2,13 +2,16 @@
 "use client";
 
 import React from "react";
+import { CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AccordionSection from "@/components/shared/CaseAccordium";
 import FinancialTable from "./FinancialTable";
 import NonFinancialsTable from "./NonFinancialTable";
+import ShowstoppersTable from "./ShowstoppersTable";
+import ScoreSummaryCards from "./ScoreSummaryCards";
+import { formatDate } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useCaseDetails } from "@/hooks/use-risk-overview";
-import ShowstoppersTable from "./ShowstoppersTable";
 import { getShowstoppers } from "@/lib/risk-overview-utils";
 import {
   getCfBalanceSheetRows,
@@ -24,16 +27,10 @@ import {
 
 interface Props {
   onClose: () => void;
-  onReturnForRevision: () => void;
-  onApproveRating: () => void;
   caseId?: string | null;
 }
 
-const ValidationReviewSheet: React.FC<Props> = ({
-  onReturnForRevision,
-  onApproveRating,
-  caseId,
-}) => {
+const CaseDetailsSheet: React.FC<Props> = ({ onClose, caseId }) => {
   const { data, isLoading } = useCaseDetails(caseId || undefined);
 
   if (isLoading) return <LoadingSpinner />;
@@ -41,7 +38,7 @@ const ValidationReviewSheet: React.FC<Props> = ({
   const details = data?.data;
 
   if (!details) {
-    return <div className="p-6 text-gray-500">No data</div>;
+    return <div className="p-6 text-gray-500">No case details found</div>;
   }
 
   const combined = details.combined_results;
@@ -81,41 +78,53 @@ const ValidationReviewSheet: React.FC<Props> = ({
   const cfNonFinancialsRows = getCfNonFinancialsRows(details);
 
   return (
-    <div className="flex flex-col gap-4 pb-6 md:px-6 px-3">
-      {/* HEADER */}
-      <div className="border-b pb-2">
-        <span className="font-semibold text-teal-600">
-          {details.case_number}
+    <div className="flex flex-col gap-4 pb-6 md:px-0 px-3">
+      {/* STATUS */}
+      <div className="rounded-[10px] bg-green-50 border border-green-200 p-4 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <CheckCircle className="w-5 h-5 text-green-600" />
+          <span className="text-[14px] font-semibold text-green-700">
+            {details.status}
+          </span>
+        </div>
+        <span className="text-[13px] text-gray-400">
+          {details.reviewed_at
+            ? `Reviewed on ${formatDate(details.reviewed_at)}`
+            : "Not yet reviewed"}
         </span>
       </div>
 
       {/* INFO */}
-      <div className="bg-gray-50 p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="rounded-[10px] border bg-[#F9FAFB] p-4 grid grid-cols-2 sm:grid-cols-5 gap-4">
         <Info label="Customer" value={details.customer_name} />
         <Info label="Project Type" value={details.project_type} />
         <Info label="Rater" value={details.rater_name} />
+        <Info label="Validator" value={details.validator_name ?? "-"} />
         <Info label="Year" value={details.year_of_financials ?? "-"} />
       </div>
 
-      {/* PF FINANCIALS */}
+      {/* PF FINANCIALS - Balance Sheet */}
       {pfFinancialsRows.length > 0 && (
         <AccordionSection title="PF Financials - Balance Sheet">
           <FinancialTable rows={pfFinancialsRows} years={pfYears} />
         </AccordionSection>
       )}
 
+      {/* PF FINANCIALS - Income Statement */}
       {pfIncomeRows.length > 0 && (
         <AccordionSection title="PF Financials - Income Statement">
           <FinancialTable rows={pfIncomeRows} years={pfYears} />
         </AccordionSection>
       )}
 
+      {/* PF FINANCIALS - Cash Flow */}
       {pfCashFlowRows.length > 0 && (
         <AccordionSection title="PF Financials - Cash Flow">
           <FinancialTable rows={pfCashFlowRows} years={pfYears} />
         </AccordionSection>
       )}
 
+      {/* PF FINANCIALS - Ratios */}
       {pfRatiosRows.length > 0 && (
         <AccordionSection title="PF Financials - Ratios">
           <FinancialTable rows={pfRatiosRows} years={pfYears} />
@@ -129,7 +138,7 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </AccordionSection>
       )}
 
-      {/* CF FINANCIALS */}
+      {/* CF FINANCIALS - Balance Sheet */}
       {cfBalanceSheetRows.length > 0 && (
         <AccordionSection title="CF Financials - Balance Sheet">
           <FinancialTable
@@ -140,6 +149,7 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </AccordionSection>
       )}
 
+      {/* CF FINANCIALS - Income Statement */}
       {cfIncomeRows.length > 0 && (
         <AccordionSection title="CF Financials - Income Statement">
           <FinancialTable
@@ -150,6 +160,7 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </AccordionSection>
       )}
 
+      {/* CF FINANCIALS - Other Inputs */}
       {cfOtherInputsRows.length > 0 && (
         <AccordionSection title="CF Financials - Other Inputs">
           <FinancialTable
@@ -167,6 +178,7 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </AccordionSection>
       )}
 
+      {/* SHOWSTOPPERS */}
       {showstoppers.length > 0 && (
         <AccordionSection title="Showstoppers">
           <ShowstoppersTable showstoppers={showstoppers} />
@@ -174,39 +186,23 @@ const ValidationReviewSheet: React.FC<Props> = ({
       )}
 
       {/* SCORES */}
-      {combined && (
-        <div className="bg-blue-600 text-white p-4 rounded-lg grid grid-cols-2 sm:grid-cols-5 gap-4">
-          <Score label="Initial PF" value={combined.initialPFScore} />
-          <Score label="Initial CF" value={combined.initialCFScore} />
-          <Score label="PD" value={String(combined.probabilityOfDefault)} />
-          <Score label="Baseline" value={combined.baselineCreditScore} />
-          <Score label="Final" value={combined.finalCreditScore} />
-        </div>
-      )}
+      {combined && <ScoreSummaryCards reportData={combined} />}
 
-      {/* ACTIONS */}
-      <div className="flex gap-3 justify-end pt-4">
-        <Button variant="outline" onClick={onReturnForRevision}>
-          Return for Revision
+      {/* ACTION */}
+      <div className="flex justify-end pt-4">
+        <Button variant="outline" onClick={onClose} className="h-[40px] px-8">
+          Close
         </Button>
-        <Button onClick={onApproveRating}>Approve Rating</Button>
       </div>
     </div>
   );
 };
 
-const Info = ({ label, value }: any) => (
-  <div>
-    <p className="text-sm text-gray-400">{label}</p>
-    <p className="font-bold">{value}</p>
+const Info = ({ label, value }: { label: string; value: any }) => (
+  <div className="flex flex-col gap-1">
+    <span className="text-[13px] text-gray-400">{label}</span>
+    <span className="text-[15px] font-bold text-gray-900">{value}</span>
   </div>
 );
 
-const Score = ({ label, value }: any) => (
-  <div>
-    <p className="text-xs text-blue-200">{label}</p>
-    <p className="text-lg font-bold">{value}</p>
-  </div>
-);
-
-export default ValidationReviewSheet;
+export default CaseDetailsSheet;

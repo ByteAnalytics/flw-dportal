@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 
 interface Props {
@@ -25,11 +27,13 @@ const CFInputRow: React.FC<Props> = ({
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      readOnly={isCalculated}
+      disabled={isCalculated}
       className={`w-full h-[41px] px-3 text-right text-[12px] font-medium rounded-[8px] border outline-none
         ${
           isCalculated
-            ? "border-amber-300 bg-amber-50 text-amber-700"
-            : "border-gray-200 bg-InfraBorder text-gray-700"
+            ? "border-amber-300 bg-amber-50 text-amber-700 cursor-not-allowed"
+            : "border-gray-200 bg-InfraBorder text-gray-700 focus:border-emerald-400"
         }`}
       placeholder="0"
     />

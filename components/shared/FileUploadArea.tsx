@@ -16,7 +16,6 @@ interface FileUploadAreaProps {
 const FileUploadArea: React.FC<FileUploadAreaProps> = ({
   onFileSelect,
   onLinkSubmit,
-  acceptedFormats = ".csv, .xlsx",
   maxSize = 25,
   enableLink = false,
 }) => {
