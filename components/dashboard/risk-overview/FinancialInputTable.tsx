@@ -148,10 +148,7 @@ const FinancialInputTable: React.FC<Props> = ({
           const computedValue = evaluateFormula(row.formula, values, year);
           const currentValue = values[row.key]?.[year];
 
-          if (
-            currentValue !== computedValue.toString() &&
-            computedValue !== 0
-          ) {
+          if ((!currentValue || currentValue === "") && computedValue !== 0) {
             onChange(row.key, year, computedValue.toString());
           }
         }

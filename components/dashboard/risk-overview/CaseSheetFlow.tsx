@@ -19,12 +19,13 @@ import { CFFinancialsData } from "@/types/risk-overview";
 import {
   VALID_STEPS,
   SHEET_CONFIG,
-  type Step,
+  Step,
 } from "@/constants/risk-overview-constants";
 import {
   MOCK_COMBINED_REPORT,
   MOCK_PF_REPORT,
 } from "@/constants/risk-overview";
+import CreditHistorySheet from "./CreditHistorySheet";
 
 interface Props {
   open: boolean;
@@ -67,10 +68,18 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
 
     const urlStep = searchParams.get("step") as Step;
     const urlCaseId = searchParams.get("caseId");
+    const urlFacilityType = searchParams.get("facilityType");
 
     if (urlStep && VALID_STEPS.includes(urlStep)) setCurrentStep(urlStep);
     if (urlCaseId) setCaseId(urlCaseId);
-  }, [open, searchParams, setCurrentStep, setCaseId]);
+    if (urlFacilityType) {
+      setProjectPath(
+        urlFacilityType === "Combined (PF & CF)"
+          ? "Combined (PF & CF)"
+          : "Pure PF",
+      );
+    }
+  }, [open, searchParams, setCurrentStep, setCaseId, setProjectPath]);
 
   const goTo = (next: Step, id?: string | null) => {
     setCurrentStep(next);
@@ -106,7 +115,9 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
     pfNonFinancials: (data: PFNonFinancialsData) => {
       setPFNonFinancialsData(data);
       goTo(
-        projectPath === "Combined (PF & CF)" ? "cf_financials" : "pf_reports",
+        projectPath === "Combined (PF & CF)"
+          ? "cf_financials"
+          : "credit_history",
       );
     },
 
@@ -117,7 +128,15 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
 
     cfNonFinancials: (data: any) => {
       setCFNonFinancialsData(data);
-      goTo("combined_reports");
+      goTo("credit_history");
+    },
+
+    creditHistory: (data: { credit_history_adjustment: string }) => {
+      goTo(
+        projectPath === "Combined (PF & CF)"
+          ? "combined_reports"
+          : "pf_reports",
+      );
     },
 
     submit: handleClose,
@@ -172,6 +191,15 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
           <CFNonFinancialsTab
             onClose={handleClose}
             onNext={handlers.cfNonFinancials}
+            onSaveAsDraft={() => {}}
+          />
+        );
+
+      case "credit_history":
+        return (
+          <CreditHistorySheet
+            onClose={handleClose}
+            onNext={handlers.creditHistory}
             onSaveAsDraft={() => {}}
           />
         );

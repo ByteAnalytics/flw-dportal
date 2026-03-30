@@ -60,7 +60,8 @@ export const useSaveDraft = (
     | "pf_financials"
     | "pf_non_financials"
     | "cf_financials"
-    | "cf_non_financials",
+    | "cf_non_financials"
+    | "credit_history",
   caseId?: string,
 ) => {
   const savePFFinancials = useSavePFFinancials(caseId);
@@ -78,6 +79,8 @@ export const useSaveDraft = (
         return savePFNonFinancials;
       case "cf_non_financials":
         return saveCFNonFinancials;
+      case "credit_history":
+        return savePFFinancials; // Assuming credit history uses PF financials endpoint
       default:
         return savePFFinancials;
     }

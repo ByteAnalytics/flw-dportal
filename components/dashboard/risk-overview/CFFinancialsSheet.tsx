@@ -18,8 +18,6 @@ import {
   CF_BALANCE_SHEET_KEY_MAP,
   CF_INCOME_STATEMENT_KEY_MAP,
   CF_OTHER_INPUTS_KEY_MAP,
-  CF_BALANCE_ROWS,
-  CF_INCOME_ROWS,
 } from "@/constants/risk-overview-constants";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -93,12 +91,10 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
 
       Object.entries(balanceSheetMain).forEach(([apiKey, values]) => {
         const mappedKey = CF_BALANCE_SHEET_KEY_MAP[apiKey];
-        const isCalculated = CF_BALANCE_ROWS.find(
-          (r) => r.key === mappedKey,
-        )?.isCalculated;
-        if (mappedKey && !isCalculated && Array.isArray(values)) {
-          current[mappedKey] = values[0]?.toString() || "";
-          previous[mappedKey] = values[1]?.toString() || "";
+        if (mappedKey && Array.isArray(values)) {
+          current[mappedKey] =
+            values[0] !== undefined && values[0] !== null ? values[0].toString() : "";
+          previous[mappedKey] = values[1] !== undefined && values[1] !== null ? values[1].toString() : "";
         }
       });
 
@@ -113,11 +109,9 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
 
       Object.entries(incomeStatement).forEach(([apiKey, value]) => {
         const mappedKey = CF_INCOME_STATEMENT_KEY_MAP[apiKey];
-        const isCalculated = CF_INCOME_ROWS.find(
-          (r) => r.key === mappedKey,
-        )?.isCalculated;
-        if (mappedKey && !isCalculated) {
-          const stringValue = value?.toString() || "";
+        if (mappedKey) {
+          const stringValue =
+            value !== undefined && value !== null ? value.toString() : "";
           current[mappedKey] = stringValue;
           previous[mappedKey] = stringValue;
         }
@@ -134,7 +128,8 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
       Object.entries(otherDetails).forEach(([apiKey, value]) => {
         const mappedKey = CF_OTHER_INPUTS_KEY_MAP[apiKey];
         if (mappedKey) {
-          current[mappedKey] = value?.toString() || "";
+          current[mappedKey] =
+            value !== undefined && value !== null ? value.toString() : "";
         }
       });
 

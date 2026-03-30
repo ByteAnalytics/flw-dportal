@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PFFinancialsData, RowReturnType } from "@/types/risk-overview";
+import { RowReturnType } from "@/types/risk-overview";
 
 // Type-safe helper to extract non-financials value
 export const extractNonFinancialValue = (

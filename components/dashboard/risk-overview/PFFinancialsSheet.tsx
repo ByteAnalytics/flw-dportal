@@ -26,6 +26,7 @@ import {
   INCOME_STATEMENT_KEY_MAP,
   CASH_FLOW_KEY_MAP,
   RATIOS_KEY_MAP,
+  OTHER_INPUTS_KEY_MAP,
 } from "@/constants/risk-overview-constants";
 
 type FinancialValues = Record<string, Record<number, string>>;
@@ -80,10 +81,19 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   );
 
   const mapArrayToYears = (
-    dataArray: number[],
+    dataArray: number[] | undefined | null,
     yearsArray: number[],
   ): Record<number, string> => {
     const result: Record<number, string> = {};
+
+    // Guard against null/undefined dataArray
+    if (!dataArray || !Array.isArray(dataArray)) {
+      yearsArray.forEach((year) => {
+        result[year] = "";
+      });
+      return result;
+    }
+
     yearsArray.forEach((year, index) => {
       const value = dataArray[index];
       result[year] =
@@ -92,64 +102,90 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     return result;
   };
 
+  const safeObjectEntries = (obj: any): [string, any][] => {
+    // Guard against null/undefined or non-object
+    if (!obj || typeof obj !== "object") {
+      return [];
+    }
+    return Object.entries(obj);
+  };
+
   const populateDataFromResponse = (responseData: any, showToast = true) => {
-    const pfData = responseData.pf_financials;
+    const pfData = responseData?.pf_financials;
     if (!pfData) {
       toast.error("No PF financials data in response");
       return;
     }
 
     const apiYears = pfData.years;
-    setYears(apiYears);
+    if (apiYears && Array.isArray(apiYears) && apiYears.length > 0) {
+      setYears(apiYears);
+    }
 
+    // Balance Sheet
     const newBalanceSheet: FinancialValues = {};
-    Object.entries(pfData.balance_sheet).forEach(([apiKey, values]) => {
+    safeObjectEntries(pfData.balance_sheet).forEach(([apiKey, values]) => {
       const mappedKey = BALANCE_SHEET_KEY_MAP[apiKey];
-      const isCalculated = BALANCE_SHEET_ROWS.find(
-        (r) => r.key === mappedKey,
-      )?.isCalculated;
-      if (mappedKey && !isCalculated) {
+      if (mappedKey) {
         newBalanceSheet[mappedKey] = mapArrayToYears(
           values as number[],
-          apiYears,
+          apiYears || years,
         );
       }
     });
     setBalanceSheet(newBalanceSheet);
 
+    // Income Statement / Financial Inputs
     const newIncomeStatement: FinancialValues = {};
-    Object.entries(pfData.financial_inputs).forEach(([apiKey, values]) => {
+    safeObjectEntries(pfData.financial_inputs).forEach(([apiKey, values]) => {
       const mappedKey = INCOME_STATEMENT_KEY_MAP[apiKey];
-      const isCalculated = INCOME_STATEMENT_ROWS.find(
-        (r) => r.key === mappedKey,
-      )?.isCalculated;
-      if (mappedKey && !isCalculated) {
+      if (mappedKey) {
         newIncomeStatement[mappedKey] = mapArrayToYears(
           values as number[],
-          apiYears,
+          apiYears || years,
         );
       }
     });
     setIncomeStatement(newIncomeStatement);
 
+    // Cash Flow
     const newCashFlow: FinancialValues = {};
-    Object.entries(pfData.summary_cashflow).forEach(([apiKey, values]) => {
+    safeObjectEntries(pfData.summary_cashflow).forEach(([apiKey, values]) => {
       const mappedKey = CASH_FLOW_KEY_MAP[apiKey];
-      const isCalculated = CASH_FLOW_ROWS.find(
-        (r) => r.key === mappedKey,
-      )?.isCalculated;
-      if (mappedKey && !isCalculated) {
-        newCashFlow[mappedKey] = mapArrayToYears(values as number[], apiYears);
+      if (mappedKey) {
+        newCashFlow[mappedKey] = mapArrayToYears(
+          values as number[],
+          apiYears || years,
+        );
       }
     });
     setCashFlow(newCashFlow);
 
+    // Other Inputs
+    const newOtherInputs: FinancialValues = {};
+    safeObjectEntries(pfData.other_inputs).forEach(([apiKey, values]) => {
+      const mappedKey = OTHER_INPUTS_KEY_MAP[apiKey];
+      if (mappedKey) {
+        newOtherInputs[mappedKey] = mapArrayToYears(
+          values as number[],
+          apiYears || years,
+        );
+      }
+    });
+
+    console.log("Mapped Other Inputs:", newOtherInputs, pfData.other_inputs);
+    setOtherInputs(newOtherInputs);
+
+    // Ratios
     if (pfData.ratios) {
       const newRatios: FinancialValues = {};
-      Object.entries(pfData.ratios).forEach(([apiKey, values]) => {
+      safeObjectEntries(pfData.ratios).forEach(([apiKey, values]) => {
         const mappedKey = RATIOS_KEY_MAP[apiKey];
         if (mappedKey) {
-          newRatios[mappedKey] = mapArrayToYears(values as number[], apiYears);
+          newRatios[mappedKey] = mapArrayToYears(
+            values as number[],
+            apiYears || years,
+          );
         }
       });
       setRatios(newRatios);
@@ -172,15 +208,17 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     try {
       const response = await parseTemplate.mutateAsync(formData);
 
-      if (response.success && response.data) {
+      if (response?.success && response?.data) {
         populateDataFromResponse(response.data);
         setInputMode("upload");
         toast.success(response.message || "File uploaded successfully");
       } else {
-        toast.error(response.message || "Failed to parse file");
+        console.log(response?.message);
+        toast.error(response?.message || "Failed to parse file");
       }
     } catch (error: any) {
       console.error("Upload error:", error);
+      console.log("error message:", error?.message);
       toast.error(error?.message || "Failed to upload file. Please try again.");
     }
 

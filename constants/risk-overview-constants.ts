@@ -1,21 +1,3 @@
-/* =====================================================
-   RISK OVERVIEW MODULE - CONSTANTS & HELPERS
-   
-   This file centralizes all constants, mock data, and
-   utility functions used across risk-overview components
-   ===================================================== */
-
-// ============== TYPES ==============
-
-export type Step =
-  | "model_info"
-  | "pf_financials"
-  | "pf_non_financials"
-  | "pf_reports"
-  | "cf_financials"
-  | "cf_non_financials"
-  | "combined_reports";
-
 export interface FinancialRow {
   key: string;
   label: string;
@@ -26,15 +8,18 @@ export interface FinancialRow {
 
 // ============== SHEET CONFIGURATION ==============
 
-export const VALID_STEPS: Step[] = [
+export const VALID_STEPS = [
   "model_info",
   "pf_financials",
   "pf_non_financials",
   "pf_reports",
   "cf_financials",
   "cf_non_financials",
+  "credit_history",
   "combined_reports",
-];
+] as const;
+
+export type Step = (typeof VALID_STEPS)[number];
 
 export const SHEET_CONFIG: Record<Step, { title: string; width: string }> = {
   model_info: { title: "Model Information", width: "sm:max-w-[500px]" },
@@ -43,6 +28,10 @@ export const SHEET_CONFIG: Record<Step, { title: string; width: string }> = {
   pf_reports: { title: "PF Reports", width: "sm:max-w-[80%]" },
   cf_financials: { title: "CF Financials", width: "sm:max-w-[80%]" },
   cf_non_financials: { title: "CF Non Financials", width: "sm:max-w-[80%]" },
+  credit_history: {
+    title: "Credit History Adjustment",
+    width: "sm:max-w-[80%]",
+  },
   combined_reports: { title: "Combined Reports", width: "sm:max-w-[80%]" },
 };
 
@@ -233,7 +222,7 @@ export const CASH_FLOW_ROWS: FinancialRow[] = [
 ];
 
 export const OTHER_INPUTS_ROWS: FinancialRow[] = [
-  { key: "loanRepayment", label: "Loan repayments due within one year" },
+  { key: "loanRepayment", label: "Loan Repayments (Principal & Interest)" },
 ];
 
 export const RATIOS_ROWS: FinancialRow[] = [
@@ -256,7 +245,7 @@ export const RATIOS_ROWS: FinancialRow[] = [
   },
   { key: "dscrSeniorLoan", label: "DSCR - Senior Loan", isCalculated: true },
   {
-    key: "dscrSeniorAndConcessionaryLoan",
+    key: "dscrSeniorAndConcessionary",
     label: "DSCR - Senior and Concessionary Loan",
     isCalculated: true,
   },
@@ -272,7 +261,7 @@ export const RATIOS_ROWS: FinancialRow[] = [
   },
   { key: "averageLCOE", label: "Average LCOE", isCalculated: true },
   {
-    key: "averageLCOEGrant",
+    key: "averageLCOEByGrant",
     label: "Average LCOE / Grant",
     isCalculated: true,
   },
@@ -282,7 +271,7 @@ export const RATIOS_ROWS: FinancialRow[] = [
     isCalculated: true,
   },
   {
-    key: "averageDscrSeniorAndConcessionaryLoan",
+    key: "averageDscrSeniorAndConcessionary",
     label: "Average DSCR - Senior and Concessionary Loan",
     isCalculated: true,
   },
@@ -488,6 +477,10 @@ export const CASH_FLOW_KEY_MAP: Record<string, string> = {
   "Number Of Connections": "numberOfConnections",
 };
 
+export const OTHER_INPUTS_KEY_MAP: Record<string, string> = {
+  "Loan Repayments (Principal & Interest)": "loanRepayment",
+};
+
 export const RATIOS_KEY_MAP: Record<string, string> = {
   "Sales Growth": "salesGrowth",
   "Gross Profit Margin": "grossProfitMargin",
@@ -495,14 +488,14 @@ export const RATIOS_KEY_MAP: Record<string, string> = {
   "Interest to Revenue": "interestToRevenue",
   "Debt to Equity Ratio": "debtToEquityRatio",
   "DSCR - Senior Loan": "dscrSeniorLoan",
-  "DSCR - Senior and Concessionary Loan": "dscrSeniorAndConcessionaryLoan",
+  "DSCR - Senior and Concessionary Loan": "dscrSeniorAndConcessionary",
   "DSCR (Excluding Grants)": "dscrExcludingGrants",
   "Average Revenue Per User (ARPU)": "averageRevenuePerUser",
   "Average LCOE": "averageLCOE",
-  "Average LCOE / Grant": "averageLCOEGrant",
+  "Average LCOE / Grant": "averageLCOEByGrant",
   "Average DSCR - Senior Loan": "averageDscrSeniorLoan",
   "Average DSCR - Senior and Concessionary Loan":
-    "averageDscrSeniorAndConcessionaryLoan",
+    "averageDscrSeniorAndConcessionary",
   "Average DSCR - Senior Loan (Excluding Grants)":
     "averageDscrSeniorLoanExcludingGrants",
 };
@@ -519,6 +512,10 @@ export const CF_BALANCE_SHEET_KEY_MAP: Record<string, string> = {
   "Total: Other Current Liabilities": "otherCurrentLiabilities",
   "Long-Term Liabilities": "longTermLiabilities",
   "Shareholders' Funds": "shareholdersFunds",
+  "Total Current Assets": "totalCurrentAssets",
+  "Total Assets": "totalAssets",
+  "Total Liabilities": "totalLiabilities",
+  "NET ASSETS": "netAssets",
 };
 
 export const CF_INCOME_STATEMENT_KEY_MAP: Record<string, string> = {
