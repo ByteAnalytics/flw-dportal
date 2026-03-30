@@ -1,4 +1,7 @@
-import { CombinedReportData, ReportSummaryData } from "@/components/dashboard/risk-overview/CFReportsSheet";
+import {
+  CombinedReportData,
+  ReportSummaryData,
+} from "@/components/dashboard/risk-overview/CFReportsSheet";
 import { TableColumn } from "@/components/ui/custom-table";
 
 export const RECENT_RISK_CASES_COLUMN: TableColumn[] = [
@@ -74,6 +77,17 @@ export const dreProjectOptions = [
 export const yesNoOptions = [
   { label: "Yes", value: "yes" },
   { label: "No", value: "no" },
+];
+
+export const PROJECT_TYPE = [
+  {
+    label: "DRE",
+    value: "DRE",
+  },
+  {
+    label: "Others",
+    value: "Others",
+  },
 ];
 
 export const pfWeights = [

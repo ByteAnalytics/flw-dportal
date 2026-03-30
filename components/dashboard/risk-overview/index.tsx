@@ -77,15 +77,13 @@ const CaseOverviewPage = () => {
 
   const isLoading = casesLoading || dashboardLoading;
 
-  const goToPageIfDraft = (caseId: string) => {
-  setSelectedCaseId(caseId);
-
-  setIsSheetOpen(true);
-
-  router.push(
-    `/dashboard/ccr/overview?step=pf_financials&caseId=${caseId}&draft=true`,
-  );
-};
+  const goToPageIfDraft = (caseId: string, facilityType: string) => {
+    setSelectedCaseId(caseId);
+    setIsSheetOpen(true);
+    router.push(
+      `/dashboard/ccr/overview?step=pf_financials&caseId=${caseId}&facilityType=${encodeURIComponent(facilityType)}`,
+    );
+  };
 
   const tableRows = useMemo(() => {
     if (!casesData?.data) return [];
@@ -121,7 +119,7 @@ const CaseOverviewPage = () => {
               } else if (status?.toUpperCase() === "RETURNED") {
                 setActiveDetailsSheet("returned");
               } else if (status?.toUpperCase() === "DRAFT") {
-                goToPageIfDraft(c.id);
+                goToPageIfDraft(c.id, c.facility_type);
               } else {
                 setActiveDetailsSheet("details");
               }

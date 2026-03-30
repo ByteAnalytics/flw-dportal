@@ -4,16 +4,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { toast } from "sonner";
-
-// Types
-export type Step =
-  | "model_info"
-  | "pf_financials"
-  | "pf_non_financials"
-  | "pf_reports"
-  | "cf_financials"
-  | "cf_non_financials"
-  | "combined_reports";
+import { Step } from "@/constants/risk-overview-constants";
 
 export type ProjectPath = "Pure PF" | "Combined (PF & CF)";
 

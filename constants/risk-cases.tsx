@@ -1,7 +1,6 @@
 
 
 const STATUS_OPTIONS = [
-  "All Status",
   "Validated",
   "Draft",
   "Pending",

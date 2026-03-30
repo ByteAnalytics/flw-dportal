@@ -2,6 +2,9 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import AccordionSection from "@/components/shared/CaseAccordium";
+import ShowstoppersTable from "./ShowstoppersTable";
+import { getShowstoppers } from "@/lib/risk-overview-utils";
 
 export type ReportSummaryData = {
   customer: string;
@@ -35,6 +38,9 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
   const [activeTab, setActiveTab] = useState<"Report Summary" | "Full Report">(
     "Report Summary",
   );
+
+  // Get showstoppers data
+    const showstoppers = getShowstoppers(reportData);
 
   return (
     <div className="flex flex-col h-full">
@@ -113,6 +119,12 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
               </div>
             </div>
 
+            {showstoppers.length > 0 && (
+              <AccordionSection title="Showstoppers">
+                <ShowstoppersTable showstoppers={showstoppers} />
+              </AccordionSection>
+            )}
+
             {/* Row 2: Scores */}
             <div className="rounded-[10px] border border-gray-200 bg-InfraBorder p-4 grid xl:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-4">
               <div className="flex flex-col gap-1">
@@ -159,7 +171,7 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
+      <div className="px-6 py-4 border-t border-gray-200 flex flex-wrap items-center justify-end gap-3">
         <button
           type="button"
           onClick={onSaveAsDraft}

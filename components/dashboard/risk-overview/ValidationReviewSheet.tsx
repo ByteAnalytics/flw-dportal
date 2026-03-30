@@ -3,6 +3,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 import AccordionSection from "@/components/shared/CaseAccordium";
 import FinancialTable from "./FinancialTable";
 import NonFinancialsTable from "./NonFinancialTable";
@@ -21,6 +22,7 @@ import {
   getPfNonFinancialsRows,
   getPfRatiosRows,
 } from "@/lib/risk-overview-utils";
+import { useRouter } from "nextjs-toploader/app";
 
 interface Props {
   onClose: () => void;
@@ -34,6 +36,7 @@ const ValidationReviewSheet: React.FC<Props> = ({
   onApproveRating,
   caseId,
 }) => {
+  const router = useRouter();
   const { data, isLoading } = useCaseDetails(caseId || undefined);
 
   if (isLoading) return <LoadingSpinner />;
@@ -80,13 +83,29 @@ const ValidationReviewSheet: React.FC<Props> = ({
 
   const cfNonFinancialsRows = getCfNonFinancialsRows(details);
 
+  const handleEdit = () => {
+    // Navigate to the PF financials step with the case ID and facility type
+    router.push(
+      `/dashboard/ccr/overview?step=pf_financials&caseId=${caseId}&facilityType=${encodeURIComponent(details.facility_type)}`,
+    );
+  };
+
   return (
     <div className="flex flex-col gap-4 pb-6 md:px-6 px-3">
-      {/* HEADER */}
-      <div className="border-b pb-2">
+      {/* HEADER with Edit Button */}
+      <div className="border-b pb-2 flex justify-between items-center">
         <span className="font-semibold text-teal-600">
           {details.case_number}
         </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleEdit}
+          className="flex items-center gap-2 text-sm"
+        >
+          <Edit className="w-4 h-4" />
+          Edit Case
+        </Button>
       </div>
 
       {/* INFO */}

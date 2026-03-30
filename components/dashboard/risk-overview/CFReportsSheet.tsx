@@ -2,6 +2,9 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { getShowstoppers } from "@/lib/risk-overview-utils";
+import AccordionSection from "@/components/shared/CaseAccordium";
+import ShowstoppersTable from "./ShowstoppersTable";
 
 export type ReportSummaryData = {
   customer: string;
@@ -77,6 +80,8 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
   onSaveAsDraft,
   reportData,
 }) => {
+  // Get showstoppers data
+      const showstoppers = getShowstoppers(reportData);
   return (
     <div className="flex flex-col gap-6 pb-6">
       <div className="border-b border-gray-200">
@@ -133,6 +138,12 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
           </div>
         </InfoCard>
 
+        {showstoppers.length > 0 && (
+          <AccordionSection title="Showstoppers">
+            <ShowstoppersTable showstoppers={showstoppers} />
+          </AccordionSection>
+        )}
+
         <div className="rounded-[12px] bg-[#1A5FA8] p-5 grid grid-cols-2 sm:grid-cols-5 gap-4">
           {[
             { label: "Initial PF Score", value: reportData.initialPFScore },
@@ -162,7 +173,7 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
         </div>
       </div>
 
-      <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
+      <div className="px-6 py-4 border-t border-gray-200 flex flex-wrap items-center justify-end gap-3">
         <button
           type="button"
           onClick={onSaveAsDraft}

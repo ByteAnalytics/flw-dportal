@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const NewCaseSchema = z.object({
-  Is_this_a_DRE_project: z.string().min(1, "This field is required"),
+  select_project_type: z.string().min(1, "This field is required"),
   customer_name: z.string().min(1, "Customer name is required"),
   facility_type: z.string().min(1, "Facility type is required"),
   revenue_growth: z.string().min(1, "This field is required"),

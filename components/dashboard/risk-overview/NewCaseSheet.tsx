@@ -17,6 +17,7 @@ import {
   facilityTypeOptions,
   marketEventOptions,
   pfWeights,
+  PROJECT_TYPE,
   yesNoOptions,
 } from "@/constants/risk-overview";
 
@@ -66,7 +67,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
   const form = useForm<NewCaseFormData>({
     resolver: zodResolver(NewCaseSchema),
     defaultValues: {
-      Is_this_a_DRE_project: "",
+      select_project_type: "",
       customer_name: "",
       facility_type: "",
       revenue_growth: "",
@@ -103,7 +104,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
       const payload: any = {
         customer_name: data.customer_name,
         facility_type: data.facility_type,
-        project_type: data.Is_this_a_DRE_project === "yes" ? "DRE" : "Others",
+        project_type: data.select_project_type === "yes" ? "DRE" : "Others",
         consistent_revenue_growth: data.revenue_growth === "yes" ? "Yes" : "No",
         market_event_losses: data.counterparty_losses === "yes" ? "Yes" : "No",
         ...(data.counterparty_losses === "yes" && {
@@ -147,11 +148,11 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
             <CustomInputField
               control={control}
               fieldType={FormFieldType.SELECT}
-              name="Is_this_a_DRE_project"
-              label="Is this a DRE project?"
-              placeholder="select answer"
+              name="select_project_type"
+              label="Select Project Type"
+              placeholder="Select project Type"
               className="bg-InfraBorder rounded-[10px] h-[44px]"
-              options={yesNoOptions}
+              options={PROJECT_TYPE}
               disabled={isLoading}
             />
 
