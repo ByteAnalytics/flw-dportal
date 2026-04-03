@@ -5,6 +5,8 @@ interface TableRowHandlers {
   setSelectedCaseId: (id: string) => void;
   setActiveDetailsSheet: (sheet: ActiveDetailsSheet) => void;
   goToPageIfDraft: (id: string, facilityType: string) => void;
+  selectedRows: Set<string>;
+  handleRowSelect: (caseId: string) => void;
 }
 
 export function buildTableRows(
@@ -13,8 +15,13 @@ export function buildTableRows(
 ) {
   if (!data) return [];
 
-  const { setSelectedCaseId, setActiveDetailsSheet, goToPageIfDraft } =
-    handlers;
+  const {
+    setSelectedCaseId,
+    setActiveDetailsSheet,
+    goToPageIfDraft,
+    selectedRows,
+    handleRowSelect,
+  } = handlers;
 
   return data.map((c) => {
     const caseStatus = c.status?.toUpperCase() ?? "";
@@ -36,6 +43,14 @@ export function buildTableRows(
     };
 
     return {
+      checkbox: (
+        <input
+          type="checkbox"
+          checked={selectedRows.has(c.id)}
+          onChange={() => handleRowSelect(c.id)}
+          className="w-4 h-4 rounded border-gray-300 text-[#006F37] focus:ring-[#006F37] cursor-pointer"
+        />
+      ),
       caseId: (
         <span className="text-gray-500 font-medium">{c.case_number}</span>
       ),

@@ -29,6 +29,7 @@ import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { extractValidationPayload } from "@/lib/parse-validation-error";
 import type { ValidationErrorPayload } from "@/lib/parse-validation-error";
 import { ModelFormData, defaultModelFormData } from "@/types/model-execution";
+import { extractModelType } from "@/lib/model-execution-utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -53,9 +54,6 @@ const ModelExecution = () => {
     status: "idle",
     progress: 0,
   });
-  const [perModelState, setPerModelState] = useState<
-    Record<string, ModelExecutionState>
-  >({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorSheetOpen, setErrorSheetOpen] = useState(false);
   const [validationError, setValidationError] =
@@ -69,31 +67,11 @@ const ModelExecution = () => {
   const { startProgress, completeProgress, resetProgress, setUploadStep } =
     useUploadProgress();
 
-  const executeLGD = usePost<ApiResponse<ModelManagementApiResponse>, any>(
-    `/guarantees/lgd`,
+  // Single executor for all models
+  const executeModels = usePost<ApiResponse<ModelManagementApiResponse>, any>(
+    `/guarantees/run`,
     ["execution-models"],
   );
-  const executeEAD = usePost<ApiResponse<ModelManagementApiResponse>, any>(
-    `/guarantees/ead`,
-    ["execution-models"],
-  );
-  const executeECL = usePost<ApiResponse<ModelManagementApiResponse>, any>(
-    `/guarantees/ecl`,
-    ["execution-models"],
-  );
-  const executeCCF = usePost<ApiResponse<ModelManagementApiResponse>, any>(
-    `/guarantees/ccf`,
-    ["execution-models"],
-  );
-
-  const getExecutorForModel = (modelId: string) => {
-    const mid = modelId?.toLowerCase();
-    if (ExecutableModels.LGD.startsWith(mid)) return executeLGD;
-    if (ExecutableModels.EAD.startsWith(mid)) return executeEAD;
-    if (ExecutableModels.ECL.startsWith(mid)) return executeECL;
-    if (ExecutableModels.CCF.startsWith(mid)) return executeCCF;
-    return executeLGD;
-  };
 
   const buildPayload = (): FormData => {
     const fd = new FormData();
@@ -101,6 +79,12 @@ const ModelExecution = () => {
       "exposure_date",
       format(sharedFileData.exposure_date, "yyyy-MM-dd"),
     );
+
+    const selectedModelIds = selectedModels.map((id) => extractModelType(id));
+    // Add the models to run as a JSON string or comma-separated string
+    fd.append("models", JSON.stringify(selectedModelIds));
+    // Alternative: fd.append("models", selectedModels.join(","));
+
     if (sharedFileData.amortization_file)
       fd.append("amortization_file", sharedFileData.amortization_file);
     if (sharedFileData.asset_information_file)
@@ -110,6 +94,7 @@ const ModelExecution = () => {
       );
     if (sharedFileData.collateral_file)
       fd.append("collateral_file", sharedFileData.collateral_file);
+
     return fd;
   };
 
@@ -148,7 +133,6 @@ const ModelExecution = () => {
     setIsFileSheetOpen(false);
     setIsModalOpen(false);
     setExecutionState({ status: "idle", progress: 0 });
-    setPerModelState({});
     setShowSuccess(false);
     setValidationError(null);
     setErrorSheetOpen(false);
@@ -171,90 +155,67 @@ const ModelExecution = () => {
     setExecutionState({ status: "uploading", progress: 10 });
     const cleanupProgress = startProgress();
 
-    const initialPerModelState: Record<string, ModelExecutionState> = {};
-    selectedModels.forEach((id) => {
-      initialPerModelState[id] = { status: "uploading", progress: 10 };
-    });
-    setPerModelState(initialPerModelState);
+    const payload = buildPayload();
 
-    const progressStep = Math.floor(80 / selectedModels.length);
-    let currentProgress = 10;
-    let hasAnyFailure = false;
+    try {
+      setExecutionState({ status: "uploading", progress: 50 });
 
-    for (const modelId of selectedModels) {
-      const executor = getExecutorForModel(modelId);
-      const payload = buildPayload();
+      const response = await executeModels.mutateAsync(payload);
 
-      currentProgress += progressStep;
-      setExecutionState({ status: "uploading", progress: currentProgress });
-
-      try {
-        const response = await executor.mutateAsync(payload);
-        setPerModelState((prev) => ({
-          ...prev,
-          [modelId]: { status: "success", progress: 100 },
-        }));
-        toast.success(
-          `${modelId.toUpperCase()}: ${extractSuccessMessage(response)}`,
-        );
-      } catch (error: unknown) {
-        hasAnyFailure = true;
-        setUploadStep("error");
-
-        const validationPayload = extractValidationPayload(error);
-
-        if (validationPayload) {
-          setValidationError((prev) => prev ?? validationPayload);
-          setPerModelState((prev) => ({
-            ...prev,
-            [modelId]: {
-              status: "error",
-              progress: 0,
-              errorMessage: "Validation failed",
-            },
-          }));
-          toastIdRef.current = toast.error(
-            `${modelId.toUpperCase()}: Validation failed`,
-            {
-              description: "Your uploaded file contains validation issues",
-              duration: Infinity,
-            },
-          );
-        } else {
-          setPerModelState((prev) => ({
-            ...prev,
-            [modelId]: {
-              status: "error",
-              progress: 0,
-              errorMessage: extractErrorMessage(error),
-            },
-          }));
-          toastIdRef.current = toast.error(
-            `${modelId.toUpperCase()}: ${extractErrorMessage(error)}`,
-            {
-              duration: Infinity,
-            },
-          );
-        }
-      }
-    }
-
-    cleanupProgress();
-
-    if (hasAnyFailure) {
-      completeProgress();
-      setExecutionState({ status: "error", progress: currentProgress });
-    } else {
-      completeProgress();
       setExecutionState({ status: "success", progress: 100 });
+      setUploadStep("success");
+
+      toast.success(`Models executed: ${extractSuccessMessage(response)}`);
+
+      completeProgress();
+
       await queryClient.invalidateQueries({
         queryKey: ["execution-models"],
         exact: false,
         refetchType: "active",
       });
+
       setTimeout(() => setShowSuccess(true), 1500);
+    } catch (error: unknown) {
+      setUploadStep("error");
+
+      const validationPayload = extractValidationPayload(error);
+
+      if (validationPayload) {
+        setValidationError(validationPayload);
+        setExecutionState({
+          status: "error",
+          progress: 0,
+          errorMessage: "Validation failed",
+        });
+        toastIdRef.current = toast.error("Validation failed", {
+          description: "Your uploaded file contains validation issues",
+          duration: Infinity,
+        });
+      } else {
+        setExecutionState({
+          status: "error",
+          progress: 0,
+          errorMessage: extractErrorMessage(error),
+        });
+        toastIdRef.current = toast.error(extractErrorMessage(error), {
+          duration: Infinity,
+        });
+      }
+
+      completeProgress();
     }
-  }, [selectedModels, sharedFileData]);
+
+    cleanupProgress();
+  }, [
+    selectedModels,
+    sharedFileData,
+    executeModels,
+    startProgress,
+    completeProgress,
+    setUploadStep,
+    queryClient,
+  ]);
 
   const handleSheetSubmit = useCallback(() => {
     setIsFileSheetOpen(false);
@@ -283,7 +244,7 @@ const ModelExecution = () => {
           Model Execution
         </h1>
         <p className="text-base text-[#5B5F5E] font-[600]">
-          Run your models simultaneously
+          Run your selected models
         </p>
       </div>
 
@@ -337,7 +298,6 @@ const ModelExecution = () => {
         selectedModels={selectedModels}
         selectedModelFiles={selectedModelFiles}
         executionState={executionState}
-        perModelState={perModelState}
         showSuccess={showSuccess}
         onCancel={resetAllState}
         onBackToDashboard={resetAllState}

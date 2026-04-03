@@ -452,6 +452,7 @@ export const CF_OTHER_INPUT_ROWS: FinancialRow[] = Object.keys(
 }));
 
 export const RECENT_RISK_CASES_COLUMN: TableColumn[] = [
+  { key: "checkbox", label: "", width: "w-12" },
   { key: "caseId", label: "CASE NO", width: "w-[100px]" },
   {
     key: "customerName",

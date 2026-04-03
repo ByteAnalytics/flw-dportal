@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CustomTable from "@/components/ui/custom-table";
 import { StatCard } from "@/components/shared/StatCard";
@@ -10,13 +10,14 @@ import { CustomerSvg, EadSvg, EclSvg, LGDSvg, NPLSvg } from "@/svg";
 import { RECENT_RISK_CASES_COLUMN } from "@/constants/risk-overview";
 import CaseSheetFlow from "./CaseSheetFlow";
 import { CaseSheets } from "./CaseSheets";
-import { useGet } from "@/hooks/use-queries";
+import { useGet, useDynamicDelete } from "@/hooks/use-queries";
 import { ApiResponse, PaginatedResponse } from "@/types";
 import { StatCardSkeleton, TableSkeleton } from "@/skeleton";
 import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 import { useRouter } from "nextjs-toploader/app";
 import { CaseItem } from "@/types/risk-overview";
 import { buildTableRows } from "@/lib/build-table-rows";
+import { toast } from "sonner";
 
 interface DashboardStats {
   total_cases: number;
@@ -58,6 +59,8 @@ const STAT_CARDS = (stats?: DashboardStats) => [
 const CaseOverviewPage = () => {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
 
   const {
     isSheetOpen,
@@ -68,21 +71,89 @@ const CaseOverviewPage = () => {
     setSelectedCaseId,
   } = useRiskOverviewStore();
 
-  const { data: casesRes, isLoading: casesLoading } = useGet<
-    ApiResponse<PaginatedResponse<CaseItem>>
-  >(
+  const {
+    data: casesRes,
+    isLoading: casesLoading,
+    refetch,
+  } = useGet<ApiResponse<PaginatedResponse<CaseItem>>>(
     ["cases", currentPage.toString()],
     `/crr/cases?page=${currentPage}&page_size=10`,
     { refetchOnMount: "always" },
   );
 
-  const { data: dashboardRes, isLoading: dashboardLoading } = useGet<
-    ApiResponse<DashboardResponse>
-  >(["cases-dashboard"], `/crr/cases/dashboard`, { refetchOnMount: "always" });
+  const {
+    data: dashboardRes,
+    isLoading: dashboardLoading,
+    refetch: refetchDashboard,
+  } = useGet<ApiResponse<DashboardResponse>>(
+    ["cases-dashboard"],
+    `/crr/cases/dashboard`,
+    { refetchOnMount: "always" },
+  );
+
+  const deleteCase = useDynamicDelete<any>();
 
   const casesData = casesRes?.data;
   const stats = dashboardRes?.data?.stats;
   const totalPages = casesData?.pages ?? 1;
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedRows(new Set());
+      setSelectAll(false);
+    } else {
+      const allIds = casesData?.data?.map((c) => c.id) ?? [];
+      setSelectedRows(new Set(allIds));
+      setSelectAll(true);
+    }
+  };
+
+  const handleRowSelect = (caseId: string) => {
+    const updated = new Set(selectedRows);
+    if (updated.has(caseId)) updated.delete(caseId);
+    else updated.add(caseId);
+    setSelectedRows(updated);
+    setSelectAll(updated.size === (casesData?.data?.length ?? 0));
+  };
+
+  const handleDeleteSelected = async () => {
+    const selectedIds = Array.from(selectedRows);
+
+    if (selectedIds.length === 0) {
+      toast.error("Please select at least one case to delete");
+      return;
+    }
+
+    try {
+      let url = "/crr/cases";
+
+      if (
+        !(selectAll && selectedIds.length === (casesData?.data?.length ?? 0))
+      ) {
+        const queryParams = selectedIds.map((id) => `id=${id}`).join("&");
+        url = `/crr/cases${queryParams?`?${queryParams}`:""}`;
+      }
+
+      await deleteCase.mutateAsync(url);
+
+      toast.success(
+        selectAll && selectedIds.length === (casesData?.data?.length ?? 0)
+          ? "Successfully deleted all cases"
+          : `Successfully deleted ${selectedIds.length} case(s)`,
+      );
+
+      setSelectedRows(new Set());
+      setSelectAll(false);
+      refetch();
+      refetchDashboard();
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to delete cases. Please try again.",
+      );
+      console.error("Delete error:", error);
+    }
+  };
 
   const goToPageIfDraft = useCallback(
     (caseId: string, facilityType: string) => {
@@ -99,7 +170,11 @@ const CaseOverviewPage = () => {
     setSelectedCaseId,
     setActiveDetailsSheet,
     goToPageIfDraft,
+    selectedRows,
+    handleRowSelect,
   });
+
+  const hasSelectedRows = selectedRows.size > 0;
 
   if (casesLoading || dashboardLoading) {
     return (
@@ -149,10 +224,30 @@ const CaseOverviewPage = () => {
               onNext={() => setCurrentPage((p) => p + 1)}
             />
           </div>
+
+          {hasSelectedRows && (
+            <div className="flex justify-between items-center bg-red-50 p-4 rounded-lg border border-red-200 mb-4">
+              <div className="text-red-800">
+                <span className="font-medium">{selectedRows.size}</span> case(s)
+                selected
+              </div>
+              <Button
+                onClick={handleDeleteSelected}
+                disabled={deleteCase.isPending}
+                className="!h-[43px] bg-red-600 hover:bg-red-700 text-white"
+              >
+                {deleteCase.isPending ? "Deleting..." : "Delete Selected"}
+                <Trash2 className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          )}
+
           <CustomTable
             columns={RECENT_RISK_CASES_COLUMN}
             rows={tableRows}
             emptyMessage="No cases available"
+            hasCheckbox
+            isActionOnRow
           />
         </div>
 
@@ -166,6 +261,7 @@ const CaseOverviewPage = () => {
         activeDetailsSheet={activeDetailsSheet}
         selectedCaseId={selectedCaseId}
         setActiveDetailsSheet={setActiveDetailsSheet}
+        selectedCaseDetails={casesData?.data?.find((c) => c.id === selectedCaseId) as CaseItem}
         setIsSheetOpen={setIsSheetOpen}
       />
     </>

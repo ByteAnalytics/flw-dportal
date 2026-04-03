@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import { CustomTabs } from "@/components/shared/CustomTab";
-import ReportTable from "./ReportTable";
 import { useGet } from "@/hooks/use-queries";
 import { Pagination } from "@/components/shared/Pagination";
 import { ApiResponse } from "@/types";
@@ -19,6 +18,7 @@ import {
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useSearchParams } from "next/navigation";
 import { getFilterValue } from "@/lib/reporting-utils";
+import ReportTable from "./ReportTable";
 
 const Reporting = () => {
   const params = useSearchParams();
@@ -41,15 +41,13 @@ const Reporting = () => {
     return baseUrl;
   };
 
-  const { data, isLoading } = useGet<ApiResponse<ExecutionModelsResponse>>(
-    ["execution-models", pageNumber?.toString(), activeTab],
-    buildApiUrl(),
-    {
-      refetchOnMount: "always",
-      refetchOnWindowFocus: true,
-      staleTime: 0,
-    },
-  );
+  const { data, isLoading, refetch } = useGet<
+    ApiResponse<ExecutionModelsResponse>
+  >(["execution-models", pageNumber?.toString(), activeTab], buildApiUrl(), {
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
 
   const transformedData = useMemo(() => {
     if (data?.data) {
@@ -114,6 +112,7 @@ const Reporting = () => {
         modelCategory: getModelCategory(),
         status: getStatus(),
         executionStatus: model.execution_status,
+        errorUser: model.error_user,
         id: model.id,
       };
     });
@@ -141,6 +140,7 @@ const Reporting = () => {
       content: renderTabContent(
         <>
           <ReportTable
+            onDeleteSuccess={() => refetch()}
             data={getFilteredData()}
             showModelCategory={true}
             currentTab="all"
@@ -164,6 +164,7 @@ const Reporting = () => {
       content: renderTabContent(
         <>
           <ReportTable
+            onDeleteSuccess={() => refetch()}
             data={getFilteredData()}
             showModelCategory={false}
             currentTab="pd-model"
@@ -187,6 +188,7 @@ const Reporting = () => {
       content: renderTabContent(
         <>
           <ReportTable
+            onDeleteSuccess={() => refetch()}
             data={getFilteredData()}
             showModelCategory={false}
             currentTab="fli-scalar"
@@ -210,6 +212,7 @@ const Reporting = () => {
       content: renderTabContent(
         <>
           <ReportTable
+            onDeleteSuccess={() => refetch()}
             data={getFilteredData()}
             showModelCategory={false}
             currentTab="lgd-model"
@@ -233,6 +236,7 @@ const Reporting = () => {
       content: renderTabContent(
         <>
           <ReportTable
+            onDeleteSuccess={() => refetch()}
             data={getFilteredData()}
             showModelCategory={false}
             currentTab="ead-model"
@@ -256,6 +260,7 @@ const Reporting = () => {
       content: renderTabContent(
         <>
           <ReportTable
+            onDeleteSuccess={() => refetch()}
             data={getFilteredData()}
             showModelCategory={false}
             currentTab="ecl-model"

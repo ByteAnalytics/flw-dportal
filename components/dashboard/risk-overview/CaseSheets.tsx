@@ -2,23 +2,27 @@ import { SheetWrapper } from "@/components/ui/custom-sheet";
 import CaseDetailsSheet from "./CaseDetailsSheet";
 import { ReturnedCaseSheet } from "./ReturnedCaseSheet";
 import ValidationReviewSheet from "./ValidationReviewSheet";
-import { ActiveDetailsSheet } from "@/types/risk-overview";
+import { ActiveDetailsSheet, CaseItem } from "@/types/risk-overview";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "nextjs-toploader/app";
 
 interface CaseSheetsProps {
   activeDetailsSheet: ActiveDetailsSheet;
   selectedCaseId: string | null;
   setActiveDetailsSheet: (sheet: ActiveDetailsSheet) => void;
   setIsSheetOpen: (open: boolean) => void;
+  selectedCaseDetails: CaseItem;
 }
 
 export const CaseSheets = ({
   activeDetailsSheet,
   selectedCaseId,
+  selectedCaseDetails,
   setActiveDetailsSheet,
   setIsSheetOpen,
 }: CaseSheetsProps) => {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const close = () => setActiveDetailsSheet(null);
 
@@ -30,6 +34,14 @@ export const CaseSheets = ({
       });
     }
     close();
+  };
+
+  const handleEdit = () => {
+    close();
+    router.push(
+      `/dashboard/ccr/overview?step=pf_financials&caseId=${selectedCaseId}&facilityType=${encodeURIComponent(selectedCaseDetails?.facility_type || "")}&isValidating=true`,
+    );
+    setIsSheetOpen(true);
   };
 
   return (
@@ -61,7 +73,7 @@ export const CaseSheets = ({
           <ReturnedCaseSheet
             caseId={selectedCaseId}
             onClose={close}
-            onEditAndResubmit={close}
+            onEditAndResubmit={handleEdit}
           />
         )}
       </SheetWrapper>

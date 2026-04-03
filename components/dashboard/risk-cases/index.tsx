@@ -1,11 +1,17 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { ChevronLeft, ChevronRight, ChevronDown, Search } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CustomTable from "@/components/ui/custom-table";
 import CustomDropdown, { DropdownItem } from "@/components/ui/custom-dropdown";
-import { useGet } from "@/hooks/use-queries";
+import { useGet, useDynamicDelete } from "@/hooks/use-queries";
 import {
   facilityTypeOptions,
   RECENT_RISK_CASES_COLUMN,
@@ -19,6 +25,7 @@ import CaseSheetFlow from "../risk-overview/CaseSheetFlow";
 import { CaseSheets } from "../risk-overview/CaseSheets";
 import { buildTableRows } from "@/lib/build-table-rows";
 import { TableSkeleton } from "@/skeleton";
+import { toast } from "sonner";
 
 const STATUS_API_MAP: Record<string, string> = {
   "Pending Review": "Pending_Review",
@@ -34,6 +41,8 @@ const RiskCases = () => {
   const [selectedFacility, setSelectedFacility] =
     useState("All Facility Types");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
 
   const {
     isSheetOpen,
@@ -51,9 +60,11 @@ const RiskCases = () => {
     search,
   });
 
-  const { data: casesResponse, isLoading: casesLoading } = useGet<
-    ApiPaginatedResponse<CaseItem>
-  >(
+  const {
+    data: casesResponse,
+    isLoading: casesLoading,
+    refetch,
+  } = useGet<ApiPaginatedResponse<CaseItem>>(
     [
       "risk-cases",
       currentPage.toString(),
@@ -65,11 +76,70 @@ const RiskCases = () => {
     { refetchOnMount: "always" },
   );
 
+  const deleteCase = useDynamicDelete<any>();
+
   const casesData = casesResponse?.data;
   const totalPages = casesData?.pages ?? 1;
   const currentPageNum = casesData?.page ?? currentPage;
 
   const resetPage = () => setCurrentPage(1);
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedRows(new Set());
+      setSelectAll(false);
+    } else {
+      const allIds = casesData?.data?.map((c) => c.id) ?? [];
+      setSelectedRows(new Set(allIds));
+      setSelectAll(true);
+    }
+  };
+
+  const handleRowSelect = (caseId: string) => {
+    const updated = new Set(selectedRows);
+    if (updated.has(caseId)) updated.delete(caseId);
+    else updated.add(caseId);
+    setSelectedRows(updated);
+    setSelectAll(updated.size === (casesData?.data?.length ?? 0));
+  };
+
+  const handleDeleteSelected = async () => {
+    const selectedIds = Array.from(selectedRows);
+
+    if (selectedIds.length === 0) {
+      toast.error("Please select at least one case to delete");
+      return;
+    }
+
+    try {
+      let url = "/crr/cases";
+
+      if (
+        !(selectAll && selectedIds.length === (casesData?.data?.length ?? 0))
+      ) {
+        const queryParams = selectedIds.map((id) => `id=${id}`).join("&");
+        url = `/crr/cases${queryParams?`?${queryParams}`:""}`;
+      }
+
+      await deleteCase.mutateAsync(url);
+
+      toast.success(
+        selectAll && selectedIds.length === (casesData?.data?.length ?? 0)
+          ? "Successfully deleted all cases"
+          : `Successfully deleted ${selectedIds.length} case(s)`,
+      );
+
+      setSelectedRows(new Set());
+      setSelectAll(false);
+      refetch();
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to delete cases. Please try again.",
+      );
+      console.error("Delete error:", error);
+    }
+  };
 
   const goToPageIfDraft = useCallback(
     (caseId: string, facilityType: string) => {
@@ -86,6 +156,8 @@ const RiskCases = () => {
     setSelectedCaseId,
     setActiveDetailsSheet,
     goToPageIfDraft,
+    selectedRows,
+    handleRowSelect,
   });
 
   const facilityDropdownItems: DropdownItem[] = [
@@ -121,6 +193,8 @@ const RiskCases = () => {
       },
     })),
   ];
+
+  const hasSelectedRows = selectedRows.size > 0;
 
   return (
     <>
@@ -159,8 +233,23 @@ const RiskCases = () => {
 
         <div>
           {totalPages > 0 && (
-            <div className="flex justify-end mb-4">
-              <div className="flex items-center gap-3">
+            <div className="flex justify-between items-center mb-4">
+              {hasSelectedRows && (
+                <div className="flex items-center gap-3 bg-red-50 p-3 rounded-lg border border-red-200">
+                  <span className="text-red-800 font-medium">
+                    {selectedRows.size} case(s) selected
+                  </span>
+                  <Button
+                    onClick={handleDeleteSelected}
+                    disabled={deleteCase.isPending}
+                    className="h-[35px] bg-red-600 hover:bg-red-700 text-white text-sm"
+                  >
+                    {deleteCase.isPending ? "Deleting..." : "Delete Selected"}
+                    <Trash2 className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              )}
+              <div className="flex items-center gap-3 ml-auto">
                 <span className="text-sm text-gray-600">
                   Page {currentPageNum} of {totalPages}
                 </span>
@@ -197,6 +286,8 @@ const RiskCases = () => {
               columns={RECENT_RISK_CASES_COLUMN}
               rows={tableRows}
               emptyMessage="No cases available"
+              hasCheckbox
+              isActionOnRow
             />
           )}
         </div>
@@ -212,6 +303,7 @@ const RiskCases = () => {
         selectedCaseId={selectedCaseId}
         setActiveDetailsSheet={setActiveDetailsSheet}
         setIsSheetOpen={setIsSheetOpen}
+        selectedCaseDetails={casesData?.data?.find((c) => c.id === selectedCaseId) as CaseItem}
       />
     </>
   );
