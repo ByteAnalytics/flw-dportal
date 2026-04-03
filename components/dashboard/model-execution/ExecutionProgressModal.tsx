@@ -5,8 +5,9 @@ import { CustomModal } from "@/components/ui/custom-modal";
 import SuccessModal from "@/components/shared/SuccessModal";
 import CustomButton from "@/components/ui/custom-button";
 import { FileItem } from "@/components/shared/FileItems";
-import { models } from "@/constants/model-execution";
 import { formatFileSize } from "@/lib/utils";
+import { models } from "@/constants/model-execution";
+import { extractModelType } from "@/lib/model-execution-utils";
 
 export type ModelExecutionStatus =
   | "idle"
@@ -27,8 +28,6 @@ interface ExecutionProgressModalProps {
   selectedModels: string[];
   selectedModelFiles: Record<string, File | null>;
   executionState: ModelExecutionState;
-  // ✅ Each model's independent state
-  perModelState: Record<string, ModelExecutionState>;
   showSuccess: boolean;
   onCancel: () => void;
   onBackToDashboard: () => void;
@@ -45,7 +44,6 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
   selectedModels,
   selectedModelFiles,
   executionState,
-  perModelState,
   showSuccess,
   onCancel,
   onBackToDashboard,
@@ -55,13 +53,17 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
 }) => {
   const filteredModels = models.filter((m) => selectedModels.includes(m.id));
 
-  // ✅ Only block closing/cancelling while at least one model is still in flight
-  const isRunning = executionState.status === "uploading";
+  // Get the first file to display (since all models share the same files)
+  const firstModel = filteredModels[0];
+  const sharedFile = firstModel ? selectedModelFiles[firstModel.id] : null;
 
-  // ✅ True only if every model that has settled came back as success
-  const hasAnyError = Object.values(perModelState).some(
-    (s) => s.status === "error",
-  );
+  // Format model names for display
+  const modelNames = filteredModels
+    .map((m) => extractModelType(m.id).toUpperCase())
+    .join(", ");
+
+  const isRunning = executionState.status === "uploading";
+  const hasError = executionState.status === "error";
 
   const renderContent = () => {
     if (showSuccess) {
@@ -81,34 +83,24 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
     return (
       <div className="space-y-[1.5rem]">
         <div className="flex flex-col gap-3">
-          {filteredModels.map((model) => {
-            const file = selectedModelFiles[model.id];
-            if (!file) return null;
-            const modelState = perModelState[model.id] ?? executionState;
-
-            return (
-              <div key={model.id} className="flex flex-col gap-1">
-                <p className="text-xs font-[600] text-[#5B5F5E] uppercase tracking-wide">
-                  {model.title}
-                </p>
-                <FileItem
-                  fileName={file.name}
-                  fileSize={formatFileSize(file.size)}
-                  status={modelState.status}
-                  progress={modelState.progress}
-                  onRemove={!isRunning ? onCancel : undefined}
-                  onReplace={!isRunning ? onCancel : undefined}
-                  onViewErrorLog={
-                    modelState.status === "error" ? onViewErrorLog : undefined
-                  }
-                  showActions={!isRunning}
-                  validationError={
-                    modelState.status === "error" ? validationError : null
-                  }
-                />
-              </div>
-            );
-          })}
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-[600] text-[#5B5F5E] uppercase tracking-wide">
+              Executing Models: {modelNames}
+            </p>
+            {sharedFile && (
+              <FileItem
+                fileName={sharedFile.name}
+                fileSize={formatFileSize(sharedFile.size)}
+                status={executionState.status}
+                progress={executionState.progress}
+                onRemove={!isRunning ? onCancel : undefined}
+                onReplace={!isRunning ? onCancel : undefined}
+                onViewErrorLog={hasError ? onViewErrorLog : undefined}
+                showActions={!isRunning}
+                validationError={hasError ? validationError : null}
+              />
+            )}
+          </div>
         </div>
 
         {isRunning ? (
@@ -118,7 +110,7 @@ export const ExecutionProgressModal: React.FC<ExecutionProgressModalProps> = ({
             textClassName="!text-[0.875rem] font-[600]"
             className="w-full border-red-300 text-red-600 bg-red-50 rounded-[1.25rem]"
           />
-        ) : hasAnyError ? (
+        ) : hasError ? (
           <CustomButton
             title="Dismiss"
             onClick={onCancel}

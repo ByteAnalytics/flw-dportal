@@ -206,20 +206,20 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
             )}
 
             {/* Row 2: Scores */}
-            <div className="rounded-[10px] border border-gray-200 bg-InfraBorder p-4 grid xl:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-4">
+            <div className="rounded-[12px] bg-[#1A5FA8] p-4 grid md:grid-cols-2 grid-cols-1 gap-4">
               <div className="flex flex-col gap-1">
-                <span className="text-[13px] font-medium text-gray-400">
+                <span className="text-[13px] font-medium text-white">
                   PF Score
                 </span>
-                <span className="text-[20px] font-bold text-gray-900">
+                <span className="text-[20px] font-bold text-white">
                   {pfScore}
                 </span>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-[13px] font-medium text-gray-400">
+                <span className="text-[13px] font-medium text-white">
                   Baseline Credit Score Rating
                 </span>
-                <span className="text-[20px] font-bold text-gray-900">
+                <span className="text-[20px] font-bold text-white">
                   {baselineScore}
                 </span>
               </div>

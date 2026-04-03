@@ -155,7 +155,6 @@ export const isModelRunnable = (
   if (ExecutableModels.LGD.startsWith(id)) return hasAllThreeFiles(data.lgd);
   if (ExecutableModels.EAD.startsWith(id)) return hasAllThreeFiles(data.ead);
   if (ExecutableModels.ECL.startsWith(id)) return hasAllThreeFiles(data.ecl);
-  if (ExecutableModels.CCF.startsWith(id)) return hasAllThreeFiles(data.ccf);
   return true;
 };
 

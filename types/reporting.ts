@@ -566,6 +566,7 @@ export interface ReportData {
   modelCategory: string;
   status: reportStatus;
   executionStatus: string;
+  errorUser?: string;
   id: string;
 }
 

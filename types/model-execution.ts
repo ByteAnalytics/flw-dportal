@@ -26,6 +26,7 @@ export interface ExecutionModel {
   report_exported: boolean;
   user_id: string;
   execution_status: reportStatus;
+  error_user?: string;
   celery_task_id: string;
   finished_at: string | null;
 }
@@ -50,6 +51,7 @@ export interface ReportData {
   modelCategory: string;
   status: reportStatus;
   executionStatus: string;
+  errorUser?: string;
   id: string;
 }
 

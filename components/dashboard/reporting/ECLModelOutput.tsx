@@ -13,7 +13,12 @@ import { Pagination } from "@/components/shared/Pagination";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { StatCard } from "@/components/shared/StatCard";
 import { useGet } from "@/hooks/use-queries";
-import { formatDate, formatNumber } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatDate,
+  formatNumber,
+  formatPercentage,
+} from "@/lib/utils";
 import { ECLApiItem } from "@/types/reporting";
 import { ApiResponse } from "@/types";
 import { CustomerSvg, EadSvg, EclSvg, LGDSvg, NPLSvg } from "@/svg";
@@ -65,8 +70,6 @@ const ECLModelOutput: React.FC = () => {
     `/guarantees/runs/${id}/result?${buildQueryString()}`,
   );
 
-
-
   const eclItem = data?.data;
 
   const eclSummary = eclItem?.ecl_summary;
@@ -87,7 +90,7 @@ const ECLModelOutput: React.FC = () => {
       ),
       "Carrying Amount": (
         <span className="text-[#444846]">
-          {item["Carrying Amount"].toFixed(4)}
+          {formatCurrency(Number(item["Carrying Amount"]))}
         </span>
       ),
       Baseline: (
@@ -110,7 +113,9 @@ const ECLModelOutput: React.FC = () => {
         </span>
       ),
       "ECL Ratio": (
-        <span className="text-[#444846]">{item["ECL Ratio"].toFixed(4)}</span>
+        <span className="text-[#444846]">
+          {formatPercentage(item["ECL Ratio"])}
+        </span>
       ),
     }));
   }, [rawRows]);
