@@ -92,3 +92,9 @@ export interface PaginationParams {
 }
 
 export type ApiPaginatedResponse<T> = ApiResponse<PaginatedResponse<T>>;
+
+
+
+
+
+

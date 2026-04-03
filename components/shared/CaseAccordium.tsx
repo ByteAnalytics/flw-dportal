@@ -13,10 +13,10 @@ const AccordionSection = ({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border border-gray-200 rounded-[10px] overflow-hidden">
+    <div className="border bg-white border-gray-200 rounded-[10px] overflow-hidden">
       <button
         onClick={() => setOpen((p) => !p)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-white text-[14px] font-semibold text-gray-800"
+        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 text-[14px] font-semibold text-gray-800"
       >
         {title}
         {open ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}

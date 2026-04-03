@@ -240,6 +240,7 @@ export const normalizePath = (pathSegments: string[]) => {
 };
 
 export const formatLabel = (value: string) => {
+  if (!value) return "";
   return value
     .replace(/_/g, " ")
     .toLowerCase()

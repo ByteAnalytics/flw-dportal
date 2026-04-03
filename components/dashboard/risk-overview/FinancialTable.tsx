@@ -1,8 +1,6 @@
 "use client";
 
 import React from "react";
-import { formatFinancialValue } from "@/constants/risk-overview-constants";
-
 interface FinancialTableProps {
   rows: { label: string; isCalculated?: boolean; values?: number[] }[];
   years: number[];
@@ -57,9 +55,7 @@ const FinancialTable: React.FC<FinancialTableProps> = ({
                       : "text-gray-600"
                   }`}
                 >
-                  {row.values?.[index] !== undefined
-                    ? formatFinancialValue(row.values[index])
-                    : "-"}
+                  {row.values?.[index] !== undefined ? row.values[index] : "-"}
                 </td>
               ))}
             </tr>

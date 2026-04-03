@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Upload } from "lucide-react";
@@ -14,6 +14,7 @@ import {
   useCaseDetails,
   useParseTemplate,
   useSaveDraft,
+  useUpdateProgress,
 } from "@/hooks/use-risk-overview";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
@@ -26,8 +27,10 @@ import {
   INCOME_STATEMENT_KEY_MAP,
   CASH_FLOW_KEY_MAP,
   RATIOS_KEY_MAP,
-  OTHER_INPUTS_KEY_MAP,
-} from "@/constants/risk-overview-constants";
+} from "@/constants/risk-overview";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
 
 type FinancialValues = Record<string, Record<number, string>>;
 
@@ -55,9 +58,11 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
 
-  const { data: caseData, isLoading: isLoadingCase } = useCaseDetails(
-    caseId || undefined,
-  );
+  const {
+    data: caseData,
+    isLoading: isLoadingCase,
+    refetch,
+  } = useCaseDetails(caseId || undefined);
 
   const [activeTab, setActiveTab] = useState("Balance Sheet");
   const [inputMode, setInputMode] = useState<"manual" | "upload">("manual");
@@ -79,6 +84,10 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     "pf_financials",
     caseId || undefined,
   );
+  const { updateProgress, isPending: isUpdating } = useUpdateProgress(
+    "pf_financials",
+    caseId || undefined,
+  );
 
   const mapArrayToYears = (
     dataArray: number[] | undefined | null,
@@ -86,7 +95,6 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   ): Record<number, string> => {
     const result: Record<number, string> = {};
 
-    // Guard against null/undefined dataArray
     if (!dataArray || !Array.isArray(dataArray)) {
       yearsArray.forEach((year) => {
         result[year] = "";
@@ -103,7 +111,6 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   };
 
   const safeObjectEntries = (obj: any): [string, any][] => {
-    // Guard against null/undefined or non-object
     if (!obj || typeof obj !== "object") {
       return [];
     }
@@ -122,7 +129,6 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
       setYears(apiYears);
     }
 
-    // Balance Sheet
     const newBalanceSheet: FinancialValues = {};
     safeObjectEntries(pfData.balance_sheet).forEach(([apiKey, values]) => {
       const mappedKey = BALANCE_SHEET_KEY_MAP[apiKey];
@@ -135,7 +141,6 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     });
     setBalanceSheet(newBalanceSheet);
 
-    // Income Statement / Financial Inputs
     const newIncomeStatement: FinancialValues = {};
     safeObjectEntries(pfData.financial_inputs).forEach(([apiKey, values]) => {
       const mappedKey = INCOME_STATEMENT_KEY_MAP[apiKey];
@@ -148,7 +153,6 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     });
     setIncomeStatement(newIncomeStatement);
 
-    // Cash Flow
     const newCashFlow: FinancialValues = {};
     safeObjectEntries(pfData.summary_cashflow).forEach(([apiKey, values]) => {
       const mappedKey = CASH_FLOW_KEY_MAP[apiKey];
@@ -161,22 +165,20 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     });
     setCashFlow(newCashFlow);
 
-    // Other Inputs
-    const newOtherInputs: FinancialValues = {};
-    safeObjectEntries(pfData.other_inputs).forEach(([apiKey, values]) => {
-      const mappedKey = OTHER_INPUTS_KEY_MAP[apiKey];
-      if (mappedKey) {
-        newOtherInputs[mappedKey] = mapArrayToYears(
-          values as number[],
-          apiYears || years,
-        );
-      }
-    });
+    // const newOtherInputs: FinancialValues = {};
+    // safeObjectEntries(pfData.other_inputs).forEach(([apiKey, values]) => {
+    //   const mappedKey = OTHER_INPUTS_KEY_MAP[apiKey];
+    //   if (mappedKey) {
+    //     newOtherInputs[mappedKey] = mapArrayToYears(
+    //       values as number[],
+    //       apiYears || years,
+    //     );
+    //   }
+    // });
 
-    console.log("Mapped Other Inputs:", newOtherInputs, pfData.other_inputs);
-    setOtherInputs(newOtherInputs);
+    // console.log("Mapped Other Inputs:", newOtherInputs, pfData.other_inputs);
+    // setOtherInputs(newOtherInputs);
 
-    // Ratios
     if (pfData.ratios) {
       const newRatios: FinancialValues = {};
       safeObjectEntries(pfData.ratios).forEach(([apiKey, values]) => {
@@ -254,6 +256,13 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     },
     [years],
   );
+
+  // Force refetch when caseId changes
+  useEffect(() => {
+    if (caseId) {
+      refetch();
+    }
+  }, [caseId, refetch]);
 
   useEffect(() => {
     if (!caseData?.data?.pf_financials) return;
@@ -382,11 +391,11 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
       label: "Cash Flow",
       content: renderTable(CASH_FLOW_ROWS, cashFlow, setCashFlow),
     },
-    {
-      value: "Other Inputs",
-      label: "Other Inputs",
-      content: renderTable(OTHER_INPUTS_ROWS, otherInputs, setOtherInputs),
-    },
+    // {
+    //   value: "Other Inputs",
+    //   label: "Other Inputs",
+    //   content: renderTable(OTHER_INPUTS_ROWS, otherInputs, setOtherInputs),
+    // },
     {
       value: "Ratios",
       label: "Ratios",
@@ -400,15 +409,23 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
       inputMode === mode ? "bg-white text-black" : "text-InfraMuted",
     );
 
-  const handleNext = () => {
-    onNext({
+  const handleNext = async () => {
+    const data: PFFinancialsData = {
       balanceSheet,
       incomeStatement,
       cashFlow,
       otherInputs,
       ratios,
       years,
-    });
+    };
+
+    setPFFinancialsData(data);
+
+    const success = await updateProgress(data);
+
+    if (success) {
+      onNext(data);
+    }
   };
 
   if (isLoadingCase) return <LoadingSpinner />;
@@ -463,9 +480,10 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
 
         <Button
           onClick={handleNext}
-          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
+          disabled={isUpdating}
+          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Next
+          {isUpdating ? "Saving..." : "Next"}
         </Button>
       </div>
     </div>

@@ -77,6 +77,7 @@ export interface DashboardApiItem {
     };
     portfolio_summary: {
       total_customers: number;
+      total_transactions?:number
       total_ead: number;
       total_ecl: number;
       average_lgd: number;

@@ -13,13 +13,18 @@ import { cn } from "@/lib/utils";
 import { usePost } from "@/hooks/use-queries";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
-import { useCaseDetails, useSaveDraft } from "@/hooks/use-risk-overview";
+import {
+  useCaseDetails,
+  useSaveDraft,
+  useUpdateProgress,
+} from "@/hooks/use-risk-overview";
 import {
   CF_BALANCE_SHEET_KEY_MAP,
   CF_INCOME_STATEMENT_KEY_MAP,
   CF_OTHER_INPUTS_KEY_MAP,
-} from "@/constants/risk-overview-constants";
+} from "@/constants/risk-overview";
 
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface CFFinancialsSheetProps {
@@ -49,7 +54,7 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
 
-  const { data: caseData } = useCaseDetails(caseId || undefined);
+  const { data: caseData, refetch } = useCaseDetails(caseId || undefined);
 
   const [inputMode, setInputMode] = useState<"manual" | "upload">("manual");
 
@@ -74,6 +79,11 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
     caseId || undefined,
   );
 
+  const { updateProgress, isPending: isUpdating } = useUpdateProgress(
+    "cf_financials",
+    caseId || undefined,
+  );
+
   const populateCFDataFromResponse = (
     responseData: ParseTemplateResponse["data"],
     showToast = true,
@@ -93,8 +103,13 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
         const mappedKey = CF_BALANCE_SHEET_KEY_MAP[apiKey];
         if (mappedKey && Array.isArray(values)) {
           current[mappedKey] =
-            values[0] !== undefined && values[0] !== null ? values[0].toString() : "";
-          previous[mappedKey] = values[1] !== undefined && values[1] !== null ? values[1].toString() : "";
+            values[0] !== undefined && values[0] !== null
+              ? values[0].toString()
+              : "";
+          previous[mappedKey] =
+            values[1] !== undefined && values[1] !== null
+              ? values[1].toString()
+              : "";
         }
       });
 
@@ -138,6 +153,13 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
 
     if (showToast) toast.success("CF data loaded successfully!");
   };
+
+  // Force refetch when caseId changes
+  useEffect(() => {
+    if (caseId) {
+      refetch();
+    }
+  }, [caseId, refetch]);
 
   useEffect(() => {
     if (!caseData?.data?.cf_financials) return;
@@ -305,10 +327,17 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
         </button>
 
         <Button
-          onClick={() => onNext(buildData())}
-          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
+          onClick={async () => {
+            const data = buildData();
+            const success = await updateProgress(data);
+            if (success) {
+              onNext(data);
+            }
+          }}
+          disabled={isUpdating}
+          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Next
+          {isUpdating ? "Saving..." : "Next"}
         </Button>
       </div>
     </div>

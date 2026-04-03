@@ -12,6 +12,7 @@ import { useGet } from "@/hooks/use-queries";
 import { formatDate, formatNumber, formatPercentage } from "@/lib/utils";
 import {
   ChartCardSkeleton,
+  DashboardOverviewSkeleton,
   StatCardSkeleton,
   TableSkeleton,
 } from "@/skeleton/Overview";
@@ -79,28 +80,7 @@ const DashboardOverviewPage = () => {
 
   const isLoading = logsLoading || (!!selectedExecutionId && dashboardLoading);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen">
-        <div className="flex items-center justify-between mb-8">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-9 w-40 rounded-md" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-        </div>
-        <TableSkeleton />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <ChartCardSkeleton />
-          <ChartCardSkeleton />
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <DashboardOverviewSkeleton />;
 
   return (
     <div className="min-h-screen">
@@ -127,11 +107,16 @@ const DashboardOverviewPage = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-6 gap-3 mb-8">
         <StatCard
           title="Total Customers"
           icon={<CustomerSvg />}
           value={formatNumber(portfolioSummary?.total_customers ?? 0)}
+        />
+        <StatCard
+          title="Total Transactions"
+          icon={<CustomerSvg />}
+          value={formatNumber(portfolioSummary?.total_transactions ?? 0)}
         />
         <StatCard
           title="Total EAD"

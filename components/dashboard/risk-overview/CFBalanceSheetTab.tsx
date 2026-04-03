@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import CFInputRow from "./CFInputRow";
 import {
   CF_BALANCE_ROWS,
   evaluateFormulaWithRows,
-} from "@/constants/risk-overview-constants";
+} from "@/constants/risk-overview";
 
 interface CFBalanceSheetTabProps {
   currentValues: Record<string, string>;
@@ -20,58 +20,54 @@ export default function CFBalanceSheetTab({
   onCurrentChange,
   onPreviousChange,
 }: CFBalanceSheetTabProps) {
-  const updateCalculatedFields = useCallback(
-    (
-      changedKey: string,
-      setter: (key: string, value: string) => void,
-      currentVals: Record<string, string>,
-    ) => {
-      // Find calculated fields that depend on the changed field
-      const dependentRows = CF_BALANCE_ROWS.filter(
-        (row) => row.isCalculated && row.dependencies?.includes(changedKey),
-      );
-
-      dependentRows.forEach((dependentRow) => {
-        if (dependentRow.formula) {
-          const computedValue = evaluateFormulaWithRows(
-            dependentRow.formula,
-            currentVals,
-            CF_BALANCE_ROWS,
-          );
-
-          const currentValue = currentVals[dependentRow.key];
-          if (currentValue !== computedValue.toString()) {
-            setter(dependentRow.key, computedValue.toString());
-          }
-        }
-      });
-    },
-    [],
-  );
-
   const handleCurrentChange = (key: string, value: string) => {
+    const updatedValues = { ...currentValues, [key]: value };
     onCurrentChange(key, value);
 
-    setTimeout(() => {
-      updateCalculatedFields(key, onCurrentChange, {
-        ...currentValues,
-        [key]: value,
-      });
-    }, 0);
+    const dependentRows = CF_BALANCE_ROWS.filter(
+      (row) => row.isCalculated && row.dependencies?.includes(key),
+    );
+
+    dependentRows.forEach((dependentRow) => {
+      if (dependentRow.formula) {
+        const computedValue = evaluateFormulaWithRows(
+          dependentRow.formula,
+          updatedValues,
+          CF_BALANCE_ROWS,
+        );
+
+        const currentValue = updatedValues[dependentRow.key];
+        if (currentValue !== computedValue.toString()) {
+          onCurrentChange(dependentRow.key, computedValue.toString());
+        }
+      }
+    });
   };
 
   const handlePreviousChange = (key: string, value: string) => {
+    const updatedValues = { ...previousValues, [key]: value };
     onPreviousChange(key, value);
 
-    setTimeout(() => {
-      updateCalculatedFields(key, onPreviousChange, {
-        ...previousValues,
-        [key]: value,
-      });
-    }, 0);
+    const dependentRows = CF_BALANCE_ROWS.filter(
+      (row) => row.isCalculated && row.dependencies?.includes(key),
+    );
+
+    dependentRows.forEach((dependentRow) => {
+      if (dependentRow.formula) {
+        const computedValue = evaluateFormulaWithRows(
+          dependentRow.formula,
+          updatedValues,
+          CF_BALANCE_ROWS,
+        );
+
+        const currentValue = updatedValues[dependentRow.key];
+        if (currentValue !== computedValue.toString()) {
+          onPreviousChange(dependentRow.key, computedValue.toString());
+        }
+      }
+    });
   };
 
-  // Initialize calculated fields on mount
   useEffect(() => {
     CF_BALANCE_ROWS.forEach((row) => {
       if (row.isCalculated && row.formula) {
@@ -94,7 +90,7 @@ export default function CFBalanceSheetTab({
         }
       }
     });
-  }, []);
+  }, [currentValues, previousValues, onCurrentChange, onPreviousChange]);
 
   return (
     <div className="grid sm:grid-cols-2 grid-cols-1 gap-6">

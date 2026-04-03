@@ -1,10 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { SheetWrapper } from "@/components/ui/custom-sheet";
 import AccordionSection from "@/components/shared/CaseAccordium";
 import ShowstoppersTable from "./ShowstoppersTable";
-import { getShowstoppers } from "@/lib/risk-overview-utils";
+import { useSearchParams } from "next/navigation";
+import {
+  useCalculateCase,
+  useSubmitCase,
+  useApproveCase,
+  useCaseDetails,
+} from "@/hooks/use-risk-overview";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { CalculateResponse } from "@/types/risk-overview";
+import SuccessIcon from "@/public/assets/icon/success-icon.svg";
+import { CustomImage } from "@/components/ui/custom-image";
+import { toast } from "sonner";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export type ReportSummaryData = {
   customer: string;
@@ -20,27 +34,108 @@ export type ReportSummaryData = {
   finalCreditScore: string;
 };
 
-// ─── PF Reports Sheet ─────────────────────────────────────────────────────────
-
 interface PFReportsSheetProps {
   onClose: () => void;
   onSubmitForValidation: () => void;
   onSaveAsDraft?: () => void;
-  reportData: ReportSummaryData;
 }
 
 const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
   onClose,
   onSubmitForValidation,
   onSaveAsDraft,
-  reportData,
 }) => {
+  const searchParams = useSearchParams();
+  const caseId = searchParams.get("caseId");
+  const isValidating = searchParams.get("isValidating") === "true";
   const [activeTab, setActiveTab] = useState<"Report Summary" | "Full Report">(
     "Report Summary",
   );
+  const [calculateResponse, setCalculateResponse] =
+    useState<CalculateResponse | null>(null);
+  const [isApproveSheetOpen, setIsApproveSheetOpen] = useState(false);
+  const [approvalComment, setApprovalComment] = useState("");
 
-  // Get showstoppers data
-    const showstoppers = getShowstoppers(reportData);
+  const { data: caseData } = useCaseDetails(caseId || undefined);
+  const details = caseData?.data;
+
+  const { mutateAsync: calculateCase, isPending: isCalculating } =
+    useCalculateCase(caseId || undefined);
+  const { mutateAsync: submitCase, isPending: isSubmitting } = useSubmitCase(
+    caseId || undefined,
+  );
+  const { mutateAsync: approveCase, isPending: isApproving } = useApproveCase(
+    caseId || undefined,
+  );
+
+  useEffect(() => {
+    if (caseId) {
+      calculateCase({}).then((response) => {
+        if (response) {
+          setCalculateResponse(response);
+        }
+      });
+    }
+  }, [caseId, calculateCase]);
+
+  const handleSubmit = async () => {
+    if (isValidating) {
+      setIsApproveSheetOpen(true);
+      return;
+    }
+
+    try {
+      const success = await submitCase({});
+      if (success) {
+        toast.success(success.message || "Submitted successfully");
+        onSubmitForValidation();
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to submit case. Please try again.");
+      console.error("Error submitting case:", error);
+    }
+  };
+
+  const confirmApproveRating = async () => {
+    if (!approvalComment.trim()) {
+      alert("Please provide a comment before approving.");
+      return;
+    }
+
+    try {
+      const success = await approveCase({ comment: approvalComment });
+      if (success) {
+        toast.success(success.message || "Case approved successfully");
+
+        setIsApproveSheetOpen(false);
+        onSubmitForValidation();
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.message || "Failed to approve case. Please try again.",
+      );
+      console.error("Error approving rating:", error);
+    }
+  };
+
+  if (isCalculating) return <LoadingSpinner />;
+
+  // Use showstoppers from API response if available
+  const showstoppersFromResponse = calculateResponse?.data?.showstoppers;
+  const showstoppersDisplay = showstoppersFromResponse
+    ? showstoppersFromResponse.SHOWSTOPPERS.map((title, index) => ({
+        id: index + 1,
+        criteria: title,
+        status: showstoppersFromResponse.STATUS[index] || "Not assessed",
+      }))
+    : [];
+
+  const customerName = calculateResponse?.data?.customer_name || "—";
+  const dateOfRating = calculateResponse?.data?.date_of_rating || "—";
+  const projectType = calculateResponse?.data?.project_type || "—";
+  const yearOfFinancials = calculateResponse?.data?.year_of_financials || "—";
+  const pfScore = calculateResponse?.data?.initial_pf_score || "—";
+  const baselineScore = calculateResponse?.data?.baseline_score || "—";
 
   return (
     <div className="flex flex-col h-full">
@@ -74,7 +169,7 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
                   Customer
                 </span>
                 <span className="text-[14px] font-bold text-gray-900">
-                  {reportData.customer}
+                  {customerName}
                 </span>
               </div>
               <div className="flex flex-col gap-1 col-span-1">
@@ -82,7 +177,7 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
                   Project type
                 </span>
                 <span className="text-[14px] font-bold text-gray-900">
-                  {reportData.projectType}
+                  {projectType}
                 </span>
               </div>
               <div className="flex flex-col gap-1 col-span-1">
@@ -90,38 +185,23 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
                   Year of Financials
                 </span>
                 <span className="text-[14px] font-bold text-gray-900">
-                  {reportData.yearOfFinancials}
+                  {yearOfFinancials}
                 </span>
               </div>
+
               <div className="flex flex-col gap-1 col-span-1">
                 <span className="text-[13px] font-medium text-gray-400">
-                  Financial Risk
+                  Rating Date
                 </span>
                 <span className="text-[14px] font-bold text-gray-900">
-                  {reportData.financialRisk}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1 col-span-1">
-                <span className="text-[13px] font-medium text-gray-400">
-                  Operational Risk
-                </span>
-                <span className="text-[14px] font-bold text-gray-900">
-                  {reportData.operationalRisk}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1 col-span-1">
-                <span className="text-[13px] font-medium text-gray-400">
-                  Structure Risk
-                </span>
-                <span className="text-[14px] font-bold text-gray-900">
-                  {reportData.structureRisk}
+                  {dateOfRating}
                 </span>
               </div>
             </div>
 
-            {showstoppers.length > 0 && (
+            {showstoppersDisplay.length > 0 && (
               <AccordionSection title="Showstoppers">
-                <ShowstoppersTable showstoppers={showstoppers} />
+                <ShowstoppersTable showstoppers={showstoppersDisplay} />
               </AccordionSection>
             )}
 
@@ -132,15 +212,7 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
                   PF Score
                 </span>
                 <span className="text-[20px] font-bold text-gray-900">
-                  {reportData.pfScore ?? "—"}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-[13px] font-medium text-gray-400">
-                  Probability of Default
-                </span>
-                <span className="text-[20px] font-bold text-gray-900">
-                  {reportData.probabilityOfDefault}
+                  {pfScore}
                 </span>
               </div>
               <div className="flex flex-col gap-1">
@@ -148,15 +220,7 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
                   Baseline Credit Score Rating
                 </span>
                 <span className="text-[20px] font-bold text-gray-900">
-                  {reportData.baselineCreditScore}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-[13px] font-medium text-gray-400">
-                  Final Credit Score Rating
-                </span>
-                <span className="text-[20px] font-bold text-emerald-600">
-                  {reportData.finalCreditScore}
+                  {baselineScore}
                 </span>
               </div>
             </div>
@@ -181,12 +245,67 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
         </button>
         <Button
           type="button"
-          onClick={onSubmitForValidation}
-          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px]"
+          onClick={handleSubmit}
+          disabled={isSubmitting || isApproving}
+          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Submit for Validation
+          {isSubmitting || isApproving
+            ? isValidating
+              ? "Approving..."
+              : "Submitting..."
+            : isValidating
+              ? "Approve Case"
+              : "Submit for Validation"}
         </Button>
       </div>
+
+      <SheetWrapper
+        open={isApproveSheetOpen}
+        setOpen={setIsApproveSheetOpen}
+        title="Approve Credit Risk Rating"
+        width="sm:max-w-[540px]"
+        headerClassName="bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] !text-white"
+        titleClassName="text-white px-6 py-4"
+        SheetContentClassName="p-0 bg-white"
+      >
+        <div className="flex flex-col gap-2 mb-4 items-center justify-center p-4">
+          <CustomImage src={SuccessIcon} style="w-20 h-20 mb-4" />
+          <p className="text-center">
+            Are you sure you want to approve the credit risk rating for{" "}
+            {details?.customer_name ?? "this case"}? This action will finalize
+            the rating as {calculateResponse?.data?.baseline_score ?? "-"}.
+          </p>
+        </div>
+
+        <div className="mb-3 px-4">
+          <label className="block text-sm font-medium text-gray-700">
+            Comment
+          </label>
+          <textarea
+            value={approvalComment}
+            onChange={(e) => setApprovalComment(e.target.value)}
+            className="mt-1 w-full rounded border px-3 py-2"
+            rows={4}
+            placeholder="Add comment"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 mt-auto px-4 mb-4">
+          <Button
+            variant="secondary"
+            onClick={() => setIsApproveSheetOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmApproveRating}
+            disabled={isApproving}
+            className="ms-auto h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
+          >
+            {isApproving ? "Approving..." : "Confirm Approve"}
+          </Button>
+        </div>
+      </SheetWrapper>
     </div>
   );
 };

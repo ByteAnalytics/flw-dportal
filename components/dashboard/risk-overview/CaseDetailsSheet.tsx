@@ -3,21 +3,19 @@
 
 import React from "react";
 import { CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import AccordionSection from "@/components/shared/CaseAccordium";
 import FinancialTable from "./FinancialTable";
 import NonFinancialsTable from "./NonFinancialTable";
 import ShowstoppersTable from "./ShowstoppersTable";
-import ScoreSummaryCards from "./ScoreSummaryCards";
 import { formatDate } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useCaseDetails } from "@/hooks/use-risk-overview";
-import { getShowstoppers } from "@/lib/risk-overview-utils";
 import {
   getCfBalanceSheetRows,
   getCfIncomeRows,
   getCfNonFinancialsRows,
   getCfOtherInputsRows,
+  getCombinedShowstoppers,
   getPfCashFlowRows,
   getPfFinancialsRows,
   getPfIncomeRows,
@@ -45,40 +43,30 @@ const CaseDetailsSheet: React.FC<Props> = ({ onClose, caseId }) => {
   const pfFinancials = details.pf_financials;
   const cfFinancials = details.cf_financials;
 
-  // Get years from PF financials
   const pfYears = pfFinancials?.years || [];
 
-  // Get showstoppers data
-  const showstoppers = getShowstoppers(details);
-
-  // Transform PF Balance Sheet rows with actual values
   const pfFinancialsRows = getPfFinancialsRows(pfFinancials);
 
-  // Transform PF Income Statement rows
   const pfIncomeRows = getPfIncomeRows(pfFinancials);
 
-  // Transform PF Cash Flow rows
   const pfCashFlowRows = getPfCashFlowRows(pfFinancials);
 
-  // Transform PF Ratios rows
   const pfRatiosRows = getPfRatiosRows(pfFinancials);
 
-  // CF Balance Sheet rows
   const cfBalanceSheetRows = getCfBalanceSheetRows(cfFinancials);
 
-  // CF Income Statement rows
   const cfIncomeRows = getCfIncomeRows(cfFinancials);
 
-  // CF Other Inputs rows
   const cfOtherInputsRows = getCfOtherInputsRows(cfFinancials);
 
-  // Then update the non-financials rows creation:
   const pfNonFinancialsRows = getPfNonFinancialsRows(details);
 
   const cfNonFinancialsRows = getCfNonFinancialsRows(details);
 
+  const showstoppersDisplay = getCombinedShowstoppers(combined, details);
+
   return (
-    <div className="flex flex-col gap-4 pb-6 md:px-0 px-3">
+    <div className="flex flex-col gap-4 pb-6 px-4">
       {/* STATUS */}
       <div className="rounded-[10px] bg-green-50 border border-green-200 p-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
@@ -95,7 +83,7 @@ const CaseDetailsSheet: React.FC<Props> = ({ onClose, caseId }) => {
       </div>
 
       {/* INFO */}
-      <div className="rounded-[10px] border bg-[#F9FAFB] p-4 grid grid-cols-2 sm:grid-cols-5 gap-4">
+      <div className="rounded-lg border bg-white p-4 grid grid-cols-2 sm:grid-cols-5 gap-4">
         <Info label="Customer" value={details.customer_name} />
         <Info label="Project Type" value={details.project_type} />
         <Info label="Rater" value={details.rater_name} />
@@ -179,20 +167,54 @@ const CaseDetailsSheet: React.FC<Props> = ({ onClose, caseId }) => {
       )}
 
       {/* SHOWSTOPPERS */}
-      {showstoppers.length > 0 && (
+      {showstoppersDisplay && showstoppersDisplay?.length > 0 && (
         <AccordionSection title="Showstoppers">
-          <ShowstoppersTable showstoppers={showstoppers} />
+          <ShowstoppersTable showstoppers={showstoppersDisplay ?? []} />
+        </AccordionSection>
+      )}
+
+      {/* CREDIT HISTORY ADJUSTMENT */}
+      {details.credit_history_adjustment && (
+        <AccordionSection title="Credit History Adjustment">
+          <div className="p-4 bg-white rounded-lg border">
+            {details.credit_history_adjustment}
+          </div>
         </AccordionSection>
       )}
 
       {/* SCORES */}
-      {combined && <ScoreSummaryCards reportData={combined} />}
+      {combined?.dashboard_rater && (
+        <div className="bg-[#1A5FA8] text-white divide-x p-4 rounded-lg p-4 grid md:grid-cols-4 xl:grid-cols-5 sm:grid-cols-3 gap-4">
+          <ScoreCard
+            label="Initial PF Score"
+            value={combined.dashboard_rater.initial_pf_score ?? "-"}
+          />
+
+          <ScoreCard
+            label="Initial CF Score"
+            value={combined.dashboard_rater.initial_cf_score ?? "-"}
+          />
+
+          <ScoreCard
+            label="Probability of Default"
+            value={combined.dashboard_rater.baseline_score ?? "-"}
+          />
+          <ScoreCard
+            label="Baseline Rating"
+            value={combined.dashboard_rater.baseline_score ?? "-"}
+          />
+          <ScoreCard label="Final Rating" value={details?.rating ?? "-"} />
+        </div>
+      )}
 
       {/* ACTION */}
       <div className="flex justify-end pt-4">
-        <Button variant="outline" onClick={onClose} className="h-[40px] px-8">
+        <button
+          onClick={onClose}
+          className="bg-white border text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Close
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -202,6 +224,13 @@ const Info = ({ label, value }: { label: string; value: any }) => (
   <div className="flex flex-col gap-1">
     <span className="text-[13px] text-gray-400">{label}</span>
     <span className="text-[15px] font-bold text-gray-900">{value}</span>
+  </div>
+);
+
+const ScoreCard = ({ label, value }: { label: string; value: any }) => (
+  <div className="flex flex-col gap-1">
+    <span className="text-[13px] text-white">{label}</span>
+    <span className="text-[18px] font-bold text-white">{value}</span>
   </div>
 );
 

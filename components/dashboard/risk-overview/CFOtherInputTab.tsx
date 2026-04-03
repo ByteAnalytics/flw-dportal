@@ -1,7 +1,8 @@
 "use client";
 
+import { cleanCfLabel } from "@/lib/risk-overview-utils";
 import CFInputRow from "./CFInputRow";
-import { CF_OTHER_INPUT_ROWS } from "@/constants/risk-overview-constants";
+import { CF_OTHER_INPUT_ROWS } from "@/constants/risk-overview";
 
 interface CFOtherInputTabProps {
   currentValues: Record<string, string>;
@@ -21,7 +22,7 @@ export default function CFOtherInputTab({
         {CF_OTHER_INPUT_ROWS.map((r) => (
           <CFInputRow
             key={r.key}
-            label={r.label}
+            label={cleanCfLabel(r?.label ?? "")}
             value={currentValues[r.key] ?? ""}
             onChange={(v) => onCurrentChange(r.key, v)}
           />

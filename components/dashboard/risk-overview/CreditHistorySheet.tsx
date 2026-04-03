@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -8,26 +8,31 @@ import { Form } from "@/components/ui/form";
 import CustomInputField from "@/components/ui/custom-input-field";
 import CustomButton from "@/components/ui/custom-button";
 import { FormFieldType } from "@/types";
-import { useSaveDraft } from "@/hooks/use-risk-overview";
-import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
+import {
+  useSaveDraft,
+  useUpdateProgress,
+  useCaseDetails,
+} from "@/hooks/use-risk-overview";
+import { extractErrorMessage } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const CREDIT_HISTORY_OPTIONS = [
   { label: "Not Applicable", value: "Not Applicable" },
   {
     label:
-      "Restructured / Rescheduled credit (Not triggered by a default event) within the last 1 year",
+      "Restructured/rescheduled credit (not triggered by default event) within the last 1 year",
     value:
-      "Restructured / Rescheduled credit (Not triggered by a default event) within the last 1 year",
+      "Restructured/rescheduled credit (not triggered by default event) within the last 1 year",
   },
   {
     label: "Payment defaults within the last 2 years",
     value: "Payment defaults within the last 2 years",
   },
   {
-    label: "Payment defaults post-restructuring",
-    value: "Payment defaults post-restructuring",
+    label: "Payment defaults post restructuring",
+    value: "Payment defaults post restructuring",
   },
 ];
 
@@ -51,6 +56,9 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
 
+  // Fetch case data
+  const { data: caseData, refetch } = useCaseDetails(caseId || undefined);
+
   const form = useForm<CreditHistoryFormData>({
     resolver: zodResolver(CreditHistorySchema),
     defaultValues: {
@@ -63,17 +71,43 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
     handleSubmit,
     formState: { isSubmitting, isValid },
     getValues,
+    reset,
   } = form;
 
   const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
     "credit_history",
     caseId || undefined,
   );
+  const { updateProgress, isPending: isUpdating } = useUpdateProgress(
+    "credit_history",
+    caseId || undefined,
+  );
 
-  const isLoading = isSavingDraft || isSubmitting;
+  const isLoading = isSavingDraft || isSubmitting || isUpdating;
 
-  const onSubmit = (data: CreditHistoryFormData) => {
-    onNext({ credit_history_adjustment: data.credit_history_adjustment });
+  // Fetch case data on mount
+  useEffect(() => {
+    if (caseId) {
+      refetch();
+    }
+  }, [caseId, refetch]);
+
+  // Initialize form from fetched case data
+  useEffect(() => {
+    if (caseData?.data?.credit_history_adjustment) {
+      const creditHistoryData = caseData.data.credit_history_adjustment;
+
+      reset({
+        credit_history_adjustment: creditHistoryData || "",
+      });
+    }
+  }, [caseData, reset]);
+
+  const onSubmit = async (data: CreditHistoryFormData) => {
+    const success = await updateProgress(data);
+    if (success) {
+      onNext({ credit_history_adjustment: data.credit_history_adjustment });
+    }
   };
 
   const handleSaveAsDraft = async () => {
@@ -95,11 +129,11 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
   };
 
   return (
-    <div className="flex flex-col min-h-[82vh] w-full">
+    <div className="flex flex-col h-fit w-full">
       <Form {...form}>
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col h-full"
+          className="flex flex-col min-h-[82vh] justify-between"
         >
           <div className="flex-1 py-6">
             <p className="text-[13px] text-gray-500 mb-4">
@@ -118,7 +152,7 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
             />
           </div>
 
-          <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-6">
+          <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-6 mt-auto">
             <button
               type="button"
               onClick={handleSaveAsDraft}
@@ -131,7 +165,7 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
             <CustomButton
               type="submit"
               title="Next"
-              isLoading={isLoading}
+              isLoading={isUpdating}
               disabled={!isValid || isLoading}
               className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
             />
