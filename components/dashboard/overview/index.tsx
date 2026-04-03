@@ -15,7 +15,7 @@ import {
   DashboardOverviewSkeleton,
   StatCardSkeleton,
   TableSkeleton,
-} from "@/skeleton/Overview";
+} from "@/skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerSvg, EadSvg, EclSvg, LGDSvg, NPLSvg } from "@/svg";
 import { ApiResponse } from "@/types";

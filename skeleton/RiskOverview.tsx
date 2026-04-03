@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatCardSkeleton, TableSkeleton } from "./Overview";
+import { StatCardSkeleton, TableSkeleton } from ".";
 
 const RiskOverviewSkeleton = () => {
   return (
