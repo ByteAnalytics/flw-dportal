@@ -2,7 +2,6 @@
 
 import React from "react";
 import CustomTable, { TableRowData } from "@/components/ui/custom-table";
-import { getStatusColor } from "@/constants/risk-overview-constants";
 
 interface Showstopper {
   id: number;
@@ -36,11 +35,7 @@ const ShowstoppersTable: React.FC<ShowstoppersTableProps> = ({
     criteria: (
       <span className="text-gray-800 font-medium">{item.criteria}</span>
     ),
-    status: (
-      <span className={`text-sm ${getStatusColor(item.status)}`}>
-        {item.status}
-      </span>
-    ),
+    status: <span className='text-sm'>{item.status}</span>,
   }));
 
   return (

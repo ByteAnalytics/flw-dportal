@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { RowReturnType } from "@/types/risk-overview";
+import { FinancialRow, RowReturnType } from "@/types/risk-overview";
 
-// Type-safe helper to extract non-financials value
 export const extractNonFinancialValue = (
   value: unknown,
 ): string | number | null => {
@@ -25,146 +24,17 @@ export const extractNonFinancialValue = (
   return null;
 };
 
-// Helper function to extract string value from nested object for showstoppers
-export const extractStringValue = (obj: unknown): string => {
-  if (!obj) return "Not assessed";
-  if (typeof obj === "string") return obj;
-  if (typeof obj === "number") return obj.toString();
+export const getCombinedShowstoppers = (combined: any, details: any) => {
+  const showStoppersData = combined?.dashboard_rater?.showstoppers;
 
-  if (typeof obj === "object" && obj !== null) {
-    const values = Object.values(obj);
-    for (const value of values) {
-      if (typeof value === "string") return value;
-      if (typeof value === "number") return value.toString();
-      if (typeof value === "object" && value !== null) {
-        const nested = extractStringValue(value);
-        if (nested !== "Not assessed") return nested;
-      }
-    }
-  }
+  const baseShowstoppers =
+    showStoppersData?.SHOWSTOPPERS?.map((title: string, index: number) => ({
+      id: index + 1,
+      criteria: title,
+      status: showStoppersData?.STATUS?.[index] || "Not assessed",
+    })) || [];
 
-  return "Not assessed";
-};
-
-// Get showstoppers from PF non-financials data
-export const getShowstoppers = (details: any) => {
-  const showstoppers: Array<{ id: number; criteria: string; status: string }> =
-    [];
-
-  // Extract from PF non-financials if available
-  const pfNonFinancials = details.pf_non_financials;
-  if (pfNonFinancials && typeof pfNonFinancials === "object") {
-    // Check Political and Regulatory Factors
-    const political = pfNonFinancials["Political & Regulatory factors"];
-    if (political && typeof political === "object") {
-      // Acquisition of all necessary supports and approvals
-      const acquisition =
-        political["Acquisition of all necessary supports and approvals"];
-      if (acquisition) {
-        const status = extractStringValue(acquisition);
-        showstoppers.push({
-          id: showstoppers.length + 1,
-          criteria: "Acquisition of all necessary supports and approvals",
-          status: status,
-        });
-      }
-
-      // Stability of legal and regulatory environment
-      const stability =
-        political["Stability of legal and regulatory environment"];
-      if (stability) {
-        const status = extractStringValue(stability);
-        showstoppers.push({
-          id: showstoppers.length + 1,
-          criteria: "Stability of legal and regulatory environment",
-          status: status,
-        });
-      }
-
-      // Enforceability of contracts, collateral and security
-      const enforceability =
-        political["Enforcement of contracts, collateral and security"];
-      if (enforceability) {
-        const status = extractStringValue(enforceability);
-        showstoppers.push({
-          id: showstoppers.length + 1,
-          criteria: "Enforceability of contracts, collateral and security",
-          status: status,
-        });
-      }
-
-      // Government Support
-      const govSupport = political["Government Support"];
-      if (govSupport) {
-        const status = extractStringValue(govSupport);
-        showstoppers.push({
-          id: showstoppers.length + 1,
-          criteria: "Government Support",
-          status: status,
-        });
-      }
-
-      // Political Risks
-      const politicalRisks = political["Political Risks"];
-      if (politicalRisks) {
-        const status = extractStringValue(politicalRisks);
-        showstoppers.push({
-          id: showstoppers.length + 1,
-          criteria: "Political Risks",
-          status: status,
-        });
-      }
-
-      // Force Majeure
-      const forceMajeure = political["Force Majeure"];
-      if (forceMajeure) {
-        const status = extractStringValue(forceMajeure);
-        showstoppers.push({
-          id: showstoppers.length + 1,
-          criteria: "Force Majeure",
-          status: status,
-        });
-      }
-    }
-  }
-
-  // If no showstoppers found, return some default ones
-  if (showstoppers.length === 0) {
-    return [
-      {
-        id: 1,
-        criteria: "Acquisition of all necessary supports and approvals",
-        status: "All necessary approvals have been obtained",
-      },
-      {
-        id: 2,
-        criteria: "Stability of legal and regulatory environment",
-        status: "Favourable and stable regulatory environment",
-      },
-      {
-        id: 3,
-        criteria: "Enforceability of contracts, collateral and security",
-        status: "Contracts are enforceable",
-      },
-      {
-        id: 4,
-        criteria: "Government Support",
-        status: "Project of strategic importance, strong support",
-      },
-      {
-        id: 5,
-        criteria: "Political Risks",
-        status: "Low exposure, satisfactory mitigation",
-      },
-      {
-        id: 6,
-        criteria: "Force Majeure",
-        status: "Limited exposure, acceptable insurance coverage",
-      },
-    ];
-  }
-
-  return showstoppers;
+  return baseShowstoppers;
 };
 
 export const getPfFinancialsRows = (pfFinancials: any): RowReturnType => {
@@ -261,12 +131,33 @@ export const getPfNonFinancialsRows = (details: any): RowReturnType => {
 };
 
 export const getCfNonFinancialsRows = (details: any): RowReturnType => {
-  return details.cf_non_financials
-    ? Object.entries(details.cf_non_financials).map(([key, value]) => ({
-        label: key,
-        value: extractNonFinancialValue(value),
-      }))
-    : [];
+  if (!details.cf_non_financials) return [];
+
+  const rows: RowReturnType = [];
+
+  // CF non-financials has a nested structure: "Corporate Non-financial" -> sections -> fields
+  Object.entries(details.cf_non_financials).forEach(
+    ([mainCategory, mainValue]) => {
+      if (typeof mainValue === "object" && mainValue !== null) {
+        Object.entries(mainValue as Record<string, unknown>).forEach(
+          ([sectionName, sectionValue]) => {
+            if (typeof sectionValue === "object" && sectionValue !== null) {
+              Object.entries(sectionValue as Record<string, unknown>).forEach(
+                ([fieldName, fieldValue]) => {
+                  rows.push({
+                    label: `${sectionName} - ${fieldName}`,
+                    value: fieldValue as string | number | null,
+                  });
+                },
+              );
+            }
+          },
+        );
+      }
+    },
+  );
+
+  return rows;
 };
 
 export const convertPFToApiFormat = (data: {
@@ -506,4 +397,893 @@ export const convertCFToApiFormat = (data: {
   });
 
   return payload;
+};
+
+export const sanitizeFormula = (formula: string): string => {
+  let sanitized = formula.replace(/[–—]/g, "-");
+  sanitized = sanitized.replace(/[''""]/g, "'");
+  sanitized = sanitized.replace(/\u00A0/g, " ");
+
+  return sanitized;
+};
+
+export const createSafeVariableName = (label: string): string => {
+  let safeName = label
+    .replace(/[–—]/g, "-")
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .replace(/\s+/g, "_")
+    .replace(/-/g, "_");
+  if (/^\d/.test(safeName)) {
+    safeName = `v_${safeName}`;
+  }
+
+  return safeName;
+};
+
+export const evaluateFormulaWithRows = (
+  formula: string,
+  values: Record<string, string>,
+  rows: FinancialRow[],
+): number => {
+  let expression = formula;
+  const sortedRows = [...rows].sort((a, b) => b.label.length - a.label.length);
+
+  sortedRows.forEach((row) => {
+    const escapedLabel = row.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(escapedLabel, "g");
+
+    if (regex.test(expression)) {
+      const value = values[row.key];
+      const numericValue =
+        value && !isNaN(parseFloat(value)) ? parseFloat(value) : 0;
+      expression = expression.replace(regex, numericValue.toString());
+    }
+  });
+
+  try {
+    const result = new Function("return (" + expression + ")")();
+    if (isNaN(result) || !isFinite(result)) return 0;
+    return Math.round(result * 100) / 100;
+  } catch (error) {
+    console.error("Error evaluating formula:", formula, error);
+    return 0;
+  }
+};
+
+export const cleanCfLabel = (key: string): string => {
+  const cleanLabel = key
+    ?.replace("inputted_", "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (l) => l.toUpperCase());
+  return cleanLabel || key;
+};
+
+// Helper function to set nested value in object
+const setNestedValue = (
+  obj: Record<string, any>,
+  path: string[],
+  value: string,
+): void => {
+  let current = obj;
+  for (let i = 0; i < path.length - 1; i++) {
+    const key = path[i];
+    if (!current[key]) current[key] = {};
+    current = current[key];
+  }
+  current[path[path.length - 1]] = value;
+};
+
+// Deep merge function to merge objects recursively
+const deepMerge = (target: any, source: any): any => {
+  const result = { ...target };
+  for (const key in source) {
+    if (source.hasOwnProperty(key)) {
+      if (
+        source[key] !== null &&
+        typeof source[key] === "object" &&
+        !Array.isArray(source[key])
+      ) {
+        if (result[key] && typeof result[key] === "object") {
+          result[key] = deepMerge(result[key], source[key]);
+        } else {
+          result[key] = source[key];
+        }
+      } else {
+        result[key] = source[key];
+      }
+    }
+  }
+  return result;
+};
+
+// Create PF Non-Financials template with all required fields
+const createPFNonFinancialsTemplate = (): Record<string, any> => ({
+  "Financial Strength": {
+    "Market Conditions": {
+      "Market Conditions": "",
+    },
+    "Stress Anaylsis": {
+      "Ability to meet Obigations under Stress Scenarios": "",
+      "Predictability of Net Cash Flows": "",
+    },
+    "PPA Structure & Bankability": {
+      "PPA Strength": "",
+    },
+    "Financial Structure": {
+      "Duration of the credit compared to the duration of the project": "",
+      "Amortisation Schedule": "",
+      "Subordinated Debt": "",
+    },
+  },
+  "Political & Regulatory factors": {
+    "Political Risks": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Stability of legal and regulatory environment": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Government Support": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Enforcement of contracts, collateral and security": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Force Majeure": {
+      "Location Specific Exposure": "",
+      "Community Relations": "",
+      "Environmental and Natural Hazards": "",
+    },
+    "Acquisition of all necessary supports and approvals": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Grant and Subsidy": {
+      "Grant Timing and Financial Resilience": "",
+      "Milestones for disbursement": "",
+    },
+  },
+  "General Construction/Installation Risk": {
+    "Design and Technology Risk": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Site Accessibility and Infrastructure": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "User Interface & Training Requirements": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Supply Risk": {
+      "Price, Volume and Transportation Risk": "",
+      "Supplier's Track Record and Financial Strength": "",
+    },
+    "EPC Risk": {
+      "EPC Quality Assessment": "",
+      "Performance Guarantees": "",
+    },
+    "Asset Movability": {
+      "Ease of Asset Relocation": "",
+      "Asset Value Retention": "",
+      "Market Demand": "",
+    },
+  },
+  "Strength of the sponsor": {
+    "Sponsor's track record, Financial strength and sector experience": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Sponsor support, as evidenced by equity, ownership clause and incentive to inject additional cash if necessary":
+      {
+        additionalProp1: "",
+        additionalProp2: "",
+        additionalProp3: "",
+      },
+    "Strength of SPV": {
+      "Legal Structure and Ring-fencing": "",
+      "Financial Independence": "",
+      "Governance and Management": "",
+    },
+  },
+  "Security Package": {
+    "Lender's Control over Cash Flow": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Strength of Security Package": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Reserve Funds, (debt service, O&M, renewal and replacement)": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Charge on Assets": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+  },
+  "General DRE Factors": {
+    "Technology Maturity": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Offtake Risk": {
+      "Nature of offtake agreement and offtaker quality": "",
+      "Diversification of offtakers": "",
+    },
+    "Operating Risk": {
+      "Scope and nature of operations and maintenance (O&M) contracts": "",
+      "Operating Risk: Operator's Expertise Rating": "",
+      "Project Goverance": "",
+    },
+    "O&M Contract Strength": {
+      "Contract Type": "",
+      "Service Level Agreement": "",
+    },
+    "System Sizing (adequacy to meet projected energy demand)": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Warranty Coverage": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Local presence and spare part availability": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "After-sales Support": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Remote Monitoring and Control": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+  },
+  "Project Type DRE Factors": {
+    "Grid (Mini, Mesh Grid & Interconnected)": {
+      "Revenue Collection & Management": "",
+      "Mini-Grid Productive Use Factor": "",
+    },
+    "C&I": {
+      "Site Power Profile": "",
+      "C&I Revenue Collection & Management": "",
+    },
+    "Solar (Stand-alone SHB, SHS, Productive use)": {
+      "Productive Use Factor": "",
+      "SBH Revenue Collection & Management": "",
+    },
+    "Evs (2-Wheelers, 3 Wheelers, 4-Wheelers, Battery Swapping, Charging Stations)":
+      {
+        "Productive Use Factor - Evs": "",
+        "EV Revenue Collection & Management": "",
+      },
+    "Solar for Telco": {
+      "Contract Type - SfT": "",
+      "Location - SfT": "",
+    },
+    "Productive use of equipment": {
+      "Operational & Utilization Model": "",
+      "PUE Revenue Collection & Management": "",
+    },
+  },
+  "ESG factors / ESMS Assessment": {
+    "Environment & Social risks": {
+      additionalProp1: "",
+      additionalProp2: "",
+      additionalProp3: "",
+    },
+    "Third-party Environmental Impact Assessment (EIA) / Environmental & Social Management Plan (ESMP)":
+      {
+        additionalProp1: "",
+        additionalProp2: "",
+        additionalProp3: "",
+      },
+    "Environmental and Social Management System (ESMS) Scoring": {
+      Policy: "",
+      Risks: "",
+      "Management & Organization": "",
+      "Emergency Preparedness & Response": "",
+      "Stakeholder & Grievances": "",
+      "Monitoring & Reporting": "",
+    },
+  },
+});
+
+// Create CF Non-Financials template with all required fields
+const createCFNonFinancialsTemplate = (): Record<string, any> => ({
+  "Corporate Non-financial": {
+    Management: {
+      "Experience of Management in the Industry": "",
+      "Integrity, Credentials and background of management": "",
+      "Corporate Governance": "",
+      "Past Payment Record and Track Record": "",
+      "Succession Planning - Key man risk": "",
+      "Risk Management Framework": "",
+      "Local Implementation Capacity": "",
+    },
+    Business: {
+      "Exposure to Market Risk": "",
+      "Market Share": "",
+      "Access to Resources": "",
+      "Financial Flexibility": "",
+    },
+    Industry: {
+      "Regulatory Environment": "",
+      "Competition Dynamics": "",
+      "Industry Outlook": "",
+      "Market Supply-Demand Balance": "",
+      "Industry Cyclicality": "",
+    },
+    "Reliability of Financial Statement": {
+      "Reliability of Auditors": "",
+      "Timeliness of Financial Statements": "",
+      "Reliability of Financial Projections": "",
+    },
+  },
+});
+
+// Mapping for PF Non-Financials
+const PF_NON_FINANCIALS_MAPPING: Record<string, string[]> = {
+  marketConditions: [
+    "Financial Strength",
+    "Market Conditions",
+    "Market Conditions",
+  ],
+  abilityToMeetObligations: [
+    "Financial Strength",
+    "Stress Anaylsis",
+    "Ability to meet Obigations under Stress Scenarios",
+  ],
+  predictabilityOfNetCashflow: [
+    "Financial Strength",
+    "Stress Anaylsis",
+    "Predictability of Net Cash Flows",
+  ],
+  ppaStrength: [
+    "Financial Strength",
+    "PPA Structure & Bankability",
+    "PPA Strength",
+  ],
+  durationOfCreditVsProject: [
+    "Financial Strength",
+    "Financial Structure",
+    "Duration of the credit compared to the duration of the project",
+  ],
+  amortisationSchedule: [
+    "Financial Strength",
+    "Financial Structure",
+    "Amortisation Schedule",
+  ],
+  subordinatedDebt: [
+    "Financial Strength",
+    "Financial Structure",
+    "Subordinated Debt",
+  ],
+  politicalRisk: [
+    "Political & Regulatory factors",
+    "Political Risks",
+    "additionalProp1",
+  ],
+  stabilityOfLegalAndRegulatoryEnvironment: [
+    "Political & Regulatory factors",
+    "Stability of legal and regulatory environment",
+    "additionalProp1",
+  ],
+  governmentSupport: [
+    "Political & Regulatory factors",
+    "Government Support",
+    "additionalProp1",
+  ],
+  enforceabilityOfContracts: [
+    "Political & Regulatory factors",
+    "Enforcement of contracts, collateral and security",
+    "additionalProp1",
+  ],
+  forceMajeure: [
+    "Political & Regulatory factors",
+    "Force Majeure",
+    "Location Specific Exposure",
+  ],
+  acquisitionOfApprovals: [
+    "Political & Regulatory factors",
+    "Acquisition of all necessary supports and approvals",
+    "additionalProp1",
+  ],
+  grantTiming: [
+    "Political & Regulatory factors",
+    "Grant and Subsidy",
+    "Grant Timing and Financial Resilience",
+  ],
+  designAndTechnologyRisk: [
+    "General Construction/Installation Risk",
+    "Design and Technology Risk",
+    "additionalProp1",
+  ],
+  siteAccessibility: [
+    "General Construction/Installation Risk",
+    "Site Accessibility and Infrastructure",
+    "additionalProp1",
+  ],
+  userInterfaceTraining: [
+    "General Construction/Installation Risk",
+    "User Interface & Training Requirements",
+    "additionalProp1",
+  ],
+  priceVolumeAndTransportationRisks: [
+    "General Construction/Installation Risk",
+    "Supply Risk",
+    "Price, Volume and Transportation Risk",
+  ],
+  trackRecordOfContractor: [
+    "General Construction/Installation Risk",
+    "Supply Risk",
+    "Supplier's Track Record and Financial Strength",
+  ],
+  completionGuarantees: [
+    "General Construction/Installation Risk",
+    "EPC Risk",
+    "EPC Quality Assessment",
+  ],
+  performanceGuarantees: [
+    "General Construction/Installation Risk",
+    "EPC Risk",
+    "Performance Guarantees",
+  ],
+  easeOfAssetRelocation: [
+    "General Construction/Installation Risk",
+    "Asset Movability",
+    "Ease of Asset Relocation",
+  ],
+  assetValueRetention: [
+    "General Construction/Installation Risk",
+    "Asset Movability",
+    "Asset Value Retention",
+  ],
+  marketDemand: [
+    "General Construction/Installation Risk",
+    "Asset Movability",
+    "Market Demand",
+  ],
+  sponsorTrackRecord: [
+    "Strength of the sponsor",
+    "Sponsor's track record, Financial strength and sector experience",
+    "additionalProp1",
+  ],
+  sponsorSupportAndIncentive: [
+    "Strength of the sponsor",
+    "Sponsor support, as evidenced by equity, ownership clause and incentive to inject additional cash if necessary",
+    "additionalProp1",
+  ],
+  legalStructure: [
+    "Strength of the sponsor",
+    "Strength of SPV",
+    "Legal Structure and Ring-fencing",
+  ],
+  financialIndependence: [
+    "Strength of the sponsor",
+    "Strength of SPV",
+    "Financial Independence",
+  ],
+  governance: [
+    "Strength of the sponsor",
+    "Strength of SPV",
+    "Governance and Management",
+  ],
+  lenderControlOverCashFlows: [
+    "Security Package",
+    "Lender's Control over Cash Flow",
+    "additionalProp1",
+  ],
+  strengthOfCovenantPackage: [
+    "Security Package",
+    "Strength of Security Package",
+    "additionalProp1",
+  ],
+  reserveFunds: [
+    "Security Package",
+    "Reserve Funds, (debt service, O&M, renewal and replacement)",
+    "additionalProp1",
+  ],
+  chargeOnAssets: ["Security Package", "Charge on Assets", "additionalProp1"],
+  technologyMaturity: [
+    "General DRE Factors",
+    "Technology Maturity",
+    "additionalProp1",
+  ],
+  offtakeAgreement: [
+    "General DRE Factors",
+    "Offtake Risk",
+    "Nature of offtake agreement and offtaker quality",
+  ],
+  diversificationOfOfftakers: [
+    "General DRE Factors",
+    "Offtake Risk",
+    "Diversification of offtakers",
+  ],
+  omContracts: [
+    "General DRE Factors",
+    "Operating Risk",
+    "Scope and nature of operations and maintenance (O&M) contracts",
+  ],
+  operatorExpertise: [
+    "General DRE Factors",
+    "Operating Risk",
+    "Operating Risk: Operator's Expertise Rating",
+  ],
+  projectGovernance: [
+    "General DRE Factors",
+    "Operating Risk",
+    "Project Goverance",
+  ],
+  typeOfConstructionContract: [
+    "General DRE Factors",
+    "O&M Contract Strength",
+    "Contract Type",
+  ],
+  serviceLevelAgreement: [
+    "General DRE Factors",
+    "O&M Contract Strength",
+    "Service Level Agreement",
+  ],
+  systemSizing: [
+    "General DRE Factors",
+    "System Sizing (adequacy to meet projected energy demand)",
+    "additionalProp1",
+  ],
+  warrantyAgreement: [
+    "General DRE Factors",
+    "Warranty Coverage",
+    "additionalProp1",
+  ],
+  localPresence: [
+    "General DRE Factors",
+    "Local presence and spare part availability",
+    "additionalProp1",
+  ],
+  afterSalesSupport: [
+    "General DRE Factors",
+    "After-sales Support",
+    "additionalProp1",
+  ],
+  remoteMonitoring: [
+    "General DRE Factors",
+    "Remote Monitoring and Control",
+    "additionalProp1",
+  ],
+  revenueCollection: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "Grid (Mini, Mesh Grid & Interconnected)",
+    "Revenue Collection & Management",
+  ],
+  miniGridProductiveUse: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "Grid (Mini, Mesh Grid & Interconnected)",
+    "Mini-Grid Productive Use Factor",
+  ],
+  ciSitePowerProfile: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "C&I",
+    "Site Power Profile",
+  ],
+  ciRevenueCollection: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "C&I",
+    "C&I Revenue Collection & Management",
+  ],
+  solarProductiveUse: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "Solar (Stand-alone SHB, SHS, Productive use)",
+    "Productive Use Factor",
+  ],
+  sbhRevenueCollection: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "Solar (Stand-alone SHB, SHS, Productive use)",
+    "SBH Revenue Collection & Management",
+  ],
+  evProductiveUseFactor: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "Evs (2-Wheelers, 3 Wheelers, 4-Wheelers, Battery Swapping, Charging Stations)",
+    "Productive Use Factor - Evs",
+  ],
+  evRevenueCollection: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "Evs (2-Wheelers, 3 Wheelers, 4-Wheelers, Battery Swapping, Charging Stations)",
+    "EV Revenue Collection & Management",
+  ],
+  sftContractType: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "Solar for Telco",
+    "Contract Type - SfT",
+  ],
+  sftLocation: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "Solar for Telco",
+    "Location - SfT",
+  ],
+  pueOperationalModel: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "Productive use of equipment",
+    "Operational & Utilization Model",
+  ],
+  pueRevenueCollection: [
+    "General DRE Factors",
+    "Project Type DRE Factors",
+    "Productive use of equipment",
+    "PUE Revenue Collection & Management",
+  ],
+  environmentalSocialRisks: [
+    "ESG factors / ESMS Assessment",
+    "Environment & Social risks",
+    "additionalProp1",
+  ],
+  eiaEsmp: [
+    "ESG factors / ESMS Assessment",
+    "Third-party Environmental Impact Assessment (EIA) / Environmental & Social Management Plan (ESMP)",
+    "additionalProp1",
+  ],
+  esmsPolicy: [
+    "ESG factors / ESMS Assessment",
+    "Environmental and Social Management System (ESMS) Scoring",
+    "Policy",
+  ],
+  esmsRisks: [
+    "ESG factors / ESMS Assessment",
+    "Environmental and Social Management System (ESMS) Scoring",
+    "Risks",
+  ],
+  esmsManagement: [
+    "ESG factors / ESMS Assessment",
+    "Environmental and Social Management System (ESMS) Scoring",
+    "Management & Organization",
+  ],
+  esmsEmergency: [
+    "ESG factors / ESMS Assessment",
+    "Environmental and Social Management System (ESMS) Scoring",
+    "Emergency Preparedness & Response",
+  ],
+  esmsStakeholder: [
+    "ESG factors / ESMS Assessment",
+    "Environmental and Social Management System (ESMS) Scoring",
+    "Stakeholder & Grievances",
+  ],
+  esmsMonitoring: [
+    "ESG factors / ESMS Assessment",
+    "Environmental and Social Management System (ESMS) Scoring",
+    "Monitoring & Reporting",
+  ],
+};
+
+export const convertPFNonFinancialsToApiFormat = (
+  data: Record<string, string>,
+): { pf_non_financials: Record<string, any> } => {
+  // Start with complete template containing all required fields
+  const template = createPFNonFinancialsTemplate();
+  const valuePayload: Record<string, any> = {};
+
+  // Build sparse object with only provided values
+  Object.entries(data).forEach(([key, value]) => {
+    const path = PF_NON_FINANCIALS_MAPPING[key];
+    if (path && value) {
+      setNestedValue(valuePayload, path, value);
+    }
+  });
+
+  // Merge provided values into template
+  const merged = deepMerge(template, valuePayload);
+
+  return {
+    pf_non_financials: merged,
+  };
+};
+
+// Mapping for CF Non-Financials (Corporate)
+const CF_NON_FINANCIALS_MAPPING: Record<string, string[]> = {
+  experienceOfManagement: [
+    "Corporate Non-financial",
+    "Management",
+    "Experience of Management in the Industry",
+  ],
+  integrityCredentials: [
+    "Corporate Non-financial",
+    "Management",
+    "Integrity, Credentials and background of management",
+  ],
+  corporateGovernment: [
+    "Corporate Non-financial",
+    "Management",
+    "Corporate Governance",
+  ],
+  pastPaymentRecord: [
+    "Corporate Non-financial",
+    "Management",
+    "Past Payment Record and Track Record",
+  ],
+  successionPlanning: [
+    "Corporate Non-financial",
+    "Management",
+    "Succession Planning - Key man risk",
+  ],
+  riskManagementFramework: [
+    "Corporate Non-financial",
+    "Management",
+    "Risk Management Framework",
+  ],
+  localImplementationCapacity: [
+    "Corporate Non-financial",
+    "Management",
+    "Local Implementation Capacity",
+  ],
+  exposureToMarketRisk: [
+    "Corporate Non-financial",
+    "Business",
+    "Exposure to Market Risk",
+  ],
+  marketShare: ["Corporate Non-financial", "Business", "Market Share"],
+  accessToResources: [
+    "Corporate Non-financial",
+    "Business",
+    "Access to Resources",
+  ],
+  financialFlexibility: [
+    "Corporate Non-financial",
+    "Business",
+    "Financial Flexibility",
+  ],
+  regulatoryEnvironment: [
+    "Corporate Non-financial",
+    "Industry",
+    "Regulatory Environment",
+  ],
+  competitionDynamics: [
+    "Corporate Non-financial",
+    "Industry",
+    "Competition Dynamics",
+  ],
+  industryOutlook: ["Corporate Non-financial", "Industry", "Industry Outlook"],
+  marketSupplyDemand: [
+    "Corporate Non-financial",
+    "Industry",
+    "Market Supply-Demand Balance",
+  ],
+  industryCyclicality: [
+    "Corporate Non-financial",
+    "Industry",
+    "Industry Cyclicality",
+  ],
+  reliabilityOfAuditors: [
+    "Corporate Non-financial",
+    "Reliability of Financial Statement",
+    "Reliability of Auditors",
+  ],
+  timelinessOfFinancials: [
+    "Corporate Non-financial",
+    "Reliability of Financial Statement",
+    "Timeliness of Financial Statements",
+  ],
+  reliabilityOfProjections: [
+    "Corporate Non-financial",
+    "Reliability of Financial Statement",
+    "Reliability of Financial Projections",
+  ],
+};
+
+export const convertCFNonFinancialsToApiFormat = (
+  data: Record<string, string>,
+): { cf_non_financials: Record<string, any> } => {
+  // Start with complete template containing all required fields
+  const template = createCFNonFinancialsTemplate();
+  const valuePayload: Record<string, any> = {};
+
+  // Build sparse object with only provided values
+  Object.entries(data).forEach(([key, value]) => {
+    const path = CF_NON_FINANCIALS_MAPPING[key];
+    if (path && value) {
+      setNestedValue(valuePayload, path, value);
+    }
+  });
+
+  // Merge provided values into template
+  const merged = deepMerge(template, valuePayload);
+
+  return {
+    cf_non_financials: merged,
+  };
+};
+
+// Reverse converter: Convert nested API PF Non-Financials to flat camelCase format
+export const convertPFNonFinancialsFromApiFormat = (
+  nestedData: Record<string, any>,
+): Record<string, string> => {
+  const flatData: Record<string, string> = {};
+
+  // Create reverse mapping: path -> camelCase key
+  Object.entries(PF_NON_FINANCIALS_MAPPING).forEach(([key, path]) => {
+    let current = nestedData;
+    let found = true;
+
+    // Navigate through the nested path
+    for (const segment of path) {
+      if (current[segment] !== undefined) {
+        current = current[segment];
+      } else {
+        found = false;
+        break;
+      }
+    }
+
+    // If we found a value at the end of the path, add it to flat data
+    if (found && typeof current === "string" && current !== "") {
+      flatData[key] = current;
+    }
+  });
+
+  return flatData;
+};
+
+// Reverse converter: Convert nested API CF Non-Financials to flat camelCase format
+export const convertCFNonFinancialsFromApiFormat = (
+  nestedData: Record<string, any>,
+): Record<string, string> => {
+  const flatData: Record<string, string> = {};
+
+  // Create reverse mapping: path -> camelCase key
+  Object.entries(CF_NON_FINANCIALS_MAPPING).forEach(([key, path]) => {
+    let current = nestedData;
+    let found = true;
+
+    // Navigate through the nested path
+    for (const segment of path) {
+      if (current[segment] !== undefined) {
+        current = current[segment];
+      } else {
+        found = false;
+        break;
+      }
+    }
+
+    // If we found a value at the end of the path, add it to flat data
+    if (found && typeof current === "string" && current !== "") {
+      flatData[key] = current;
+    }
+  });
+
+  return flatData;
 };

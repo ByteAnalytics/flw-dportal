@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import {
   sanitizeFormula,
   createSafeVariableName,
-} from "@/constants/risk-overview-constants";
+} from "@/constants/risk-overview";
 
 export type FinancialRow = {
   key: string;
@@ -36,19 +36,15 @@ const FinancialInputTable: React.FC<Props> = ({
       currentValues: Record<string, Record<number, string>>,
       year: number,
     ): number => {
-      // First, sanitize the formula
       const sanitizedFormula = sanitizeFormula(formula);
       let expression = sanitizedFormula;
 
-      // Sort rows by label length descending to avoid partial replacements
       const sortedRows = [...rows].sort(
         (a, b) => b.label.length - a.label.length,
       );
 
-      // Create a map of safe variable names to actual values
       const variableMap: Record<string, number> = {};
 
-      // First pass: Create safe variable names and collect values
       sortedRows.forEach((row) => {
         const safeName = createSafeVariableName(row.label);
         const value = currentValues[row.key]?.[year];
@@ -57,16 +53,13 @@ const FinancialInputTable: React.FC<Props> = ({
         variableMap[safeName] = numericValue;
       });
 
-      // Second pass: Replace labels with safe variable names
       sortedRows.forEach((row) => {
         const safeName = createSafeVariableName(row.label);
-        // Escape special regex characters in the label
         const escapedLabel = row.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const regex = new RegExp(escapedLabel, "g");
         expression = expression.replace(regex, safeName);
       });
 
-      // Also handle direct key references
       sortedRows.forEach((row) => {
         const escapedKey = row.key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const regex = new RegExp(escapedKey, "g");
@@ -74,13 +67,10 @@ const FinancialInputTable: React.FC<Props> = ({
         expression = expression.replace(regex, safeName);
       });
 
-      // Now build the evaluation function with safe variable names
       const varNames = Object.keys(variableMap);
       const varValues = Object.values(variableMap);
 
       try {
-        // Create a function with the variable names as parameters
-        // Using Function constructor with parameter names that are valid identifiers
         const fnBody = `return (${expression})`;
         const fn = new Function(...varNames, fnBody);
         const result = fn(...varValues);
@@ -97,58 +87,48 @@ const FinancialInputTable: React.FC<Props> = ({
     [rows],
   );
 
-  // Update calculated rows when dependencies change
-  const updateCalculatedRows = useCallback(
-    (changedRowKey: string, changedYear: number) => {
-      // Find rows that depend on the changed row
+  const handleInputChange = (rowKey: string, year: number, value: string) => {
+    onChange(rowKey, year, value);
+
+    const row = rows.find((r) => r.key === rowKey);
+    if (row && !row.isCalculated) {
+      const updatedValues = {
+        ...values,
+        [rowKey]: { ...(values[rowKey] ?? {}), [year]: value },
+      };
+
       const dependentRows = rows.filter(
-        (row) => row.isCalculated && row.dependencies?.includes(changedRowKey),
+        (r) => r.isCalculated && r.dependencies?.includes(rowKey),
       );
 
       dependentRows.forEach((dependentRow) => {
         if (dependentRow.formula) {
           const computedValue = evaluateFormula(
             dependentRow.formula,
-            values,
-            changedYear,
+            updatedValues,
+            year,
           );
 
-          // Only update if the value has changed
-          const currentValue = values[dependentRow.key]?.[changedYear];
+          const currentValue = updatedValues[dependentRow.key]?.[year];
           if (currentValue !== computedValue.toString()) {
-            onChange(dependentRow.key, changedYear, computedValue.toString());
+            onChange(dependentRow.key, year, computedValue.toString());
           }
         }
       });
-    },
-    [rows, values, onChange, evaluateFormula],
-  );
-
-  // Handle input changes for non-calculated rows
-  const handleInputChange = (rowKey: string, year: number, value: string) => {
-    // Update the value
-    onChange(rowKey, year, value);
-
-    // Check if this row is a dependency for any calculated rows
-    const row = rows.find((r) => r.key === rowKey);
-    if (row && !row.isCalculated) {
-      // Use setTimeout to ensure the state update is complete
-      setTimeout(() => {
-        updateCalculatedRows(rowKey, year);
-      }, 0);
     }
   };
 
-  // Update all calculated rows when any value changes
   useEffect(() => {
-    // Update all calculated rows
     years.forEach((year) => {
       rows.forEach((row) => {
         if (row.isCalculated && row.formula) {
           const computedValue = evaluateFormula(row.formula, values, year);
           const currentValue = values[row.key]?.[year];
 
-          if ((!currentValue || currentValue === "") && computedValue !== 0) {
+          const shouldUpdate =
+            currentValue !== computedValue.toString() && computedValue !== 0;
+
+          if (shouldUpdate) {
             onChange(row.key, year, computedValue.toString());
           }
         }

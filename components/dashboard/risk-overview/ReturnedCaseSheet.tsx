@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import AccordionSection from "@/components/shared/CaseAccordium";
 import FinancialTable from "./FinancialTable";
 import NonFinancialsTable from "./NonFinancialTable";
-import ScoreSummaryCards from "./ScoreSummaryCards";
 import { formatDate } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useCaseDetails } from "@/hooks/use-risk-overview";
@@ -17,12 +16,12 @@ import {
   getCfIncomeRows,
   getCfNonFinancialsRows,
   getCfOtherInputsRows,
+  getCombinedShowstoppers,
   getPfCashFlowRows,
   getPfFinancialsRows,
   getPfIncomeRows,
   getPfNonFinancialsRows,
   getPfRatiosRows,
-  getShowstoppers,
 } from "@/lib/risk-overview-utils";
 
 interface Props {
@@ -50,40 +49,30 @@ export const ReturnedCaseSheet: React.FC<Props> = ({
   const pfFinancials = details.pf_financials;
   const cfFinancials = details.cf_financials;
 
-  // Get years from PF financials
   const pfYears = pfFinancials?.years || [];
 
-  // Get showstoppers data
-  const showstoppers = getShowstoppers(details);
+  const showstoppersDisplay = getCombinedShowstoppers(combined, details);
 
-  // Transform PF Balance Sheet rows with actual values
   const pfFinancialsRows = getPfFinancialsRows(pfFinancials);
 
-  // Transform PF Income Statement rows
   const pfIncomeRows = getPfIncomeRows(pfFinancials);
 
-  // Transform PF Cash Flow rows
   const pfCashFlowRows = getPfCashFlowRows(pfFinancials);
 
-  // Transform PF Ratios rows
   const pfRatiosRows = getPfRatiosRows(pfFinancials);
 
-  // CF Balance Sheet rows
   const cfBalanceSheetRows = getCfBalanceSheetRows(cfFinancials);
 
-  // CF Income Statement rows
   const cfIncomeRows = getCfIncomeRows(cfFinancials);
 
-  // CF Other Inputs rows
   const cfOtherInputsRows = getCfOtherInputsRows(cfFinancials);
 
-  // Then update the non-financials rows creation:
   const pfNonFinancialsRows = getPfNonFinancialsRows(details);
 
   const cfNonFinancialsRows = getCfNonFinancialsRows(details);
 
   return (
-    <div className="flex flex-col gap-4 pb-6 md:px-6 px-3">
+    <div className="flex flex-col gap-4 pb-6 px-4">
       {/* ALERT */}
       <div className="rounded-[10px] bg-orange-50 border border-orange-200 p-4">
         <div className="flex justify-between">
@@ -97,6 +86,9 @@ export const ReturnedCaseSheet: React.FC<Props> = ({
                 <b>Validator:</b> {details.validator_name ?? "-"}
               </p>
               <p className="text-sm">
+                <b>Category:</b> {details.validator_notes ?? "No comment"}
+              </p>
+              <p className="text-sm text-[#64748b]">
                 <b>Comment:</b> {details.validator_notes ?? "No comment"}
               </p>
             </div>
@@ -108,7 +100,7 @@ export const ReturnedCaseSheet: React.FC<Props> = ({
       </div>
 
       {/* INFO */}
-      <div className="bg-gray-50 p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="bg-white p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-lg border">
         <Info label="Customer" value={details.customer_name} />
         <Info label="Project Type" value={details.project_type} />
         <Info label="Rater" value={details.rater_name} />
@@ -185,21 +177,62 @@ export const ReturnedCaseSheet: React.FC<Props> = ({
         </AccordionSection>
       )}
 
-      {showstoppers.length > 0 && (
+      {/* SHOWSTOPPERS */}
+      {showstoppersDisplay && showstoppersDisplay?.length > 0 && (
         <AccordionSection title="Showstoppers">
-          <ShowstoppersTable showstoppers={showstoppers} />
+          <ShowstoppersTable showstoppers={showstoppersDisplay ?? []} />
+        </AccordionSection>
+      )}
+
+      {/* CREDIT HISTORY ADJUSTMENT */}
+      {details.credit_history_adjustment && (
+        <AccordionSection title="Credit History Adjustment">
+          <div className="p-4 bg-white rounded-lg border">
+            {details.credit_history_adjustment}
+          </div>
         </AccordionSection>
       )}
 
       {/* SCORES */}
-      {combined && <ScoreSummaryCards reportData={combined} />}
+      {combined?.dashboard_rater && (
+        <div className="bg-[#1A5FA8] text-white divide-x p-4 rounded-lg p-4 grid md:grid-cols-4 xl:grid-cols-5 sm:grid-cols-3 gap-4">
+          <ScoreCard
+            label="Initial PF Score"
+            value={combined.dashboard_rater.initial_pf_score ?? "-"}
+          />
+
+          <ScoreCard
+            label="Initial CF Score"
+            value={combined.dashboard_rater.initial_cf_score ?? "-"}
+          />
+
+          <ScoreCard
+            label="Probability of Default"
+            value={combined.dashboard_rater.baseline_score ?? "-"}
+          />
+          <ScoreCard
+            label="Baseline Rating"
+            value={combined.dashboard_rater.baseline_score ?? "-"}
+          />
+          <ScoreCard label="Final Rating" value={details?.rating ?? "-"} />
+        </div>
+      )}
 
       {/* ACTIONS */}
       <div className="flex gap-3 justify-end pt-4">
-        <Button variant="outline" onClick={onClose}>
+        <button
+          onClick={onClose}
+          className="bg-white border text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Close
+        </button>
+
+        <Button
+          onClick={onEditAndResubmit}
+          className="ms-auto h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
+        >
+          Edit & Resubmit
         </Button>
-        <Button onClick={onEditAndResubmit}>Edit & Resubmit</Button>
       </div>
     </div>
   );
@@ -209,5 +242,12 @@ const Info = ({ label, value }: any) => (
   <div>
     <p className="text-sm text-gray-400">{label}</p>
     <p className="font-bold">{value}</p>
+  </div>
+);
+
+const ScoreCard = ({ label, value }: { label: string; value: any }) => (
+  <div className="flex flex-col gap-1">
+    <span className="text-[13px] text-white">{label}</span>
+    <span className="text-[18px] font-bold text-white">{value}</span>
   </div>
 );

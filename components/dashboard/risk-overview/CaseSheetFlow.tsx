@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { SheetWrapper } from "@/components/ui/custom-sheet";
 import NewCaseSheet from "./NewCaseSheet";
 import CFFinancialsSheet from "./CFFinancialsSheet";
@@ -10,21 +10,10 @@ import CombinedReportsSheet from "./CFReportsSheet";
 import CFNonFinancialsTab from "./CFNonFinancialsTab";
 import PFFinancialsSheet from "./PFFinancialsSheet";
 import PFNonFinancialsTab, { PFNonFinancialsData } from "./PFNonFinancialsTab";
-import {
-  useRiskOverviewStore,
-  PFCompleteData,
-} from "@/stores/risk-overview-store";
+import { useRiskOverviewStore, PFCompleteData } from "@/stores/risk-overview-store";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CFFinancialsData } from "@/types/risk-overview";
-import {
-  VALID_STEPS,
-  SHEET_CONFIG,
-  Step,
-} from "@/constants/risk-overview-constants";
-import {
-  MOCK_COMBINED_REPORT,
-  MOCK_PF_REPORT,
-} from "@/constants/risk-overview";
+import { VALID_STEPS, SHEET_CONFIG, Step } from "@/constants/risk-overview";
 import CreditHistorySheet from "./CreditHistorySheet";
 
 interface Props {
@@ -37,7 +26,6 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Zustand store
   const {
     currentStep,
     caseId,
@@ -52,17 +40,19 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
     resetAll,
   } = useRiskOverviewStore();
 
-  /* ================= URL SYNC ================= */
-
   const updateUrl = (nextStep: Step, id?: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("step", nextStep);
-    id ? params.set("caseId", id) : params.delete("caseId");
+
+    if (id) {
+      params.set("caseId", id);
+    } else {
+      params.delete("caseId");
+    }
 
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  /* Restore state from URL */
   useEffect(() => {
     if (!open) return;
 
@@ -74,9 +64,7 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
     if (urlCaseId) setCaseId(urlCaseId);
     if (urlFacilityType) {
       setProjectPath(
-        urlFacilityType === "Combined (PF & CF)"
-          ? "Combined (PF & CF)"
-          : "Pure PF",
+        urlFacilityType === "Combined (PF & CF)" ? "Combined (PF & CF)" : "Pure PF",
       );
     }
   }, [open, searchParams, setCurrentStep, setCaseId, setProjectPath]);
@@ -89,22 +77,14 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
   const handleClose = () => {
     router.replace(pathname, { scroll: false });
     onClose();
-
-    setTimeout(() => {
-      resetAll();
-    }, 200);
+    setTimeout(() => resetAll(), 200);
   };
 
   const handlers = {
     modelInfo: (facilityType?: string, newCaseId?: string) => {
       if (newCaseId) setCaseId(newCaseId);
-
-      const isCombined = facilityType === "Combined (PF & CF)";
-      setProjectPath(isCombined ? "Combined (PF & CF)" : "Pure PF");
-
-      setTimeout(() => {
-        goTo("pf_financials", newCaseId);
-      }, 50);
+      setProjectPath(facilityType === "Combined (PF & CF)" ? "Combined (PF & CF)" : "Pure PF");
+      setTimeout(() => goTo("pf_financials", newCaseId), 50);
     },
 
     pfFinancials: (data: PFCompleteData) => {
@@ -114,11 +94,7 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
 
     pfNonFinancials: (data: PFNonFinancialsData) => {
       setPFNonFinancialsData(data);
-      goTo(
-        projectPath === "Combined (PF & CF)"
-          ? "cf_financials"
-          : "credit_history",
-      );
+      goTo(projectPath === "Combined (PF & CF)" ? "cf_financials" : "credit_history");
     },
 
     cfFinancials: (data: CFFinancialsData) => {
@@ -131,93 +107,57 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
       goTo("credit_history");
     },
 
-    creditHistory: (data: { credit_history_adjustment: string }) => {
-      goTo(
-        projectPath === "Combined (PF & CF)"
-          ? "combined_reports"
-          : "pf_reports",
-      );
+    creditHistory: (_data: { credit_history_adjustment: string }) => {
+      goTo(projectPath === "Combined (PF & CF)" ? "combined_reports" : "pf_reports");
     },
 
     submit: handleClose,
   };
 
-  const content = useMemo(() => {
+  const renderContent = () => {
     switch (currentStep) {
       case "model_info":
-        return (
-          <NewCaseSheet onClose={handleClose} onSuccess={handlers.modelInfo} />
-        );
+        return <NewCaseSheet onClose={handleClose} onSuccess={handlers.modelInfo} />;
 
       case "pf_financials":
         return (
-          <PFFinancialsSheet
-            onClose={handleClose}
-            onNext={handlers.pfFinancials}
-            onSaveAsDraft={() => {}}
-          />
+          <PFFinancialsSheet onClose={handleClose} onNext={handlers.pfFinancials} onSaveAsDraft={() => {}} />
         );
 
       case "pf_non_financials":
         return (
-          <PFNonFinancialsTab
-            onClose={handleClose}
-            onNext={handlers.pfNonFinancials}
-            onSaveAsDraft={() => {}}
-          />
+          <PFNonFinancialsTab 
+          onClose={handleClose} 
+          onNext={handlers.pfNonFinancials} onSaveAsDraft={() => {}} />
         );
 
       case "pf_reports":
         return (
-          <PFReportsSheet
-            onClose={handleClose}
-            reportData={MOCK_PF_REPORT}
-            onSubmitForValidation={handlers.submit}
-            onSaveAsDraft={() => {}}
-          />
+          <PFReportsSheet onClose={handleClose} onSubmitForValidation={handlers.submit} onSaveAsDraft={() => {}} />
         );
 
       case "cf_financials":
         return (
-          <CFFinancialsSheet
-            onClose={handleClose}
-            onNext={handlers.cfFinancials}
-            onSaveAsDraft={() => {}}
-          />
+          <CFFinancialsSheet onClose={handleClose} onNext={handlers.cfFinancials} onSaveAsDraft={() => {}} />
         );
 
       case "cf_non_financials":
-        return (
-          <CFNonFinancialsTab
-            onClose={handleClose}
-            onNext={handlers.cfNonFinancials}
-            onSaveAsDraft={() => {}}
-          />
-        );
+        return <CFNonFinancialsTab onClose={handleClose} onNext={handlers.cfNonFinancials} onSaveAsDraft={() => {}} />;
 
       case "credit_history":
         return (
-          <CreditHistorySheet
-            onClose={handleClose}
-            onNext={handlers.creditHistory}
-            onSaveAsDraft={() => {}}
-          />
+          <CreditHistorySheet onClose={handleClose} onNext={handlers.creditHistory} onSaveAsDraft={() => {}} />
         );
 
       case "combined_reports":
         return (
-          <CombinedReportsSheet
-            onClose={handleClose}
-            reportData={MOCK_COMBINED_REPORT}
-            onSubmitForValidation={handlers.submit}
-            onSaveAsDraft={() => {}}
-          />
+          <CombinedReportsSheet onClose={handleClose} onSubmitForValidation={handlers.submit} onSaveAsDraft={() => {}} />
         );
 
       default:
         return null;
     }
-  }, [currentStep, projectPath]);
+  };
 
   const config = SHEET_CONFIG[currentStep];
 
@@ -231,7 +171,7 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
       titleClassName="text-white px-6 py-4"
       SheetContentClassName="p-0"
     >
-      <div className="px-6">{content}</div>
+      <div className="px-6">{renderContent()}</div>
     </SheetWrapper>
   );
 };

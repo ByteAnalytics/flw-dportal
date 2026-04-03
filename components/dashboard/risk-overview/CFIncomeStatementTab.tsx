@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import CFInputRow from "./CFInputRow";
 import {
   CF_INCOME_ROWS,
   evaluateFormulaWithRows,
-} from "@/constants/risk-overview-constants";
+} from "@/constants/risk-overview";
+import { cleanCfLabel } from "@/lib/risk-overview-utils";
 
 interface CFIncomeStatementTabProps {
   currentValues: Record<string, string>;
@@ -21,57 +22,54 @@ export default function CFIncomeStatementTab({
   onCurrentChange,
   onPreviousChange,
 }: CFIncomeStatementTabProps) {
-  const updateCalculatedFields = useCallback(
-    (
-      changedKey: string,
-      setter: (key: string, value: string) => void,
-      currentVals: Record<string, string>,
-    ) => {
-      const dependentRows = CF_INCOME_ROWS.filter(
-        (row) => row.isCalculated && row.dependencies?.includes(changedKey),
-      );
-
-      dependentRows.forEach((dependentRow) => {
-        if (dependentRow.formula) {
-          const computedValue = evaluateFormulaWithRows(
-            dependentRow.formula,
-            currentVals,
-            CF_INCOME_ROWS,
-          );
-
-          const currentValue = currentVals[dependentRow.key];
-          if (currentValue !== computedValue.toString()) {
-            setter(dependentRow.key, computedValue.toString());
-          }
-        }
-      });
-    },
-    [],
-  );
-
   const handleCurrentChange = (key: string, value: string) => {
+    const updatedValues = { ...currentValues, [key]: value };
     onCurrentChange(key, value);
 
-    setTimeout(() => {
-      updateCalculatedFields(key, onCurrentChange, {
-        ...currentValues,
-        [key]: value,
-      });
-    }, 0);
+    const dependentRows = CF_INCOME_ROWS.filter(
+      (row) => row.isCalculated && row.dependencies?.includes(key),
+    );
+
+    dependentRows.forEach((dependentRow) => {
+      if (dependentRow.formula) {
+        const computedValue = evaluateFormulaWithRows(
+          dependentRow.formula,
+          updatedValues,
+          CF_INCOME_ROWS,
+        );
+
+        const currentValue = updatedValues[dependentRow.key];
+        if (currentValue !== computedValue.toString()) {
+          onCurrentChange(dependentRow.key, computedValue.toString());
+        }
+      }
+    });
   };
 
   const handlePreviousChange = (key: string, value: string) => {
+    const updatedValues = { ...previousValues, [key]: value };
     onPreviousChange(key, value);
 
-    setTimeout(() => {
-      updateCalculatedFields(key, onPreviousChange, {
-        ...previousValues,
-        [key]: value,
-      });
-    }, 0);
+    const dependentRows = CF_INCOME_ROWS.filter(
+      (row) => row.isCalculated && row.dependencies?.includes(key),
+    );
+
+    dependentRows.forEach((dependentRow) => {
+      if (dependentRow.formula) {
+        const computedValue = evaluateFormulaWithRows(
+          dependentRow.formula,
+          updatedValues,
+          CF_INCOME_ROWS,
+        );
+
+        const currentValue = updatedValues[dependentRow.key];
+        if (currentValue !== computedValue.toString()) {
+          onPreviousChange(dependentRow.key, computedValue.toString());
+        }
+      }
+    });
   };
 
-  // Initialize calculated fields on mount
   useEffect(() => {
     CF_INCOME_ROWS.forEach((row) => {
       if (row.isCalculated && row.formula) {
@@ -94,7 +92,7 @@ export default function CFIncomeStatementTab({
         }
       }
     });
-  }, []);
+  }, [currentValues, previousValues, onCurrentChange, onPreviousChange]);
 
   return (
     <div className="grid sm:grid-cols-2 grid-cols-1 gap-6">
@@ -102,15 +100,17 @@ export default function CFIncomeStatementTab({
         <h3 className="text-[14px] text-InfraSoftBlack font-bold mb-3">
           CURRENT PERIOD
         </h3>
-        {CF_INCOME_ROWS.map((r) => (
-          <CFInputRow
-            key={r.key}
-            label={r.label}
-            value={currentValues[r.key] ?? ""}
-            onChange={(v) => handleCurrentChange(r.key, v)}
-            isCalculated={r.isCalculated}
-          />
-        ))}
+        {CF_INCOME_ROWS.map((r) => {
+          return (
+            <CFInputRow
+              key={r.key}
+              label={cleanCfLabel(r?.label ?? "")}
+              value={currentValues[r.key] ?? ""}
+              onChange={(v) => handleCurrentChange(r.key, v)}
+              isCalculated={r.isCalculated}
+            />
+          );
+        })}
       </div>
 
       <div>
@@ -120,7 +120,7 @@ export default function CFIncomeStatementTab({
         {CF_INCOME_ROWS.map((r) => (
           <CFInputRow
             key={r.key}
-            label={r.label}
+            label={cleanCfLabel(r?.label ?? "")}
             value={previousValues[r.key] ?? ""}
             onChange={(v) => handlePreviousChange(r.key, v)}
             isCalculated={r.isCalculated}

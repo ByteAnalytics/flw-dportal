@@ -14,7 +14,6 @@ interface NonFinancialsTableProps {
 const formatValue = (value: any): string => {
   if (value === undefined || value === null) return "-";
   if (typeof value === "number") {
-    // Format percentages (values between -100 and 100 that look like percentages)
     if (
       value <= 100 &&
       value >= -100 &&
@@ -22,7 +21,6 @@ const formatValue = (value: any): string => {
     ) {
       return `${value.toFixed(2)}%`;
     }
-    // Format large numbers with commas
     if (Math.abs(value) >= 1000) {
       return value.toLocaleString(undefined, {
         minimumFractionDigits: 2,

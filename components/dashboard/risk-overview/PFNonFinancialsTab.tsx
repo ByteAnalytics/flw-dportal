@@ -7,9 +7,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PF_NON_FINANCIALS_SECTIONS } from "@/constants/risk-cases";
 import { Button } from "@/components/ui/button";
+import { useSearchParams } from "next/navigation";
+import { useUpdateProgress, useSaveDraft, useCaseDetails } from "@/hooks/use-risk-overview";
+import { convertPFNonFinancialsFromApiFormat } from "@/lib/risk-overview-utils";
+
+/* eslint-disable react-hooks/set-state-in-effect */
 
 export type PFNonFinancialsData = Record<string, string>;
 
@@ -24,10 +29,53 @@ export default function PFNonFinancialsTab({
   onNext,
   onSaveAsDraft,
 }: PFNonFinancialsTabProps) {
+  const searchParams = useSearchParams();
+  const caseId = searchParams.get("caseId");
   const [values, setValues] = useState<PFNonFinancialsData>({});
+
+  const { data: caseData, refetch } = useCaseDetails(caseId || undefined);
+
+  const { updateProgress, isPending: isUpdating } = useUpdateProgress(
+    "pf_non_financials",
+    caseId || undefined,
+  );
+  const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
+    "pf_non_financials",
+    caseId || undefined,
+  );
+
+  // Fetch case data on mount
+  useEffect(() => {
+    if (caseId) {
+      refetch();
+    }
+  }, [caseId, refetch]);
+
+  // Initialize form from fetched case data
+  useEffect(() => {
+    if (caseData?.data?.pf_non_financials) {
+      const flatData = convertPFNonFinancialsFromApiFormat(
+        caseData.data.pf_non_financials,
+      );
+      setValues(flatData);
+    }
+  }, [caseData]);
 
   const handleChange = (key: string, value: string) => {
     setValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleNext = async () => {
+    const success = await updateProgress(values);
+
+    if (success) {
+      onNext(values);
+    }
+  };
+
+  const handleSaveAsDraft = async () => {
+    await saveDraft(values);
+    onSaveAsDraft(values);
   };
 
   return (
@@ -67,17 +115,19 @@ export default function PFNonFinancialsTab({
       <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
         <button
           type="button"
-          onClick={() => onSaveAsDraft(values)}
-          className="text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 bg-white cursor-pointer rounded-[8px] h-[40px]"
+          onClick={handleSaveAsDraft}
+          disabled={isSavingDraft}
+          className="text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 bg-white cursor-pointer rounded-[8px] h-[40px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save as draft
+          {isSavingDraft ? "Saving..." : "Save as draft"}
         </button>
         <Button
           type="button"
-          onClick={() => onNext(values)}
-          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px]"
+          onClick={handleNext}
+          disabled={isUpdating}
+          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Next
+          {isUpdating ? "Saving..." : "Next"}
         </Button>
       </div>
     </div>
