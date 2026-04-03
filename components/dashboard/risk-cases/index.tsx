@@ -18,7 +18,7 @@ import { CaseItem } from "@/types/risk-overview";
 import CaseSheetFlow from "../risk-overview/CaseSheetFlow";
 import { CaseSheets } from "../risk-overview/CaseSheets";
 import { buildTableRows } from "@/lib/build-table-rows";
-import { TableSkeleton } from "@/skeleton/Overview";
+import { TableSkeleton } from "@/skeleton";
 
 const STATUS_API_MAP: Record<string, string> = {
   "Pending Review": "Pending_Review",

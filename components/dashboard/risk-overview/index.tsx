@@ -12,7 +12,7 @@ import CaseSheetFlow from "./CaseSheetFlow";
 import { CaseSheets } from "./CaseSheets";
 import { useGet } from "@/hooks/use-queries";
 import { ApiResponse, PaginatedResponse } from "@/types";
-import { StatCardSkeleton, TableSkeleton } from "@/skeleton/Overview";
+import { StatCardSkeleton, TableSkeleton } from "@/skeleton";
 import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 import { useRouter } from "nextjs-toploader/app";
 import { CaseItem } from "@/types/risk-overview";

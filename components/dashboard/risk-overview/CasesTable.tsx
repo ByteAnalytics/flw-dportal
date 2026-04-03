@@ -3,7 +3,7 @@
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import CustomTable, { TableRowData } from "@/components/ui/custom-table";
-import { TableSkeleton } from "@/skeleton/Overview";
+import { TableSkeleton } from "@/skeleton";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
