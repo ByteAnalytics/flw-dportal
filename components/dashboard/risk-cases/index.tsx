@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import CustomTable from "@/components/ui/custom-table";
 import CustomDropdown, { DropdownItem } from "@/components/ui/custom-dropdown";
 import { useGet } from "@/hooks/use-queries";
-import { TableSkeleton } from "@/skeleton/Overview";
 import {
   facilityTypeOptions,
   RECENT_RISK_CASES_COLUMN,
@@ -19,6 +18,7 @@ import { CaseItem } from "@/types/risk-overview";
 import CaseSheetFlow from "../risk-overview/CaseSheetFlow";
 import { CaseSheets } from "../risk-overview/CaseSheets";
 import { buildTableRows } from "@/lib/build-table-rows";
+import { TableSkeleton } from "@/skeleton/Overview";
 
 const STATUS_API_MAP: Record<string, string> = {
   "Pending Review": "Pending_Review",
