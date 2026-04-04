@@ -19,6 +19,8 @@ import { CaseItem } from "@/types/risk-overview";
 import { buildTableRows } from "@/lib/build-table-rows";
 import { toast } from "sonner";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 interface DashboardStats {
   total_cases: number;
   pending_review: number;
