@@ -215,6 +215,7 @@ const ModelExecution = () => {
     completeProgress,
     setUploadStep,
     queryClient,
+    buildPayload,
   ]);
 
   const handleSheetSubmit = useCallback(() => {
