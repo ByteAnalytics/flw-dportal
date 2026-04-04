@@ -57,13 +57,13 @@ export type CombinedReportData = {
   finalCreditScore: string;
 };
 
-const InfoCard = ({ children }: { children: React.ReactNode }) => (
+export const InfoCard = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-[12px] border border-gray-200 bg-[#F9FAFB] p-5">
     {children}
   </div>
 );
 
-const InfoField = ({
+export const InfoField = ({
   label,
   value,
   valueClassName,

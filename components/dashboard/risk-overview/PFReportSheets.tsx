@@ -17,6 +17,7 @@ import { CalculateResponse } from "@/types/risk-overview";
 import SuccessIcon from "@/public/assets/icon/success-icon.svg";
 import { CustomImage } from "@/components/ui/custom-image";
 import { toast } from "sonner";
+import { InfoCard, InfoField } from "./CFReportsSheet";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -142,7 +143,7 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
       {/* Tabs */}
       <div className="pb-0 border-b border-gray-200">
         <div className="flex gap-0">
-          {(["Report Summary", "Full Report"] as const).map((tab) => (
+          {(["Report Summary"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -160,78 +161,39 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto py-6">
-        {activeTab === "Report Summary" && (
-          <div className="flex flex-col gap-7">
-            {/* Row 1: Customer info */}
-            <div className="rounded-[10px] border border-gray-200 bg-InfraBorder p-4 grid xl:grid-cols-6 md:grid-cols-3 grid-cols-1 gap-4">
-              <div className="flex flex-col gap-1 col-span-1">
-                <span className="text-[13px] font-medium text-gray-400">
-                  Customer
-                </span>
-                <span className="text-[14px] font-bold text-gray-900">
-                  {customerName}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1 col-span-1">
-                <span className="text-[13px] font-medium text-gray-400">
-                  Project type
-                </span>
-                <span className="text-[14px] font-bold text-gray-900">
-                  {projectType}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1 col-span-1">
-                <span className="text-[13px] font-medium text-gray-400">
-                  Year of Financials
-                </span>
-                <span className="text-[14px] font-bold text-gray-900">
-                  {yearOfFinancials}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1 col-span-1">
-                <span className="text-[13px] font-medium text-gray-400">
-                  Rating Date
-                </span>
-                <span className="text-[14px] font-bold text-gray-900">
-                  {dateOfRating}
-                </span>
-              </div>
+        <div className="flex flex-col gap-4">
+          <InfoCard>
+            <div className="grid grid-cols-3 gap-4">
+              <InfoField label="Customer" value={customerName} />
+              <InfoField label="Project type" value={projectType} />
+              <InfoField label="Year of Financials" value={yearOfFinancials} />
+              <InfoField label="Rating Date" value={dateOfRating} />
             </div>
+          </InfoCard>
 
-            {showstoppersDisplay.length > 0 && (
-              <AccordionSection title="Showstoppers">
-                <ShowstoppersTable showstoppers={showstoppersDisplay} />
-              </AccordionSection>
-            )}
+          <AccordionSection title="Showstoppers">
+            <ShowstoppersTable showstoppers={showstoppersDisplay} />
+          </AccordionSection>
 
-            {/* Row 2: Scores */}
-            <div className="rounded-[12px] bg-[#1A5FA8] p-4 grid md:grid-cols-2 grid-cols-1 gap-4">
-              <div className="flex flex-col gap-1">
-                <span className="text-[13px] font-medium text-white">
-                  PF Score
+          <div className="rounded-[12px] bg-[#1A5FA8] p-5 grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {[
+              { label: "Initial PF Score", value: pfScore },
+              {
+                label: "Baseline Credit Score Rating",
+                value: baselineScore,
+              },
+            ].map((item) => (
+              <div key={item.label} className="flex flex-col gap-1">
+                <span className="text-[13px] font-medium text-blue-200">
+                  {item.label}
                 </span>
                 <span className="text-[20px] font-bold text-white">
-                  {pfScore}
+                  {item.value}
                 </span>
               </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-[13px] font-medium text-white">
-                  Baseline Credit Score Rating
-                </span>
-                <span className="text-[20px] font-bold text-white">
-                  {baselineScore}
-                </span>
-              </div>
-            </div>
+            ))}
           </div>
-        )}
-
-        {activeTab === "Full Report" && (
-          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-            Full report view coming soon
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Footer */}

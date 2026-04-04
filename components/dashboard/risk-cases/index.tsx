@@ -27,6 +27,8 @@ import { buildTableRows } from "@/lib/build-table-rows";
 import { TableSkeleton } from "@/skeleton";
 import { toast } from "sonner";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 const STATUS_API_MAP: Record<string, string> = {
   "Pending Review": "Pending_Review",
   Validated: "Validated",
