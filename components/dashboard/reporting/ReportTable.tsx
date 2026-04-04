@@ -8,7 +8,13 @@ import CustomTable, { TableRowData } from "@/components/ui/custom-table";
 import CustomDropdown, { DropdownItem } from "@/components/ui/custom-dropdown";
 import CustomButton from "@/components/ui/custom-button";
 import StatusBadge from "./StatusBadge";
-import { formatDate, getModelLabel, getModelTypeFromTab } from "@/lib/utils";
+import {
+  extractErrorMessage,
+  extractSuccessMessage,
+  formatDate,
+  getModelLabel,
+  getModelTypeFromTab,
+} from "@/lib/utils";
 import { useFileDownload } from "@/hooks/us-file-download";
 import { useDynamicDelete } from "@/hooks/use-queries";
 import { ReportData, reportStatus, ReportTableProps } from "@/types/reporting";
@@ -72,15 +78,18 @@ const ReportTable = ({
       // If not deleting all, add id query parameters
       if (!(selectAll && selectedIds.length === data.length)) {
         const queryParams = selectedIds.map((id) => `id=${id}`).join("&");
-        url = `/guarantees/runs${queryParams?`?${queryParams}`:""}`;
+        url = `/guarantees/runs${queryParams ? `?${queryParams}` : ""}`;
       }
 
-      await deleteModel.mutateAsync(url);
+      const success = await deleteModel.mutateAsync(url);
 
       toast.success(
-        selectAll && selectedIds.length === data.length
-          ? "Successfully deleted all models"
-          : `Successfully deleted ${selectedIds.length} model(s)`,
+        extractSuccessMessage(
+          success,
+          selectAll && selectedIds.length === data.length
+            ? "Successfully deleted all models"
+            : `Successfully deleted ${selectedIds.length} model(s)`,
+        ),
       );
 
       setSelectedRows(new Set());
@@ -91,8 +100,10 @@ const ReportTable = ({
       }
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message ||
+        extractErrorMessage(
+          error,
           "Failed to delete models. Please try again.",
+        ),
       );
       console.error("Delete error:", error);
     }
@@ -116,15 +127,7 @@ const ReportTable = ({
   };
 
   const handleDownload = async (item: ReportData) => {
-    const modelType =
-      currentTab === "all"
-        ? getModelTypeFromTab(
-            item.modelCategory.toLowerCase().replace(/\s+/g, "-"),
-          )
-        : getModelTypeFromTab(currentTab);
-
-    // Your original URL
-    const fileUrl = `/guarantees/email?model_name=${extractModelType(modelType ?? "")}&model_execution_id=${item.id}`;
+    const fileUrl = `/crr/${item.id}/output`;
 
     const filename = `${item.fileName}_${formatDate(item.timeStamp)}`;
 

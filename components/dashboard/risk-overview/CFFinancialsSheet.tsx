@@ -9,7 +9,7 @@ import CFIncomeStatementTab from "./CFIncomeStatementTab";
 import CFOtherInputTab from "./CFOtherInputTab";
 import { CFFinancialsData } from "@/types/risk-overview";
 import { Upload } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { usePost } from "@/hooks/use-queries";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
@@ -23,6 +23,7 @@ import {
   CF_INCOME_STATEMENT_KEY_MAP,
   CF_OTHER_INPUTS_KEY_MAP,
 } from "@/constants/risk-overview";
+import CustomButton from "@/components/ui/custom-button";
 
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -31,6 +32,7 @@ interface CFFinancialsSheetProps {
   onClose: () => void;
   onNext: (data: CFFinancialsData) => void;
   onSaveAsDraft?: () => void;
+  onPrevious?: () => void;
 }
 
 interface ParseTemplateResponse {
@@ -50,6 +52,7 @@ interface ParseTemplateResponse {
 const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
   onSaveAsDraft,
   onNext,
+  onPrevious,
 }) => {
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
@@ -154,6 +157,10 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
     if (showToast) toast.success("CF data loaded successfully!");
   };
 
+  const handlePrevious = () => {
+    onPrevious?.();
+  };
+
   // Force refetch when caseId changes
   useEffect(() => {
     if (caseId) {
@@ -184,13 +191,22 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
       if (response.success && response.data) {
         populateCFDataFromResponse(response.data);
         setInputMode("upload");
-        toast.success(response.message || "File uploaded successfully");
+        toast.success(
+          extractSuccessMessage(response, "File uploaded successfully"),
+        );
       } else {
-        toast.error(response.message || "Failed to parse file");
+        toast.error(
+          extractErrorMessage(
+            response,
+            `Failed to parse file. Please try again.`,
+          ),
+        );
       }
     } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error(error?.message || "Failed to upload file. Please try again.");
+      toast.error(
+        extractErrorMessage(error, `Failed to upload file. Please try again.`),
+      );
     }
 
     if (fileInputRef.current) {
@@ -317,28 +333,39 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
         headerRight={inputModeToggle}
       />
 
-      <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-6">
-        <button
-          onClick={handleSaveAsDraft}
-          disabled={isSavingDraft}
-          className="bg-white border text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSavingDraft ? "Saving..." : "Save as draft"}
-        </button>
+      <div className="pt-6 flex items-center gap-3 justify-between mt-auto">
+        {onPrevious && (
+          <CustomButton
+            type="button"
+            title="Previous"
+            onClick={handlePrevious}
+            disabled={isSavingDraft || isUpdating}
+            className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
+          />
+        )}
+        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-6 ">
+          <button
+            onClick={handleSaveAsDraft}
+            disabled={isSavingDraft}
+            className="bg-white border text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSavingDraft ? "Saving..." : "Save as draft"}
+          </button>
 
-        <Button
-          onClick={async () => {
-            const data = buildData();
-            const success = await updateProgress(data);
-            if (success) {
-              onNext(data);
-            }
-          }}
-          disabled={isUpdating}
-          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isUpdating ? "Saving..." : "Next"}
-        </Button>
+          <Button
+            onClick={async () => {
+              const data = buildData();
+              const success = await updateProgress(data);
+              if (success) {
+                onNext(data);
+              }
+            }}
+            disabled={isUpdating}
+            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isUpdating ? "Saving..." : "Next"}
+          </Button>
+        </div>
       </div>
     </div>
   );

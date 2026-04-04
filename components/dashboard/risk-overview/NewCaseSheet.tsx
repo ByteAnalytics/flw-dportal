@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -16,16 +16,20 @@ import {
   dreProjectOptions,
   facilityTypeOptions,
   marketEventOptions,
-  pfWeights,
   PROJECT_TYPE,
   yesNoOptions,
 } from "@/constants/risk-overview";
+import { useSearchParams } from "next/navigation";
+import { useCaseDetails, useUpdateProgress } from "@/hooks/use-risk-overview";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface NewCaseSheetProps {
   onClose: () => void;
   onSuccess?: (facilityType: string, newCaseId: string) => void;
+  onPrevious?: () => void;
+  onSkip?: () => void;
 }
 
 interface Apidata {
@@ -61,8 +65,25 @@ interface Apidata {
   created_at: Date;
 }
 
-const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
+const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
+  onClose,
+  onSuccess,
+  onPrevious,
+  onSkip,
+}) => {
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const caseId = searchParams.get("caseId");
+
+  const {
+    data,
+    isLoading: isLoadingCase,
+    refetch,
+  } = useCaseDetails(caseId || undefined);
+
+  const caseData = data?.data;
+
+  console.log("case data in new case sheet:", caseData);
 
   const form = useForm<NewCaseFormData>({
     resolver: zodResolver(NewCaseSchema),
@@ -70,34 +91,62 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
       select_project_type: "",
       customer_name: "",
       facility_type: "",
-      revenue_growth: "",
-      counterparty_losses: "yes",
+      revenue_growth: "no",
+      counterparty_losses: "no",
       market_events: "",
-      dre_project: "",
-      manual_weightages: "yes",
-      pf_weight: "",
-      cf_weight: "",
       market_event_description: "",
       year_of_financials: "",
+      dre_project: "",
     },
   });
 
+  // Populate form once caseData is fetched (for update mode)
+  useEffect(() => {
+    if (!caseData) return;
+
+    form.reset({
+      select_project_type: caseData.project_type ?? "",
+      customer_name: caseData.customer_name ?? "",
+      facility_type: caseData.facility_type ?? "",
+      revenue_growth:
+        caseData.consistent_revenue_growth === true ? "yes" : "no",
+      counterparty_losses: caseData.market_event_losses === true ? "yes" : "no",
+      market_events: caseData.applicable_market_events ?? "",
+      market_event_description: caseData.market_event_description ?? "",
+      year_of_financials: caseData.year_of_financials
+        ? String(caseData.year_of_financials)
+        : "",
+      dre_project: caseData.dre_project_selection
+        ? (Object.keys(caseData.dre_project_selection).find(
+            (key) => caseData.dre_project_selection![key] === "Yes",
+          ) ?? "")
+        : "",
+    });
+  }, [caseData, form]);
+
+  // Create new case mutation (only for creation)
   const createNewCase = usePost<ApiResponse<Apidata>, NewCaseFormData>(
     "/crr/cases",
     ["crr-cases"],
+  );
+
+  // Use the update progress hook for updating existing case
+  const { updateProgress, isPending: isUpdating } = useUpdateProgress(
+    "model_info" as any, // You might need to add "model_info" to your type definition
+    caseId || undefined,
   );
 
   const {
     control,
     handleSubmit,
     formState: { isSubmitting },
+    getValues,
   } = form;
 
   const lossIsDrivenByMarketEvent = form.watch("counterparty_losses") === "yes";
 
-  const manuallyInputWeightages = form.watch("manual_weightages") === "yes";
-
-  const isLoading = createNewCase.isPending || isSubmitting;
+  const isLoading =
+    createNewCase.isPending || isUpdating || isSubmitting || isLoadingCase;
 
   const onSubmit = async (data: NewCaseFormData) => {
     try {
@@ -114,28 +163,47 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
         dre_project_selection: data.dre_project
           ? { [data.dre_project]: "Yes" }
           : {},
-        manual_weights: data.manual_weightages === "yes" ? "Yes" : "No",
-        ...(data.manual_weightages === "yes" && {
-          pf_weight: Number(data.pf_weight),
-          cf_weight: Number(data.cf_weight),
-        }),
+        manual_weights: "No",
         year_of_financials: Number(data.year_of_financials ?? 0),
       };
 
-      const response = await createNewCase.mutateAsync(payload);
-
-      toast.success(extractSuccessMessage(response));
-      await queryClient.invalidateQueries({
-        queryKey: ["crr-cases"],
-        exact: false,
-        refetchType: "all",
-      });
-      const caseId = response?.data?.id;
-      onSuccess?.(data.facility_type, caseId);
+      if (caseId) {
+        // Update existing case using updateProgress
+        const success = await updateProgress(payload);
+        if (success) {
+          await queryClient.invalidateQueries({
+            queryKey: ["crr-cases"],
+            exact: false,
+            refetchType: "all",
+          });
+          onSuccess?.(data.facility_type, caseId);
+        }
+      } else {
+        // Create new case
+        const response = await createNewCase.mutateAsync(payload);
+        toast.success(extractSuccessMessage(response));
+        await queryClient.invalidateQueries({
+          queryKey: ["crr-cases"],
+          exact: false,
+          refetchType: "all",
+        });
+        const newCaseId = response?.data?.id;
+        onSuccess?.(data.facility_type, newCaseId);
+      }
     } catch (error: any) {
       toast.error(extractErrorMessage(error));
     }
   };
+
+  const handlePrevious = () => {
+    onPrevious?.();
+  };
+
+  const handleSkip = () => {
+    onSkip?.();
+  };
+
+  if (isLoadingCase) return <LoadingSpinner />;
 
   return (
     <div className="flex flex-col gap-6 mb-6">
@@ -243,50 +311,32 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({ onClose, onSuccess }) => {
               options={dreProjectOptions}
               disabled={isLoading}
             />
-
-            <CustomInputField
-              control={control}
-              fieldType={FormFieldType.SELECT}
-              name="manual_weightages"
-              label="Do you want to manually input weightages for PF and Corporate"
-              placeholder="select DRE project type"
-              className="bg-InfraBorder rounded-[10px] h-[44px]"
-              options={yesNoOptions}
-              disabled={isLoading}
-            />
-
-            {/* PF Weight + CF Weight — side by side */}
-            {manuallyInputWeightages && (
-              <div className="grid grid-cols-2 gap-3">
-                <CustomInputField
-                  control={control}
-                  fieldType={FormFieldType.SELECT}
-                  options={pfWeights}
-                  name="pf_weight"
-                  label="PF Weight"
-                  placeholder="enter weight"
-                  className="bg-InfraBorder rounded-[10px] h-[44px]"
-                  disabled={isLoading}
-                />
-
-                <CustomInputField
-                  control={control}
-                  fieldType={FormFieldType.SELECT}
-                  options={pfWeights}
-                  name="cf_weight"
-                  label="CF Weight"
-                  placeholder="enter weight"
-                  className="bg-InfraBorder rounded-[10px] h-[44px]"
-                  disabled={isLoading}
-                />
-              </div>
-            )}
           </div>
 
-          <div className="pt-6 flex justify-end items-center">
+          <div className="pt-6 flex items-center gap-3 justify-between">
+            <div className="flex gap-3">
+              {onPrevious && (
+                <CustomButton
+                  type="button"
+                  title="Previous"
+                  onClick={handlePrevious}
+                  disabled={isLoading}
+                  className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
+                />
+              )}
+              {onSkip && caseId && (
+                <CustomButton
+                  type="button"
+                  title="Skip"
+                  onClick={handleSkip}
+                  disabled={isLoading}
+                  className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
+                />
+              )}
+            </div>
             <CustomButton
               type="submit"
-              title="Continue"
+              title={caseId ? "Update" : "Continue"}
               isLoading={isLoading}
               disabled={isLoading}
               className="w-[117px] h-[40px] flex items-center gap-2 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:bg-teal-700 text-white text-[16px] font-semibold"

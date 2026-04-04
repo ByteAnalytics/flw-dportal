@@ -11,8 +11,13 @@ import { useState, useEffect } from "react";
 import { PF_NON_FINANCIALS_SECTIONS } from "@/constants/risk-cases";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
-import { useUpdateProgress, useSaveDraft, useCaseDetails } from "@/hooks/use-risk-overview";
+import {
+  useUpdateProgress,
+  useSaveDraft,
+  useCaseDetails,
+} from "@/hooks/use-risk-overview";
 import { convertPFNonFinancialsFromApiFormat } from "@/lib/risk-overview-utils";
+import CustomButton from "@/components/ui/custom-button";
 
 /* eslint-disable react-hooks/set-state-in-effect */
 
@@ -22,12 +27,14 @@ interface PFNonFinancialsTabProps {
   onClose: () => void;
   onNext: (data: PFNonFinancialsData) => void;
   onSaveAsDraft: (data: PFNonFinancialsData) => void;
+  onPrevious?: () => void;
 }
 
 export default function PFNonFinancialsTab({
   onClose,
   onNext,
   onSaveAsDraft,
+  onPrevious,
 }: PFNonFinancialsTabProps) {
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
@@ -43,6 +50,10 @@ export default function PFNonFinancialsTab({
     "pf_non_financials",
     caseId || undefined,
   );
+
+  const handlePrevious = () => {
+    onPrevious?.();
+  };
 
   // Fetch case data on mount
   useEffect(() => {
@@ -112,23 +123,35 @@ export default function PFNonFinancialsTab({
           </div>
         </div>
       ))}
-      <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
-        <button
-          type="button"
-          onClick={handleSaveAsDraft}
-          disabled={isSavingDraft}
-          className="text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 bg-white cursor-pointer rounded-[8px] h-[40px] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSavingDraft ? "Saving..." : "Save as draft"}
-        </button>
-        <Button
-          type="button"
-          onClick={handleNext}
-          disabled={isUpdating}
-          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isUpdating ? "Saving..." : "Next"}
-        </Button>
+
+      <div className="pt-6 flex items-center gap-3 justify-between mt-auto">
+        {onPrevious  && (
+          <CustomButton
+            type="button"
+            title="Previous"
+            onClick={handlePrevious}
+            disabled={isSavingDraft || isUpdating}
+            className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
+          />
+        )}
+        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={handleSaveAsDraft}
+            disabled={isSavingDraft}
+            className="text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 bg-white cursor-pointer rounded-[8px] h-[40px] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSavingDraft ? "Saving..." : "Save as draft"}
+          </button>
+          <Button
+            type="button"
+            onClick={handleNext}
+            disabled={isUpdating}
+            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isUpdating ? "Saving..." : "Next"}
+          </Button>
+        </div>
       </div>
     </div>
   );

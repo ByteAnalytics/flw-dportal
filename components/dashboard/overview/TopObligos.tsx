@@ -8,6 +8,7 @@ import CustomDropdown, { DropdownItem } from "@/components/ui/custom-dropdown";
 import { useGet } from "@/hooks/use-queries";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ApiResponse } from "@/types";
+import { formatCurrency, formatPercentage } from "@/lib/utils";
 
 interface TopObligor {
   "Counter Party": string;
@@ -67,9 +68,9 @@ export const Top20DebtorsTable: React.FC<Top20DebtorsTableProps> = ({
       name: (
         <span className="text-[#003A1B] font-medium">{o["Counter Party"]}</span>
       ),
-      ead: o.EAD?.toFixed(2) ?? "0.00",
-      lgd: o.LGD?.toFixed(2) ?? "0.00",
-      ecl: o.ECL?.toFixed(2) ?? "0.00",
+      ead: formatCurrency(o.EAD ?? "0.00"),
+      lgd: formatPercentage(o.LGD ?? "0.00"),
+      ecl: formatCurrency(o.ECL ?? "0.00"),
     }));
   }, [paginatedRows]);
 

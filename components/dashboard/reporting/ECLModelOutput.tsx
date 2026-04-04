@@ -94,22 +94,22 @@ const ECLModelOutput: React.FC = () => {
         </span>
       ),
       Baseline: (
-        <span className="text-[#444846]">{item.Baseline.toFixed(4)}</span>
+        <span className="text-[#444846]">{formatCurrency(Number(item.Baseline))}</span>
       ),
       "Best Case": (
-        <span className="text-[#444846]">{item["Best Case"].toFixed(4)}</span>
+        <span className="text-[#444846]">{formatCurrency(Number(item["Best Case"]))}</span>
       ),
       "Worst Case": (
-        <span className="text-[#444846]">{item["Worst Case"].toFixed(4)}</span>
+        <span className="text-[#444846]">{formatCurrency(Number(item["Worst Case"]))}</span>
       ),
       "Probability Weighted ECL": (
         <span className="text-[#444846]">
-          {item["Probability Weighted ECL"].toFixed(4)}
+          {formatCurrency(Number(item["Probability Weighted ECL"]))}
         </span>
       ),
       "ECL with Scalar": (
         <span className="text-[#444846]">
-          {item["ECL with Scalar"].toFixed(4)}
+          {formatCurrency(Number(item["ECL with Scalar"]))}
         </span>
       ),
       "ECL Ratio": (
@@ -124,7 +124,7 @@ const ECLModelOutput: React.FC = () => {
   const emailExportApiUrl = `/guarantees/email?model_name=${extractModelType(data?.data?.model_type ?? "")}&model_execution_id=${id}`;
 
   const renderEclTabCards = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
       <StatCard
         title="Total ECL"
         icon={<CustomerSvg />}
@@ -149,7 +149,7 @@ const ECLModelOutput: React.FC = () => {
   );
 
   const renderScenarioCards = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
       <StatCard
         title="Total EAD"
         icon={<CustomerSvg />}
@@ -199,31 +199,7 @@ const ECLModelOutput: React.FC = () => {
   const renderTableWithPagination = () => {
     if (isLoading) return <LoadingSpinner loadingText="Loading ECL Data..." />;
 
-    return (
-      <>
-        {isEclTab ? renderEclTabCards() : renderScenarioCards()}
-
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <CustomTable
-            columns={ECL_PER_ASSET_COLUMNS}
-            rows={tableRows}
-            tableHeaderClassName="bg-[#F9FAFB]"
-            emptyMessage={`No ${activeTabConfig.label} data available`}
-          />
-        </div>
-
-        {(pagedData?.total_logs ?? 0) > 0 && (
-          <div className="mt-6">
-            <Pagination
-              totalCount={pagedData?.total_logs ?? 0}
-              activePage={String(pagedData?.current_page ?? 1)}
-              setPageNumber={setPageNumber}
-              itemsPerPage={ITEMS_PER_PAGE}
-            />
-          </div>
-        )}
-      </>
-    );
+    return <>{isEclTab ? renderEclTabCards() : renderScenarioCards()}</>;
   };
 
   const tabOptions = TAB_CONFIG.map((tab) => ({
@@ -270,6 +246,26 @@ const ECLModelOutput: React.FC = () => {
         className="border-none"
         triggerClassName="max-w-fit"
       />
+
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <CustomTable
+          columns={ECL_PER_ASSET_COLUMNS}
+          rows={tableRows}
+          tableHeaderClassName="bg-[#F9FAFB]"
+          emptyMessage={`No ${activeTabConfig.label} data available`}
+        />
+      </div>
+
+      {(pagedData?.total_logs ?? 0) > 0 && (
+        <div className="mt-6">
+          <Pagination
+            totalCount={pagedData?.total_logs ?? 0}
+            activePage={String(pagedData?.current_page ?? 1)}
+            setPageNumber={setPageNumber}
+            itemsPerPage={ITEMS_PER_PAGE}
+          />
+        </div>
+      )}
     </div>
   );
 };

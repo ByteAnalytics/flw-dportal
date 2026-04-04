@@ -14,7 +14,7 @@ export function useFileDownload() {
       try {
         setIsDownloading(true);
 
-        const response = await apiClient.post(url, {
+        const response = await apiClient.get(url, {
           responseType: "blob",
           headers: {
             Accept:

@@ -46,12 +46,14 @@ interface CreditHistorySheetProps {
   onClose: () => void;
   onNext: (data: { credit_history_adjustment: string }) => void;
   onSaveAsDraft?: () => void;
+  onPrevious?: () => void;
 }
 
 const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
   onClose,
   onNext,
   onSaveAsDraft,
+  onPrevious,
 }) => {
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
@@ -128,6 +130,10 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
     }
   };
 
+  const handlePrevious = () => {
+    onPrevious?.();
+  };
+
   return (
     <div className="flex flex-col h-fit w-full">
       <Form {...form}>
@@ -152,23 +158,34 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
             />
           </div>
 
-          <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-6 mt-auto">
-            <button
-              type="button"
-              onClick={handleSaveAsDraft}
-              disabled={isLoading}
-              className="bg-white border-InfraBorder h-[40px] text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSavingDraft ? "Saving..." : "Save as draft"}
-            </button>
+          <div className="pt-6 flex items-center gap-3 justify-between mt-auto">
+            {onPrevious &&  (
+              <CustomButton
+                type="button"
+                title="Previous"
+                onClick={handlePrevious}
+                disabled={isSavingDraft || isUpdating}
+                className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
+              />
+            )}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-6 ">
+              <button
+                type="button"
+                onClick={handleSaveAsDraft}
+                disabled={isLoading}
+                className="bg-white border-InfraBorder h-[40px] text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSavingDraft ? "Saving..." : "Save as draft"}
+              </button>
 
-            <CustomButton
-              type="submit"
-              title="Next"
-              isLoading={isUpdating}
-              disabled={!isValid || isLoading}
-              className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
-            />
+              <CustomButton
+                type="submit"
+                title="Next"
+                isLoading={isUpdating}
+                disabled={!isValid || isLoading}
+                className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
+              />
+            </div>
           </div>
         </form>
       </Form>

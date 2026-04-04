@@ -10,9 +10,9 @@ export const NewCaseSchema = z.object({
   market_event_description: z.string().optional(),
   year_of_financials: z.string().optional(),
   dre_project: z.string().min(1, "Please select a DRE project"),
-  manual_weightages: z.string().min(1, "This field is required"),
-  pf_weight: z.string().optional(),
-  cf_weight: z.string().optional(),
+  // manual_weightages: z.string().min(1, "This field is required"),
+  // pf_weight: z.string().optional(),
+  // cf_weight: z.string().optional(),
 });
 
 export type NewCaseFormData = z.infer<typeof NewCaseSchema>;
