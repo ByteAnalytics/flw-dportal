@@ -1,12 +1,16 @@
 "use client";
 
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FinancialInputTable, { FinancialRow } from "./FinancialInputTable";
 import { CustomTabs } from "@/components/shared/CustomTab";
-import { cn, generateDynamicYears } from "@/lib/utils";
+import {
+  cn,
+  extractErrorMessage,
+  extractSuccessMessage,
+  generateDynamicYears,
+} from "@/lib/utils";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { useRiskOverviewStore } from "@/stores/risk-overview-store";
@@ -28,6 +32,7 @@ import {
   CASH_FLOW_KEY_MAP,
   RATIOS_KEY_MAP,
 } from "@/constants/risk-overview";
+import CustomButton from "@/components/ui/custom-button";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
@@ -47,6 +52,7 @@ interface PFFinancialsSheetProps {
   onClose: () => void;
   onNext: (data: PFFinancialsData) => void;
   onSaveAsDraft?: () => void;
+  onPrevious?: () => void;
 }
 
 const DEFAULT_YEARS = generateDynamicYears();
@@ -54,6 +60,7 @@ const DEFAULT_YEARS = generateDynamicYears();
 const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   onNext,
   onSaveAsDraft,
+  onPrevious,
 }) => {
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
@@ -126,6 +133,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
 
     const apiYears = pfData.years;
     if (apiYears && Array.isArray(apiYears) && apiYears.length > 0) {
+      console.log("api years:", apiYears);
       setYears(apiYears);
     }
 
@@ -196,6 +204,10 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     if (showToast) toast.success("File uploaded and parsed successfully!");
   };
 
+  const handlePrevious = () => {
+    onPrevious?.();
+  };
+
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -213,15 +225,24 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
       if (response?.success && response?.data) {
         populateDataFromResponse(response.data);
         setInputMode("upload");
-        toast.success(response.message || "File uploaded successfully");
+        toast.success(
+          extractSuccessMessage(response, "File uploaded successfully"),
+        );
       } else {
         console.log(response?.message);
-        toast.error(response?.message || "Failed to parse file");
+        toast.error(
+          extractErrorMessage(
+            response,
+            `Failed to parse file. Please try again.`,
+          ),
+        );
       }
     } catch (error: any) {
       console.error("Upload error:", error);
       console.log("error message:", error?.message);
-      toast.error(error?.message || "Failed to upload file. Please try again.");
+      toast.error(
+        extractErrorMessage(error, `Failed to upload file. Please try again.`),
+      );
     }
 
     if (fileInputRef.current) {
@@ -469,22 +490,33 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
         />
       </div>
 
-      <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-6">
-        <button
-          onClick={handleSaveAsDraft}
-          disabled={isSavingDraft}
-          className="bg-white border-InfraBorder h-[40px] text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSavingDraft ? "Saving..." : "Save as draft"}
-        </button>
+      <div className="pt-6 flex items-center gap-3 justify-between mt-auto">
+        {onPrevious && (
+          <CustomButton
+            type="button"
+            title="Previous"
+            onClick={handlePrevious}
+            disabled={isSavingDraft || isUpdating}
+            className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
+          />
+        )}
+        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-6">
+          <Button
+            onClick={handleSaveAsDraft}
+            disabled={isSavingDraft}
+            className="bg-white border-InfraBorder h-[40px] text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSavingDraft ? "Saving..." : "Save as draft"}
+          </Button>
 
-        <Button
-          onClick={handleNext}
-          disabled={isUpdating}
-          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isUpdating ? "Saving..." : "Next"}
-        </Button>
+          <Button
+            onClick={handleNext}
+            disabled={isUpdating}
+            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isUpdating ? "Saving..." : "Next"}
+          </Button>
+        </div>
       </div>
     </div>
   );

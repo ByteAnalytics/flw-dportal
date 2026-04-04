@@ -40,7 +40,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 }) => {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild disabled={disabled}>
+      <DropdownMenuTrigger asChild disabled={disabled} className="cursor-pointer">
         {trigger}
       </DropdownMenuTrigger>
       <DropdownMenuContent

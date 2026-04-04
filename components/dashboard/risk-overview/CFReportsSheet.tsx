@@ -17,6 +17,7 @@ import { CalculateResponse } from "@/types/risk-overview";
 import SuccessIcon from "@/public/assets/icon/success-icon.svg";
 import { CustomImage } from "@/components/ui/custom-image";
 import { toast } from "sonner";
+import CustomButton from "@/components/ui/custom-button";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -86,12 +87,14 @@ interface CombinedReportsSheetProps {
   onClose: () => void;
   onSubmitForValidation: () => void;
   onSaveAsDraft?: () => void;
+  onPrevious?: () => void;
 }
 
 const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
   onClose,
   onSubmitForValidation,
   onSaveAsDraft,
+  onPrevious,
 }) => {
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
@@ -135,7 +138,7 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
         toast.success(success.message || "Submitted successfully");
         onSubmitForValidation();
       }
-    } catch (error:any) {
+    } catch (error: any) {
       console.error("Error submitting case:", error);
       toast.error(error?.message || "Failed to submit case. Please try again.");
     }
@@ -154,6 +157,10 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
     } catch (error) {
       console.error("Error approving rating:", error);
     }
+  };
+
+  const handlePrevious = () => {
+    onPrevious?.();
   };
 
   if (isCalculating) return <LoadingSpinner />;
@@ -220,30 +227,40 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
         </div>
       </div>
 
-      <div className="px-6 py-4 border-t mt-auto border-gray-200 flex flex-wrap items-center justify-end gap-3">
-        <button
-          type="button"
-          onClick={onSaveAsDraft}
-          className="text-[13px] border h-[40px] bg-white rounded-[8px] border-InfraBorder font-semibold text-gray-600 hover:text-gray-800 px-3 py-2"
-        >
-          Save as draft
-        </button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitting || isApproving}
-          className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting || isApproving
-            ? isValidating
-              ? "Approving..."
-              : "Submitting..."
-            : isValidating
-              ? "Approve Case"
-              : "Submit for Validation"}
-        </Button>
+      <div className="pt-6 flex items-center gap-3 justify-between mt-auto">
+        {onPrevious && (
+          <CustomButton
+            type="button"
+            title="Previous"
+            onClick={handlePrevious}
+            disabled={isSubmitting || isApproving}
+            className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
+          />
+        )}
+        <div className="px-6 py-4 border-t  border-gray-200 flex flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onSaveAsDraft}
+            className="text-[13px] border h-[40px] bg-white rounded-[8px] border-InfraBorder font-semibold text-gray-600 hover:text-gray-800 px-3 py-2"
+          >
+            Save as draft
+          </button>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting || isApproving}
+            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting || isApproving
+              ? isValidating
+                ? "Approving..."
+                : "Submitting..."
+              : isValidating
+                ? "Approve Case"
+                : "Submit for Validation"}
+          </Button>
+        </div>
       </div>
-
       <SheetWrapper
         open={isApproveSheetOpen}
         setOpen={setIsApproveSheetOpen}

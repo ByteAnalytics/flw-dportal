@@ -9,13 +9,10 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import CustomTable from "@/components/ui/custom-table";
+import CustomTable, { TableColumn } from "@/components/ui/custom-table";
 import CustomDropdown, { DropdownItem } from "@/components/ui/custom-dropdown";
 import { useGet, useDynamicDelete } from "@/hooks/use-queries";
-import {
-  facilityTypeOptions,
-  RECENT_RISK_CASES_COLUMN,
-} from "@/constants/risk-overview";
+import { facilityTypeOptions } from "@/constants/risk-overview";
 import { STATUS_OPTIONS } from "@/constants/risk-cases";
 import { useRouter } from "nextjs-toploader/app";
 import { ApiPaginatedResponse } from "@/types";
@@ -26,6 +23,7 @@ import { CaseSheets } from "../risk-overview/CaseSheets";
 import { buildTableRows } from "@/lib/build-table-rows";
 import { TableSkeleton } from "@/skeleton";
 import { toast } from "sonner";
+import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -120,15 +118,18 @@ const RiskCases = () => {
         !(selectAll && selectedIds.length === (casesData?.data?.length ?? 0))
       ) {
         const queryParams = selectedIds.map((id) => `id=${id}`).join("&");
-        url = `/crr/cases${queryParams?`?${queryParams}`:""}`;
+        url = `/crr/cases${queryParams ? `?${queryParams}` : ""}`;
       }
 
-      await deleteCase.mutateAsync(url);
+      const success = await deleteCase.mutateAsync(url);
 
       toast.success(
-        selectAll && selectedIds.length === (casesData?.data?.length ?? 0)
-          ? "Successfully deleted all cases"
-          : `Successfully deleted ${selectedIds.length} case(s)`,
+        extractSuccessMessage(
+          success,
+          selectAll && selectedIds.length === (casesData?.data?.length ?? 0)
+            ? "Successfully deleted all cases"
+            : `Successfully deleted ${selectedIds.length} case(s)`,
+        ),
       );
 
       setSelectedRows(new Set());
@@ -136,8 +137,7 @@ const RiskCases = () => {
       refetch();
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message ||
-          "Failed to delete cases. Please try again.",
+        extractErrorMessage(error, "Failed to delete cases. Please try again."),
       );
       console.error("Delete error:", error);
     }
@@ -153,6 +153,34 @@ const RiskCases = () => {
     },
     [setSelectedCaseId, setIsSheetOpen, router],
   );
+
+  const RECENT_RISK_CASES_COLUMN: TableColumn[] = [
+    {
+      key: "checkbox",
+      label: (
+        <input
+          type="checkbox"
+          checked={selectAll}
+          onChange={handleSelectAll}
+          className="w-4 h-4 rounded border-gray-300 text-[#006F37] focus:ring-[#006F37] cursor-pointer"
+        />
+      ),
+      width: "w-12",
+    },
+    { key: "caseId", label: "CASE NO", width: "w-[100px]" },
+    {
+      key: "customerName",
+      label: "CUSTOMER NAME",
+      width: "md:w-[200px] w-[150px]",
+    },
+    { key: "facilityType", label: "FACILITY TYPE", align: "left" },
+    { key: "rater", label: "RATER", align: "left" },
+    { key: "validator", label: "VALIDATOR", align: "left" },
+    { key: "lastUpdated", label: "LAST UPDATED", align: "left" },
+    { key: "status", label: "STATUS", align: "left" },
+    { key: "rating", label: "RATING", align: "left" },
+    { key: "actions", label: "ACTIONS", align: "left" },
+  ];
 
   const tableRows = buildTableRows(casesData?.data, {
     setSelectedCaseId,
@@ -305,7 +333,9 @@ const RiskCases = () => {
         selectedCaseId={selectedCaseId}
         setActiveDetailsSheet={setActiveDetailsSheet}
         setIsSheetOpen={setIsSheetOpen}
-        selectedCaseDetails={casesData?.data?.find((c) => c.id === selectedCaseId) as CaseItem}
+        selectedCaseDetails={
+          casesData?.data?.find((c) => c.id === selectedCaseId) as CaseItem
+        }
       />
     </>
   );

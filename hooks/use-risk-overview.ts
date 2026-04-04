@@ -9,6 +9,7 @@ import {
   convertPFNonFinancialsToApiFormat,
   convertCFNonFinancialsToApiFormat,
 } from "@/lib/risk-overview-utils";
+import { extractErrorMessage } from "@/lib/utils";
 
 export const useCaseDetails = (caseId?: string) => {
   return useGet<ApiResponse<CaseDetails>>(
@@ -79,7 +80,8 @@ export const useUpdateProgress = (
     | "pf_non_financials"
     | "cf_financials"
     | "cf_non_financials"
-    | "credit_history",
+    | "credit_history"
+    | "model_info",
   caseId?: string,
 ) => {
   const updateCase = useUpdateCase(caseId);
@@ -106,7 +108,7 @@ export const useUpdateProgress = (
           credit_history_adjustment:
             data.credit_history_adjustment || "Not applicable",
         };
-      }
+      } else payload = data;
 
       await updateCase.mutateAsync(payload);
       toast.success(`Progress saved successfully!`);
@@ -114,7 +116,10 @@ export const useUpdateProgress = (
     } catch (error: any) {
       console.error(`Error updating case:`, error);
       toast.error(
-        error?.message || `Failed to save progress. Please try again.`,
+        extractErrorMessage(
+          error,
+          `Failed to save progress. Please try again.`
+        ),
       );
       return false;
     }
@@ -187,7 +192,7 @@ export const useSaveDraft = (
     } catch (error: any) {
       console.error(`Error saving ${type}:`, error);
       toast.error(
-        error?.message || `Failed to save ${type}. Please try again.`,
+        extractErrorMessage(error, `Failed to save ${type}. Please try again.`),
       );
       return false;
     }

@@ -48,7 +48,7 @@ const AppHeader: React.FC = () => {
         <CustomDropdown
           className="w-52"
           trigger={
-            <div className="p-[1.5px] rounded-md bg-gradient-to-r from-[#49A85ACC] to-[#1E6FB8]">
+            <div className="cursor-pointer p-[1.5px] rounded-md bg-gradient-to-r from-[#49A85ACC] to-[#1E6FB8]">
               <Button className="flex items-center gap-2 text-[13px] font-[600] text-InfraBlack bg-white border-0 w-full h-full">
                 {selectedModel}
                 <ChevronDown className="w-4 h-4" />

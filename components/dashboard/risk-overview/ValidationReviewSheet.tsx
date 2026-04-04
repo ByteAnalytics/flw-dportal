@@ -31,6 +31,8 @@ import { useRouter } from "nextjs-toploader/app";
 import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 import SuccessIcon from "@/public/assets/icon/success-icon.svg";
 import { CustomImage } from "@/components/ui/custom-image";
+import { toast } from "sonner";
+import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 interface Props {
   onClose: () => void;
   onReturnForRevision: () => void;
@@ -96,7 +98,7 @@ const ValidationReviewSheet: React.FC<Props> = ({
   const handleEdit = () => {
     onClose();
     router.push(
-      `/dashboard/ccr/overview?step=pf_financials&caseId=${caseId}&facilityType=${encodeURIComponent(details.facility_type)}&isValidating=true`,
+      `/dashboard/ccr/overview?step=model_info&caseId=${caseId}&facilityType=${encodeURIComponent(details.facility_type)}&isValidating=true`,
     );
     setIsSheetOpen(true);
   };
@@ -112,11 +114,15 @@ const ValidationReviewSheet: React.FC<Props> = ({
     }
 
     try {
-      await returnCase({ notes: returnNotes });
-      setIsReturnSheetOpen(false);
-      onReturnForRevision();
+      const success = await returnCase({ notes: returnNotes });
+      if (success) {
+        toast.success(extractSuccessMessage(success));
+        setIsReturnSheetOpen(false);
+        onReturnForRevision();
+      }
     } catch (error) {
       console.error("Error returning case:", error);
+      toast.error(extractErrorMessage(error));
     }
   };
 
@@ -131,11 +137,15 @@ const ValidationReviewSheet: React.FC<Props> = ({
     }
 
     try {
-      await approveCase({ comment: approvalComment });
-      setIsApproveSheetOpen(false);
-      onApproveRating();
+      const success = await approveCase({ comment: approvalComment });
+      if (success) {
+        setIsApproveSheetOpen(false);
+        onApproveRating();
+        toast.success(extractSuccessMessage(success));
+      }
     } catch (error) {
       console.error("Error approving rating:", error);
+      toast.error(extractErrorMessage(error));
     }
   };
 
