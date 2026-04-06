@@ -89,11 +89,11 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   const parseTemplate = useParseTemplate();
   const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
     "pf_financials",
-    caseId || undefined,
+    caseId || '',
   );
   const { updateProgress, isPending: isUpdating } = useUpdateProgress(
     "pf_financials",
-    caseId || undefined,
+    caseId || '',
   );
 
   const mapArrayToYears = (
@@ -490,7 +490,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
         />
       </div>
 
-      <div className="pt-6 flex items-center gap-3 justify-between mt-auto">
+      <div className="pt-6 flex flex-wrap items-center gap-3 justify-between mt-auto">
         {onPrevious && (
           <CustomButton
             type="button"

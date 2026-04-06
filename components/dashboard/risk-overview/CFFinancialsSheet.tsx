@@ -79,12 +79,12 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
 
   const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
     "cf_financials",
-    caseId || undefined,
+    caseId || '',
   );
 
   const { updateProgress, isPending: isUpdating } = useUpdateProgress(
     "cf_financials",
-    caseId || undefined,
+    caseId || '',
   );
 
   const populateCFDataFromResponse = (
@@ -333,7 +333,7 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
         headerRight={inputModeToggle}
       />
 
-      <div className="pt-6 flex items-center gap-3 justify-between mt-auto">
+      <div className="pt-6 flex flex-wrap items-center gap-3 justify-between mt-auto">
         {onPrevious && (
           <CustomButton
             type="button"

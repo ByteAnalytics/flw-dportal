@@ -39,7 +39,7 @@ export const CaseSheets = ({
   const handleEdit = () => {
     close();
     router.push(
-      `/dashboard/ccr/overview?step=model_info&caseId=${selectedCaseId}&facilityType=${encodeURIComponent(selectedCaseDetails?.facility_type || "")}&isValidating=true`,
+      `/dashboard/ccr/overview?step=model_info&caseId=${selectedCaseId}&facilityType=${encodeURIComponent(selectedCaseDetails?.facility_type || "")}`,
     );
     setIsSheetOpen(true);
   };

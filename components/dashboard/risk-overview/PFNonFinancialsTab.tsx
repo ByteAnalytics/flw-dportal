@@ -44,11 +44,11 @@ export default function PFNonFinancialsTab({
 
   const { updateProgress, isPending: isUpdating } = useUpdateProgress(
     "pf_non_financials",
-    caseId || undefined,
+    caseId || '',
   );
   const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
     "pf_non_financials",
-    caseId || undefined,
+    caseId || '',
   );
 
   const handlePrevious = () => {
@@ -124,8 +124,8 @@ export default function PFNonFinancialsTab({
         </div>
       ))}
 
-      <div className="pt-6 flex items-center gap-3 justify-between mt-auto">
-        {onPrevious  && (
+      <div className="pt-6 flex flex-wrap items-center gap-3 justify-between mt-auto">
+        {onPrevious && (
           <CustomButton
             type="button"
             title="Previous"

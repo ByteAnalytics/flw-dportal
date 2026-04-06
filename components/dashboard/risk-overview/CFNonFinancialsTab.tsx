@@ -44,11 +44,11 @@ export default function CFNonFinancialsTab({
 
   const { updateProgress, isPending: isUpdating } = useUpdateProgress(
     "cf_non_financials",
-    caseId || undefined,
+    caseId || '',
   );
   const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
     "cf_non_financials",
-    caseId || undefined,
+    caseId || '',
   );
 
   // Fetch case data on mount
@@ -123,7 +123,7 @@ export default function CFNonFinancialsTab({
           </div>
         </div>
       ))}
-      <div className="pt-6 flex items-center gap-3 justify-between mt-auto">
+      <div className="pt-6 flex flex-wrap items-center gap-3 justify-between mt-auto">
         {onPrevious && (
           <CustomButton
             type="button"

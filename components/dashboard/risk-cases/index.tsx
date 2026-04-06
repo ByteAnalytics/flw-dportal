@@ -24,6 +24,8 @@ import { buildTableRows } from "@/lib/build-table-rows";
 import { TableSkeleton } from "@/skeleton";
 import { toast } from "sonner";
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth-store";
+import { UserRole } from "@/types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -43,6 +45,9 @@ const RiskCases = () => {
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
+
+  const { user } = useAuthStore((s) => s);
+  const isValidValidator = user?.role === UserRole?.["SUPER USER"];
 
   const {
     isSheetOpen,
@@ -148,7 +153,7 @@ const RiskCases = () => {
       setSelectedCaseId(caseId);
       setIsSheetOpen(true);
       router.push(
-        `/dashboard/ccr/overview?step=pf_financials&caseId=${caseId}&facilityType=${encodeURIComponent(facilityType)}`,
+        `/dashboard/ccr/overview?step=model_info&caseId=${caseId}&facilityType=${encodeURIComponent(facilityType)}`,
       );
     },
     [setSelectedCaseId, setIsSheetOpen, router],
@@ -188,6 +193,7 @@ const RiskCases = () => {
     goToPageIfDraft,
     selectedRows,
     handleRowSelect,
+    isValidValidator,
   });
 
   const facilityDropdownItems: DropdownItem[] = [
@@ -231,12 +237,14 @@ const RiskCases = () => {
       <div className="min-h-screen">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-[1.4rem] font-bold text-gray-900">Risk Cases</h1>
-          <Button
-            onClick={() => setIsSheetOpen(true)}
-            className="w-[117px] h-[40px] flex items-center gap-2 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[16px] font-semibold"
-          >
-            New Case
-          </Button>
+          {!isValidValidator && (
+            <Button
+              onClick={() => setIsSheetOpen(true)}
+              className="w-[117px] h-[40px] flex items-center gap-2 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[16px] font-semibold"
+            >
+              New Case
+            </Button>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-3 mb-6 bg-[#F7F7F7] p-2">

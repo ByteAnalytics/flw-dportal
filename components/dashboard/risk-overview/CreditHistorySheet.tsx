@@ -78,11 +78,11 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
 
   const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
     "credit_history",
-    caseId || undefined,
+    caseId || '',
   );
   const { updateProgress, isPending: isUpdating } = useUpdateProgress(
     "credit_history",
-    caseId || undefined,
+    caseId || '',
   );
 
   const isLoading = isSavingDraft || isSubmitting || isUpdating;
