@@ -291,28 +291,6 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
               . They will be notified once submitted.
             </p>
           </div>
-
-          {/* Case summary pill */}
-          <div className="flex items-center gap-3 rounded-[8px] bg-blue-50 border border-blue-100 px-4 py-3">
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-[11px] font-medium text-blue-400 uppercase tracking-wide">
-                Baseline Score
-              </span>
-              <span className="text-[18px] font-bold text-blue-800">
-                {baselineScore}
-              </span>
-            </div>
-            <div className="h-8 w-px bg-blue-200 mx-1" />
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-[11px] font-medium text-blue-400 uppercase tracking-wide">
-                Project Type
-              </span>
-              <span className="text-[13px] font-semibold text-blue-700 truncate">
-                {projectType}
-              </span>
-            </div>
-          </div>
-
           {/* Picker */}
           <ValidatorPicker
             validators={validators}
@@ -349,7 +327,7 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 px-6 pb-6">
+        <div className="flex justify-between gap-2 px-6 pb-6 mt-auto w-full">
           <Button
             variant="secondary"
             onClick={() => {
