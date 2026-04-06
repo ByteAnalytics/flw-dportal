@@ -9,7 +9,26 @@ import {
   convertPFNonFinancialsToApiFormat,
   convertCFNonFinancialsToApiFormat,
 } from "@/lib/risk-overview-utils";
-import { extractErrorMessage } from "@/lib/utils";
+import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
+
+export type Validator = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  status: string;
+  last_login: string;
+  is_temp_password: boolean;
+  is_email_recipient: boolean;
+};
+
+export type ValidatorsResponse = {
+  total_count: number;
+  data: Validator[];
+};
 
 export const useCaseDetails = (caseId?: string) => {
   return useGet<ApiResponse<CaseDetails>>(
@@ -20,6 +39,12 @@ export const useCaseDetails = (caseId?: string) => {
       staleTime: 0,
     },
   );
+};
+
+export const useGetValidators = () => {
+  return useGet<ValidatorsResponse>(["validators"], "/users/validators", {
+    staleTime: 5 * 60 * 1000, // 5 min — validator list changes infrequently
+  });
 };
 
 export const useSaveFinancials = (caseId?: string) => {
@@ -52,7 +77,7 @@ export const useCalculateCase = (caseId?: string) => {
   );
 };
 
-export const useSubmitCase = (caseId?: string) => {
+export const useSubmitCase = (caseId: string) => {
   return usePost<ApiResponse<any>, unknown>(
     caseId ? `/crr/cases/${caseId}/submit` : "",
     ["cases"],
@@ -82,7 +107,7 @@ export const useUpdateProgress = (
     | "cf_non_financials"
     | "credit_history"
     | "model_info",
-  caseId?: string,
+  caseId: string,
 ) => {
   const updateCase = useUpdateCase(caseId);
 
@@ -110,15 +135,20 @@ export const useUpdateProgress = (
         };
       } else payload = data;
 
-      await updateCase.mutateAsync(payload);
-      toast.success(`Progress saved successfully!`);
+      const success = await updateCase.mutateAsync(payload);
+      toast.success(
+        extractSuccessMessage(
+          success,
+          `Progress saved successfully!`,
+        ),
+      );
       return true;
     } catch (error: any) {
       console.error(`Error updating case:`, error);
       toast.error(
         extractErrorMessage(
           error,
-          `Failed to save progress. Please try again.`
+          `Failed to save progress. Please try again.`,
         ),
       );
       return false;
@@ -136,7 +166,7 @@ export const useSaveDraft = (
     | "cf_financials"
     | "cf_non_financials"
     | "credit_history",
-  caseId?: string,
+  caseId: string,
 ) => {
   const savePFFinancials = useSaveFinancials(caseId);
   const saveCFFinancials = useSaveFinancials(caseId);
@@ -185,9 +215,14 @@ export const useSaveDraft = (
       }
 
       const mutation = getMutation();
-      await mutation.mutateAsync(payload);
+      const success = await mutation.mutateAsync(payload);
 
-      toast.success(`${type.replace("_", " ")} saved successfully!`);
+      toast.success(
+        extractSuccessMessage(
+          success,
+          `${type.replace("_", " ")} saved successfully!`,
+        ),
+      );
       return true;
     } catch (error: any) {
       console.error(`Error saving ${type}:`, error);

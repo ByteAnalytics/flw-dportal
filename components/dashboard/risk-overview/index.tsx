@@ -21,6 +21,9 @@ import { useRouter } from "nextjs-toploader/app";
 import { CaseItem } from "@/types/risk-overview";
 import { buildTableRows } from "@/lib/build-table-rows";
 import { toast } from "sonner";
+import { useAuthStore } from "@/stores/auth-store"; // Adjust import path as needed
+import { UserRole } from "@/types"; // Adjust import path as needed
+import Paginator from "./Paginator";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -66,6 +69,9 @@ const CaseOverviewPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
+
+  const { user } = useAuthStore((s) => s);
+  const isValidValidator = user?.role === UserRole?.["SUPER USER"];
 
   const {
     isSheetOpen,
@@ -167,7 +173,7 @@ const CaseOverviewPage = () => {
       setSelectedCaseId(caseId);
       setIsSheetOpen(true);
       router.push(
-        `/dashboard/ccr/overview?step=pf_financials&caseId=${caseId}&facilityType=${encodeURIComponent(facilityType)}`,
+        `/dashboard/ccr/overview?step=model_info&caseId=${caseId}&facilityType=${encodeURIComponent(facilityType)}`,
       );
     },
     [setSelectedCaseId, setIsSheetOpen, router],
@@ -181,7 +187,7 @@ const CaseOverviewPage = () => {
           type="checkbox"
           checked={selectAll}
           onChange={handleSelectAll}
-          className="w-4 h-4 rounded border-gray-300 text-[#006F37] focus:ring-[#006F37] cursor-pointer"
+          className="w-4 h-4 rounded border-gray-300 text-[#006F37] focus:ring-[#006F37] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         />
       ),
       width: "w-12",
@@ -207,6 +213,7 @@ const CaseOverviewPage = () => {
     goToPageIfDraft,
     selectedRows,
     handleRowSelect,
+    isValidValidator,
   });
 
   const hasSelectedRows = selectedRows.size > 0;
@@ -233,12 +240,14 @@ const CaseOverviewPage = () => {
       <div className="min-h-screen">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-[1.4rem] font-bold text-gray-900">Overview</h1>
-          <Button
-            onClick={() => setIsSheetOpen(true)}
-            className="w-[117px] h-[40px] bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white font-semibold"
-          >
-            New Case
-          </Button>
+          {!isValidValidator && (
+            <Button
+              onClick={() => setIsSheetOpen(true)}
+              className="w-[117px] h-[40px] bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white font-semibold"
+            >
+              New Case
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
@@ -304,33 +313,5 @@ const CaseOverviewPage = () => {
     </>
   );
 };
-
-const Paginator = ({
-  currentPage,
-  totalPages,
-  onPrev,
-  onNext,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPrev: () => void;
-  onNext: () => void;
-}) => (
-  <div className="flex items-center gap-3">
-    <span className="text-sm text-gray-600">
-      Page {currentPage} of {totalPages}
-    </span>
-    <div className="flex items-center gap-2">
-      <ChevronLeft
-        className={`cursor-pointer ${currentPage === 1 ? "opacity-40" : ""}`}
-        onClick={() => currentPage > 1 && onPrev()}
-      />
-      <ChevronRight
-        className={`cursor-pointer ${currentPage === totalPages ? "opacity-40" : ""}`}
-        onClick={() => currentPage < totalPages && onNext()}
-      />
-    </div>
-  </div>
-);
 
 export default CaseOverviewPage;

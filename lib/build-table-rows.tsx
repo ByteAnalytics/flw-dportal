@@ -1,3 +1,4 @@
+// build-table-rows.ts
 import { formatDate, formatLabel } from "@/lib/utils";
 import { ActiveDetailsSheet, CaseItem } from "@/types/risk-overview";
 
@@ -7,6 +8,7 @@ interface TableRowHandlers {
   goToPageIfDraft: (id: string, facilityType: string) => void;
   selectedRows: Set<string>;
   handleRowSelect: (caseId: string) => void;
+  isValidValidator: boolean;
 }
 
 export function buildTableRows(
@@ -21,25 +23,50 @@ export function buildTableRows(
     goToPageIfDraft,
     selectedRows,
     handleRowSelect,
+    isValidValidator,
   } = handlers;
 
   return data.map((c) => {
     const caseStatus = c.status?.toUpperCase() ?? "";
     const statusLabel = formatLabel(c.status);
 
+    // Determine if user can review based on role and case status
+    const canReview = isValidValidator && caseStatus === "PENDING_REVIEW";
+
+    // Determine if action is clickable
+    const isClickable =
+      canReview ||
+      caseStatus === "REJECTED" ||
+      caseStatus === "DRAFT" ||
+      caseStatus !== "PENDING_REVIEW";
+
     const actionLabel =
       caseStatus === "PENDING_REVIEW"
-        ? "Review"
+        ? canReview
+          ? "Review"
+          : "View Only"
         : caseStatus === "REJECTED"
           ? "View"
           : "Open";
 
     const handleAction = () => {
+      // Only proceed if action is clickable
+      if (!isClickable) return;
+
       setSelectedCaseId(c.id);
-      if (caseStatus === "PENDING_REVIEW") setActiveDetailsSheet("validation");
-      else if (caseStatus === "REJECTED") setActiveDetailsSheet("returned");
-      else if (caseStatus === "DRAFT") goToPageIfDraft(c.id, c.facility_type);
-      else setActiveDetailsSheet("details");
+      if (caseStatus === "PENDING_REVIEW") {
+        if (canReview) {
+          setActiveDetailsSheet("validation");
+        } else {
+          setActiveDetailsSheet("details"); // Only view details if not validator
+        }
+      } else if (caseStatus === "REJECTED") {
+        setActiveDetailsSheet("returned");
+      } else if (caseStatus === "DRAFT") {
+        goToPageIfDraft(c.id, c.facility_type);
+      } else {
+        setActiveDetailsSheet("details");
+      }
     };
 
     return {
@@ -67,10 +94,14 @@ export function buildTableRows(
       ),
       actions: (
         <span
-          className="flex items-center gap-1 text-[13px] font-semibold text-emerald-600 cursor-pointer hover:text-emerald-700"
+          className={`flex items-center gap-1 text-[13px] font-semibold ${
+            isClickable
+              ? "text-emerald-600 cursor-pointer hover:text-emerald-700"
+              : "text-gray-400 cursor-not-allowed"
+          }`}
           onClick={handleAction}
         >
-          {actionLabel} →
+          {actionLabel} {(canReview || caseStatus === "DRAFT") && "→"}
         </span>
       ),
     };
