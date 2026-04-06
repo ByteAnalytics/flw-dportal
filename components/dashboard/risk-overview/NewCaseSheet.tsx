@@ -217,7 +217,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
   if (isLoadingCase) return <LoadingSpinner />;
 
   return (
-    <div className="flex flex-col gap-6 mb-6">
+    <div className="flex flex-col gap-6 pb-6">
       <Form {...form}>
         <form
           onSubmit={handleSubmit(onSubmit)}

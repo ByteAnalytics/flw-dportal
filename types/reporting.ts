@@ -255,9 +255,10 @@ export interface ECLPerAssetRow {
   "ECL Ratio": number;
 }
 
-interface ECLDfRow {
+export interface ECLDfRow {
   Scenario: string;
   "Counter Party": string;
+  "Grouped Asset": string;
   Rating: string;
   Stage: number;
   ECL: number;
