@@ -19,7 +19,7 @@ import {
   formatNumber,
   formatPercentage,
 } from "@/lib/utils";
-import { ECLApiItem } from "@/types/reporting";
+import { ECLApiItem, ECLDfRow } from "@/types/reporting";
 import { ApiResponse } from "@/types";
 import { CustomerSvg, EadSvg, EclSvg, LGDSvg, NPLSvg } from "@/svg";
 import {
@@ -39,6 +39,24 @@ const TAB_TO_SUMMARY_KEY: Record<TabValue, SummaryKey | null> = {
   "worst-case": "Worst Case",
 };
 
+// Scenario label used in ecl_df_all_scenario data
+const TAB_TO_SCENARIO_LABEL: Record<TabValue, string | null> = {
+  ecl: null,
+  baseline: "Baseline",
+  "best-case": "Best Case",
+  "worst-case": "Worst Case",
+};
+
+// Static columns for scenario tabs (non-date fields)
+const SCENARIO_STATIC_KEYS = [
+  // "Scenario",
+  "Counter Party",
+  "Grouped Asset",
+  "Rating",
+  "Stage",
+  "ECL",
+] as const;
+
 const ECLModelOutput: React.FC = () => {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -53,6 +71,7 @@ const ECLModelOutput: React.FC = () => {
 
   const activeTabConfig = TAB_CONFIG.find((t) => t.value === activeTab)!;
   const summaryKey = TAB_TO_SUMMARY_KEY[activeTab];
+  const scenarioLabel = TAB_TO_SCENARIO_LABEL[activeTab];
   const isEclTab = activeTab === "ecl";
 
   const buildQueryString = () => {
@@ -71,17 +90,85 @@ const ECLModelOutput: React.FC = () => {
   );
 
   const eclItem = data?.data;
-
   const eclSummary = eclItem?.ecl_summary;
   const pagedData = eclItem?.ecl_per_asset;
   const rawRows = pagedData?.data ?? [];
 
-  const activeScenarioSummary = summaryKey ? eclSummary?.[summaryKey] : null;
+  // ecl_df_all_scenario rows filtered by the current scenario label
+  const allScenarioRaw = eclItem?.ecl_df_all_scenario?.data ?? [];
+  const scenarioRows = useMemo(() => {
+    if (!scenarioLabel) return [];
+    return allScenarioRaw.filter((row) => row["Scenario"] === scenarioLabel);
+  }, [allScenarioRaw, scenarioLabel]);
 
+  // Dynamically extract date column keys from the first scenario row
+  const dateColumnKeys = useMemo(() => {
+    const firstRow = scenarioRows[0] ?? allScenarioRaw[0];
+    if (!firstRow) return [];
+    return Object.keys(firstRow).filter((key) =>
+      /^\d{4}-\d{2}-\d{2}$/.test(key),
+    );
+  }, [scenarioRows, allScenarioRaw]);
+
+  // Build columns for scenario table: static fields + date columns
+  const scenarioTableColumns = useMemo(() => {
+    const staticCols = SCENARIO_STATIC_KEYS.map((key) => ({
+      key,
+      label: key,
+    }));
+    const dateCols = dateColumnKeys.map((key) => ({ key, label: key }));
+    return [...staticCols, ...dateCols];
+  }, [dateColumnKeys]);
+
+  // Build rows for scenario table
+  const scenarioTableRows = useMemo(() => {
+    return scenarioRows.map((item) => {
+      const row: Record<string, React.ReactNode> = {
+        // Scenario: <span className="text-[#444846]">{item["Scenario"]}</span>,
+        "Counter Party": (
+          <span className="text-[#003A1B] font-medium">
+            {item["Counter Party"]}
+          </span>
+        ),
+        "Grouped Asset": (
+          <span className="text-[#444846]">{item["Grouped Asset"]}</span>
+        ),
+        Rating: <span className="text-[#444846]">{item["Rating"]}</span>,
+        Stage: (
+          <span className="text-[#444846]">
+            {item["Stage"] !== undefined ? `Stage ${item["Stage"]}` : "-"}
+          </span>
+        ),
+        ECL: (
+          <span className="text-[#444846]">
+            {formatCurrency(Number(item["ECL"] ?? 0))}
+          </span>
+        ),
+      };
+
+      // Add date columns
+      dateColumnKeys.forEach((dateKey) => {
+        row[dateKey] = (
+          <span className="text-[#444846]">
+            {formatCurrency(
+              Number(
+                (item as unknown as Record<string, unknown>)[dateKey] ?? 0,
+              ),
+            )}
+          </span>
+        );
+      });
+
+      return row;
+    });
+  }, [scenarioRows, dateColumnKeys]);
+
+  const activeScenarioSummary = summaryKey ? eclSummary?.[summaryKey] : null;
   const weightedSummary =
     eclItem?.dashboard_summary?.report_summary_page?.weighted_summary_df?.[0];
 
-  const tableRows = useMemo(() => {
+  // ECL tab table rows (unchanged)
+  const eclTableRows = useMemo(() => {
     return rawRows.map((item) => ({
       "Counter Party": (
         <span className="text-[#003A1B] font-medium">
@@ -94,13 +181,19 @@ const ECLModelOutput: React.FC = () => {
         </span>
       ),
       Baseline: (
-        <span className="text-[#444846]">{formatCurrency(Number(item.Baseline))}</span>
+        <span className="text-[#444846]">
+          {formatCurrency(Number(item.Baseline))}
+        </span>
       ),
       "Best Case": (
-        <span className="text-[#444846]">{formatCurrency(Number(item["Best Case"]))}</span>
+        <span className="text-[#444846]">
+          {formatCurrency(Number(item["Best Case"]))}
+        </span>
       ),
       "Worst Case": (
-        <span className="text-[#444846]">{formatCurrency(Number(item["Worst Case"]))}</span>
+        <span className="text-[#444846]">
+          {formatCurrency(Number(item["Worst Case"]))}
+        </span>
       ),
       "Probability Weighted ECL": (
         <span className="text-[#444846]">
@@ -196,16 +289,59 @@ const ECLModelOutput: React.FC = () => {
     </div>
   );
 
-  const renderTableWithPagination = () => {
-    if (isLoading) return <LoadingSpinner loadingText="Loading ECL Data..." />;
+  const renderSummaryCards = () =>
+    isEclTab ? renderEclTabCards() : renderScenarioCards();
 
-    return <>{isEclTab ? renderEclTabCards() : renderScenarioCards()}</>;
-  };
+  const tableColumns = isEclTab ? ECL_PER_ASSET_COLUMNS : scenarioTableColumns;
+  const tableRows = isEclTab ? eclTableRows : scenarioTableRows;
+  const emptyMessage = `No ${activeTabConfig.label} data available`;
 
   const tabOptions = TAB_CONFIG.map((tab) => ({
     value: tab.value,
     label: tab.label,
-    content: tab.value === activeTab ? renderTableWithPagination() : null,
+    content:
+      tab.value === activeTab ? (
+        isLoading ? (
+          <LoadingSpinner loadingText="Loading ECL Data..." />
+        ) : (
+          <div>
+            {renderSummaryCards()}
+            <div className="bg-white mt-6 rounded-xl border border-gray-200 overflow-hidden">
+              <CustomTable
+                columns={tableColumns}
+                rows={tableRows}
+                tableHeaderClassName="bg-[#F9FAFB]"
+                emptyMessage={emptyMessage}
+              />
+            </div>
+            {/* Pagination: ECL tab uses ecl_per_asset pagination; scenario tabs use scenarioRows length */}
+            {isEclTab
+              ? (pagedData?.total_logs ?? 0) > 0 && (
+                  <div className="mt-6">
+                    <Pagination
+                      totalCount={pagedData?.total_logs ?? 0}
+                      activePage={String(pagedData?.current_page ?? 1)}
+                      setPageNumber={setPageNumber}
+                      itemsPerPage={ITEMS_PER_PAGE}
+                    />
+                  </div>
+                )
+              : scenarioRows.length > 0 && (
+                  <div className="mt-6">
+                    <Pagination
+                      totalCount={
+                        eclItem?.ecl_df_all_scenario?.total_logs ??
+                        scenarioRows.length
+                      }
+                      activePage={String(pageNumber)}
+                      setPageNumber={setPageNumber}
+                      itemsPerPage={ITEMS_PER_PAGE}
+                    />
+                  </div>
+                )}
+          </div>
+        )
+      ) : null,
   }));
 
   return (
@@ -246,26 +382,6 @@ const ECLModelOutput: React.FC = () => {
         className="border-none"
         triggerClassName="max-w-fit"
       />
-
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <CustomTable
-          columns={ECL_PER_ASSET_COLUMNS}
-          rows={tableRows}
-          tableHeaderClassName="bg-[#F9FAFB]"
-          emptyMessage={`No ${activeTabConfig.label} data available`}
-        />
-      </div>
-
-      {(pagedData?.total_logs ?? 0) > 0 && (
-        <div className="mt-6">
-          <Pagination
-            totalCount={pagedData?.total_logs ?? 0}
-            activePage={String(pagedData?.current_page ?? 1)}
-            setPageNumber={setPageNumber}
-            itemsPerPage={ITEMS_PER_PAGE}
-          />
-        </div>
-      )}
     </div>
   );
 };

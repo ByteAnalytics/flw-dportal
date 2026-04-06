@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { SheetWrapper } from "@/components/ui/custom-sheet";
 import AccordionSection from "@/components/shared/CaseAccordium";
 import ShowstoppersTable from "./ShowstoppersTable";
 import { useSearchParams } from "next/navigation";
@@ -11,21 +10,18 @@ import {
   useSubmitCase,
   useApproveCase,
   useCaseDetails,
-  useGetValidators,
   Validator,
 } from "@/hooks/use-risk-overview";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CalculateResponse } from "@/types/risk-overview";
-import SuccessIcon from "@/public/assets/icon/success-icon.svg";
-import { CustomImage } from "@/components/ui/custom-image";
 import { toast } from "sonner";
 import { InfoCard, InfoField } from "./CFReportsSheet";
 import CustomButton from "@/components/ui/custom-button";
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
-import { X } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { UserRole } from "@/types";
-import ValidatorPicker from "./ValidatorPicker";
+import ValidatorsSheet from "./ValidatorsSheet";
+import ApproveConfirmationSheet from "./ApproveConfirmationSheet";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -80,15 +76,10 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
   const { data: caseData } = useCaseDetails(caseId || undefined);
   const details = caseData?.data;
 
-  // Fetch validators — only needed when not isValidating
-  const { data: validatorsData, isLoading: isLoadingValidators } =
-    useGetValidators();
-  const validators = validatorsData?.data ?? [];
-
   const { mutateAsync: calculateCase, isPending: isCalculating } =
     useCalculateCase(caseId || undefined);
   const { mutateAsync: submitCase, isPending: isSubmitting } = useSubmitCase(
-    caseId || '',
+    caseId || "",
   );
   const { mutateAsync: approveCase, isPending: isApproving } = useApproveCase(
     caseId || undefined,
@@ -195,7 +186,6 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
           ))}
         </div>
       </div>
-
       {/* Content */}
       <div className="flex-1 overflow-y-auto py-6">
         <div className="flex flex-col gap-4">
@@ -229,7 +219,6 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
           </div>
         </div>
       </div>
-
       {/* Footer */}
       <div className="pt-6 flex flex-wrap items-center gap-3 justify-between mt-auto">
         {onPrevious && (
@@ -265,136 +254,27 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
           </Button>
         </div>
       </div>
-
       {/* ── Validator Picker Sheet (submit flow only) ── */}
-      <SheetWrapper
-        open={isValidatorSheetOpen}
-        setOpen={setIsValidatorSheetOpen}
-        title="Request Validation"
-        width="sm:max-w-[480px]"
-        headerClassName="bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] !text-white"
-        titleClassName="text-white px-6 py-4"
-        SheetContentClassName="p-0 bg-white"
-      >
-        <div className="flex flex-col gap-5 p-6">
-          {/* Intro copy */}
-          <div className="flex flex-col gap-1">
-            <p className="text-[14px] font-semibold text-gray-800">
-              Assign a validator for this case
-            </p>
-            <p className="text-[13px] text-gray-500">
-              Select a team member to review and validate the credit risk rating
-              for{" "}
-              <span className="font-semibold text-gray-700">
-                {customerName}
-              </span>
-              . They will be notified once submitted.
-            </p>
-          </div>
-          {/* Picker */}
-          <ValidatorPicker
-            validators={validators}
-            isLoading={isLoadingValidators}
-            selected={selectedValidator}
-            onSelect={setSelectedValidator}
-          />
-
-          {/* Selected validator confirmation card */}
-          {selectedValidator && (
-            <div className="flex items-center gap-3 rounded-[8px] border border-teal-200 bg-teal-50 px-4 py-3">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-teal-600 text-[12px] font-bold text-white shrink-0">
-                {selectedValidator.first_name[0]}
-                {selectedValidator.last_name[0]}
-              </span>
-              <div className="flex flex-col min-w-0">
-                <span className="text-[13px] font-semibold text-teal-800">
-                  {selectedValidator.first_name} {selectedValidator.last_name}
-                </span>
-                <span className="text-[12px] text-teal-600 truncate">
-                  {selectedValidator.email}
-                </span>
-              </div>
-              <Button
-                type="button"
-                onClick={() => setSelectedValidator(null)}
-                className="ml-auto text-teal-400 hover:text-teal-700 transition-colors"
-                aria-label="Remove selected validator"
-              >
-                <X size={15} />
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-between gap-2 px-6 pb-6 mt-auto w-full">
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setIsValidatorSheetOpen(false);
-              setSelectedValidator(null);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={confirmSubmitWithValidator}
-            disabled={!selectedValidator || isSubmitting}
-            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? "Submitting…" : "Submit for Validation"}
-          </Button>
-        </div>
-      </SheetWrapper>
-
+      <ValidatorsSheet
+        isValidatorSheetOpen={isValidatorSheetOpen}
+        setIsValidatorSheetOpen={setIsValidatorSheetOpen}
+        customerName={customerName}
+        selectedValidator={selectedValidator}
+        setSelectedValidator={setSelectedValidator}
+        confirmSubmitWithValidator={confirmSubmitWithValidator}
+        isSubmitting={isSubmitting}
+      />
       {/* ── Approve Confirmation Sheet (validate flow only) ── */}
-      <SheetWrapper
-        open={isApproveSheetOpen}
-        setOpen={setIsApproveSheetOpen}
-        title="Approve Credit Risk Rating"
-        width="sm:max-w-[540px]"
-        headerClassName="bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] !text-white"
-        titleClassName="text-white px-6 py-4"
-        SheetContentClassName="p-0 bg-white"
-      >
-        <div className="flex flex-col gap-2 mb-4 items-center justify-center p-4">
-          <CustomImage src={SuccessIcon} style="w-20 h-20 mb-4" />
-          <p className="text-center">
-            Are you sure you want to approve the credit risk rating for{" "}
-            {details?.customer_name ?? "this case"}? This action will finalize
-            the rating as {calculateResponse?.data?.baseline_score ?? "-"}.
-          </p>
-        </div>
-
-        <div className="mb-3 px-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Comment
-          </label>
-          <textarea
-            value={approvalComment}
-            onChange={(e) => setApprovalComment(e.target.value)}
-            className="mt-1 w-full rounded border px-3 py-2"
-            rows={4}
-            placeholder="Add comment"
-          />
-        </div>
-
-        <div className="flex justify-end gap-2 mt-auto px-4 mb-4">
-          <Button
-            variant="secondary"
-            onClick={() => setIsApproveSheetOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={confirmApproveRating}
-            disabled={isApproving}
-            className="ms-auto h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
-          >
-            {isApproving ? "Approving..." : "Confirm Approve"}
-          </Button>
-        </div>
-      </SheetWrapper>
+      <ApproveConfirmationSheet
+        isApproveSheetOpen={isApproveSheetOpen}
+        setIsApproveSheetOpen={setIsApproveSheetOpen}
+        details={details}
+        calculateResponse={calculateResponse}
+        approvalComment={approvalComment}
+        setApprovalComment={setApprovalComment}
+        confirmApproveRating={confirmApproveRating}
+        isApproving={isApproving}
+      />
     </div>
   );
 };
