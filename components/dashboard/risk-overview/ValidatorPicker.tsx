@@ -39,7 +39,7 @@ const ValidatorPicker: React.FC<ValidatorPickerProps> = ({
     <div className="flex flex-col gap-1.5">
       <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
         <UserCheck size={14} className="text-teal-600" />
-        Assign Validator
+        Validator
         <span className="text-red-500">*</span>
       </label>
 
