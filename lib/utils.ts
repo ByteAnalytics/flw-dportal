@@ -247,7 +247,7 @@ export const formatLabel = (value: string) => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-export const generateDynamicYears = (): string[] => {
+export const generateDynamicYears = (): any[] => {
   const years: string[] = [];
   for (let i = 1; i <= 7; i++) {
     years.push(`Year ${i}`);

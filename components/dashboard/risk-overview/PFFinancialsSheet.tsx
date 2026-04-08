@@ -89,11 +89,11 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   const parseTemplate = useParseTemplate();
   const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
     "pf_financials",
-    caseId || '',
+    caseId || "",
   );
   const { updateProgress, isPending: isUpdating } = useUpdateProgress(
     "pf_financials",
-    caseId || '',
+    caseId || "",
   );
 
   const mapArrayToYears = (
