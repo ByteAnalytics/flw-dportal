@@ -247,12 +247,10 @@ export const formatLabel = (value: string) => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-export const generateDynamicYears = (): number[] => {
-  const currentYear = new Date().getFullYear();
-  const years: number[] = [];
-  // Generate 7 years backward from current year
-  for (let i = 0; i < 7; i++) {
-    years.push(currentYear - i);
+export const generateDynamicYears = (): string[] => {
+  const years: string[] = [];
+  for (let i = 1; i <= 7; i++) {
+    years.push(`Year ${i}`);
   }
   return years;
 };
