@@ -73,7 +73,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
 
   const [activeTab, setActiveTab] = useState("Balance Sheet");
   const [inputMode, setInputMode] = useState<"manual" | "upload">("manual");
-  const [years, setYears] = useState<number[]>(DEFAULT_YEARS);
+  const [years, setYears] = useState<any[]>(DEFAULT_YEARS);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -311,9 +311,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     };
 
   const handleAddColumn = () => {
-    const minYear = Math.min(...years);
-    const newYear = minYear - 1;
-    setYears((prev) => [...prev, newYear].sort((a, b) => b - a));
+    setYears((prev) => [...prev, `Year ${prev.length + 1}`]);
   };
 
   const renderTable = (
