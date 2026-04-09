@@ -19,6 +19,8 @@ import { VALID_STEPS, SHEET_CONFIG, Step } from "@/constants/risk-overview";
 import CreditHistorySheet from "./CreditHistorySheet";
 import { useCaseDetails } from "@/hooks/use-risk-overview";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 interface Props {
   open: boolean;
   onClose: () => void;

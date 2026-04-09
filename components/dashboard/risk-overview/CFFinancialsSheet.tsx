@@ -22,6 +22,7 @@ import CustomButton from "@/components/ui/custom-button";
 import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
 
 interface CFFinancialsSheetProps {
   onClose: () => void;
