@@ -213,11 +213,10 @@ export const formatFileSize = (bytes: number) =>
 
 export function formatNumber(num: number): string {
   if (isNaN(num)) return "0";
-  if (num < 1000) return num?.toString();
+  if (num < 1000) return parseFloat(num.toFixed(4)).toString();
 
   const units = ["", "K", "M", "B", "T", "P", "E"];
   const unitIndex = Math.floor(Math.log10(num) / 3);
-
   const scaledNumber = (num / Math.pow(1000, unitIndex)).toFixed(2);
   return `${scaledNumber}${units[unitIndex]}`;
 }

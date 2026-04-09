@@ -127,6 +127,7 @@ export interface CalculateResponseData {
   initial_pf_score: number | null;
   initial_cf_score: number | null;
   baseline_score: number | null;
+  baseline_rating: string | null;
 }
 
 export interface CalculateResponse {

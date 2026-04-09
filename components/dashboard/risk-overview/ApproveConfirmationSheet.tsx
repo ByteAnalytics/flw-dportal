@@ -41,7 +41,7 @@ const ApproveConfirmationSheet: React.FC<ApproveConfirmationSheetProps> = ({
         <p className="text-center">
           Are you sure you want to approve the credit risk rating for{" "}
           {details?.customer_name ?? "this case"}? This action will finalize the
-          rating as {calculateResponse?.data?.baseline_score ?? "-"}.
+          rating as {calculateResponse?.data?.baseline_rating ?? "-"}.
         </p>
       </div>
 

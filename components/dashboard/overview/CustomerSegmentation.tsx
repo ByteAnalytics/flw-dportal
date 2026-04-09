@@ -3,6 +3,7 @@
 import ChartDetailsCard from "@/components/dashboard/overview/ChartDetails";
 import React from "react";
 import { ECLScenarioSummary } from "@/types/reporting";
+import { formatCurrency } from "@/lib/utils";
 
 interface CustomerSegmentationCardProps {
   eclSummaryPerScenario?: {
@@ -31,15 +32,15 @@ export const CustomerSegmentationCard: React.FC<
       : [0, 0, 0];
 
   const legendItems = [
-    { label: "Baseline", value: String(baseline.toFixed(2)), color: "#F79661" },
+    { label: "Baseline", value: formatCurrency(Number(baseline)), color: "#F79661" },
     {
       label: "Best Case",
-      value: String(bestCase.toFixed(2)),
+      value: formatCurrency(Number(bestCase)),
       color: "#2B4DED",
     },
     {
       label: "Worst Case",
-      value: String(worstCase.toFixed(2)),
+      value: formatCurrency(Number(worstCase)),
       color: "#2BEB81",
     },
   ];

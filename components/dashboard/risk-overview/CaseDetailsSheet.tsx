@@ -7,7 +7,7 @@ import AccordionSection from "@/components/shared/CaseAccordium";
 import FinancialTable from "./FinancialTable";
 import NonFinancialsTable from "./NonFinancialTable";
 import ShowstoppersTable from "./ShowstoppersTable";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate, formatLabel } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useCaseDetails } from "@/hooks/use-risk-overview";
 import {
@@ -65,14 +65,26 @@ const CaseDetailsSheet: React.FC<Props> = ({ onClose, caseId }) => {
 
   const showstoppersDisplay = getCombinedShowstoppers(combined, details);
 
+  const statusColor =
+    details.status?.toUpperCase() === "VALIDATED"
+      ? "bg-green-50 border-green-200 text-green-700"
+      : details.status?.toUpperCase() === "REJECTED"
+        ? "bg-red-50 border-red-200 text-red-700"
+        : "bg-yellow-50 border-yellow-200 text-yellow-700";
+
   return (
     <div className="flex flex-col gap-4 pb-6 px-4">
       {/* STATUS */}
-      <div className="rounded-[10px] bg-green-50 border border-green-200 p-4 flex justify-between items-center">
+      <div
+        className={cn(
+          "rounded-[10px] border p-4 flex justify-between items-center",
+          statusColor,
+        )}
+      >
         <div className="flex items-center gap-3">
           <CheckCircle className="w-5 h-5 text-green-600" />
           <span className="text-[14px] font-semibold text-green-700">
-            {details.status}
+            {formatLabel(details.status)}
           </span>
         </div>
         <span className="text-[13px] text-gray-400">
@@ -92,35 +104,35 @@ const CaseDetailsSheet: React.FC<Props> = ({ onClose, caseId }) => {
       </div>
 
       {/* PF FINANCIALS - Balance Sheet */}
-      {pfFinancialsRows.length > 0 && (
+      {pfFinancialsRows?.length > 0 && (
         <AccordionSection title="PF Financials - Balance Sheet">
           <FinancialTable rows={pfFinancialsRows} years={pfYears} />
         </AccordionSection>
       )}
 
       {/* PF FINANCIALS - Income Statement */}
-      {pfIncomeRows.length > 0 && (
+      {pfIncomeRows?.length > 0 && (
         <AccordionSection title="PF Financials - Income Statement">
           <FinancialTable rows={pfIncomeRows} years={pfYears} />
         </AccordionSection>
       )}
 
       {/* PF FINANCIALS - Cash Flow */}
-      {pfCashFlowRows.length > 0 && (
+      {pfCashFlowRows?.length > 0 && (
         <AccordionSection title="PF Financials - Cash Flow">
           <FinancialTable rows={pfCashFlowRows} years={pfYears} />
         </AccordionSection>
       )}
 
       {/* PF FINANCIALS - Ratios */}
-      {pfRatiosRows.length > 0 && (
+      {pfRatiosRows?.length > 0 && (
         <AccordionSection title="PF Financials - Ratios">
           <FinancialTable rows={pfRatiosRows} years={pfYears} />
         </AccordionSection>
       )}
 
       {/* PF NON FINANCIALS */}
-      {pfNonFinancialsRows.length > 0 && (
+      {pfNonFinancialsRows?.length > 0 && (
         <AccordionSection title="PF Non Financials">
           <NonFinancialsTable rows={pfNonFinancialsRows} />
         </AccordionSection>
@@ -160,7 +172,7 @@ const CaseDetailsSheet: React.FC<Props> = ({ onClose, caseId }) => {
       )}
 
       {/* CF NON FINANCIALS */}
-      {cfNonFinancialsRows.length > 0 && (
+      {cfNonFinancialsRows?.length > 0 && (
         <AccordionSection title="CF Non Financials">
           <NonFinancialsTable rows={cfNonFinancialsRows} />
         </AccordionSection>
@@ -196,12 +208,12 @@ const CaseDetailsSheet: React.FC<Props> = ({ onClose, caseId }) => {
           />
 
           <ScoreCard
-            label="Probability of Default"
+            label="Baseline Credit Score"
             value={combined.dashboard_rater.baseline_score ?? "-"}
           />
           <ScoreCard
             label="Baseline Rating"
-            value={combined.dashboard_rater.baseline_score ?? "-"}
+            value={combined.dashboard_rater.baseline_rating ?? "-"}
           />
           <ScoreCard label="Final Rating" value={details?.rating ?? "-"} />
         </div>
