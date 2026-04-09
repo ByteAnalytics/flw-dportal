@@ -8,7 +8,7 @@ import { CalculateResponse } from "@/types/risk-overview";
 interface ApproveConfirmationSheetProps {
   isApproveSheetOpen: boolean;
   setIsApproveSheetOpen: (open: boolean) => void;
-  details: CaseDetails | undefined;
+  details: CaseDetails | null;
   calculateResponse: CalculateResponse | null;
   approvalComment: string;
   setApprovalComment: (comment: string) => void;

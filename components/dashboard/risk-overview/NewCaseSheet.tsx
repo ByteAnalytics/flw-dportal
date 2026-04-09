@@ -20,8 +20,9 @@ import {
   yesNoOptions,
 } from "@/constants/risk-overview";
 import { useSearchParams } from "next/navigation";
-import { useCaseDetails, useUpdateProgress } from "@/hooks/use-risk-overview";
+import { useUpdateProgress } from "@/hooks/use-risk-overview";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -66,7 +67,6 @@ interface Apidata {
 }
 
 const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
-  onClose,
   onSuccess,
   onPrevious,
   onSkip,
@@ -75,15 +75,9 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
   const queryClient = useQueryClient();
   const caseId = searchParams.get("caseId");
 
-  const {
-    data,
-    isLoading: isLoadingCase,
-    refetch,
-  } = useCaseDetails(caseId || undefined);
-
-  const caseData = data?.data;
-
-  console.log("Case data in NewCaseSheet:", caseData);
+  // ─── Read from store (fetched once in CaseSheetFlow) ──────────────────────
+  const { caseDetails, isLoadingCaseDetails } = useRiskOverviewStore();
+  // ───────────────────────────────────────────────────────────────────────────
 
   const form = useForm<NewCaseFormData>({
     resolver: zodResolver(NewCaseSchema),
@@ -100,41 +94,35 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
     },
   });
 
-  // Use a separate useEffect with a flag to prevent multiple resets
   useEffect(() => {
-    if (!caseData) return;
+    if (!caseDetails) return;
 
-    // Use setTimeout to ensure the form is ready
     const timeoutId = setTimeout(() => {
-      const newValues = {
-        select_project_type: caseData.project_type ?? "",
-        customer_name: caseData.customer_name ?? "",
-        facility_type: caseData.facility_type ?? "",
-        revenue_growth:
-          caseData.consistent_revenue_growth === true ? "yes" : "no",
-        counterparty_losses:
-          caseData.market_event_losses === true ? "yes" : "no",
-        market_events: caseData.applicable_market_events ?? "",
-        market_event_description: caseData.market_event_description ?? "",
-        year_of_financials: caseData.year_of_financials
-          ? String(caseData.year_of_financials)
-          : "",
-        dre_project: caseData.dre_project_selection
-          ? (Object.keys(caseData.dre_project_selection).find(
-              (key) => caseData.dre_project_selection![key] === "Yes",
-            ) ?? "")
-          : "",
-      };
-
-      // Reset with keepDefaultValues: false to force update
-      form.reset(newValues, { keepDefaultValues: false });
-
-      // Manually trigger a re-render of select components
+      form.reset(
+        {
+          select_project_type: caseDetails.project_type ?? "",
+          customer_name: caseDetails.customer_name ?? "",
+          facility_type: caseDetails.facility_type ?? "",
+          revenue_growth: caseDetails.consistent_revenue_growth ? "yes" : "no",
+          counterparty_losses: caseDetails.market_event_losses ? "yes" : "no",
+          market_events: caseDetails.applicable_market_events ?? "",
+          market_event_description: caseDetails.market_event_description ?? "",
+          year_of_financials: caseDetails.year_of_financials
+            ? String(caseDetails.year_of_financials)
+            : "",
+          dre_project: caseDetails.dre_project_selection
+            ? (Object.keys(caseDetails.dre_project_selection).find(
+                (key) => caseDetails.dre_project_selection![key] === "Yes",
+              ) ?? "")
+            : "",
+        },
+        { keepDefaultValues: false },
+      );
       form.trigger();
     }, 0);
 
     return () => clearTimeout(timeoutId);
-  }, [caseData, form]);
+  }, [caseDetails, form]);
 
   const createNewCase = usePost<ApiResponse<Apidata>, NewCaseFormData>(
     "/crr/cases",
@@ -150,14 +138,16 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
     control,
     handleSubmit,
     formState: { isSubmitting },
-    getValues,
     watch,
   } = form;
 
   const lossIsDrivenByMarketEvent = watch("counterparty_losses") === "yes";
 
   const isLoading =
-    createNewCase.isPending || isUpdating || isSubmitting || isLoadingCase;
+    createNewCase.isPending ||
+    isUpdating ||
+    isSubmitting ||
+    isLoadingCaseDetails;
 
   const onSubmit = async (data: NewCaseFormData) => {
     try {
@@ -179,7 +169,6 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
       };
 
       if (caseId) {
-        // Update existing case using updateProgress
         const success = await updateProgress(payload);
         if (success) {
           await queryClient.invalidateQueries({
@@ -190,7 +179,6 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
           onSuccess?.(data.facility_type, caseId);
         }
       } else {
-        // Create new case
         const response = await createNewCase.mutateAsync(payload);
         toast.success(extractSuccessMessage(response));
         await queryClient.invalidateQueries({
@@ -198,23 +186,14 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
           exact: false,
           refetchType: "all",
         });
-        const newCaseId = response?.data?.id;
-        onSuccess?.(data.facility_type, newCaseId);
+        onSuccess?.(data.facility_type, response?.data?.id);
       }
     } catch (error: any) {
       toast.error(extractErrorMessage(error));
     }
   };
 
-  const handlePrevious = () => {
-    onPrevious?.();
-  };
-
-  const handleSkip = () => {
-    onSkip?.();
-  };
-
-  if (isLoadingCase) return <LoadingSpinner />;
+  if (isLoadingCaseDetails) return <LoadingSpinner />;
 
   return (
     <div className="flex flex-col gap-6 pb-6">
@@ -225,7 +204,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
         >
           <div className="h-full space-y-4 overflow-y-auto">
             <CustomInputField
-              key={`project_type_${caseId || "new"}_${caseData?.project_type}`}
+              key={`project_type_${caseId || "new"}_${caseDetails?.project_type}`}
               control={control}
               fieldType={FormFieldType.SELECT}
               name="select_project_type"
@@ -237,7 +216,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
             />
 
             <CustomInputField
-              key={`customer_name_${caseId || "new"}_${caseData?.customer_name}`}
+              key={`customer_name_${caseId || "new"}_${caseDetails?.customer_name}`}
               control={control}
               fieldType={FormFieldType.INPUT}
               name="customer_name"
@@ -248,7 +227,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
             />
 
             <CustomInputField
-              key={`facility_type_${caseId || "new"}_${caseData?.facility_type}`}
+              key={`facility_type_${caseId || "new"}_${caseDetails?.facility_type}`}
               control={control}
               fieldType={FormFieldType.SELECT}
               name="facility_type"
@@ -260,7 +239,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
             />
 
             <CustomInputField
-              key={`revenue_growth_${caseId || "new"}_${caseData?.consistent_revenue_growth}`}
+              key={`revenue_growth_${caseId || "new"}_${caseDetails?.consistent_revenue_growth}`}
               control={control}
               fieldType={FormFieldType.SELECT}
               name="revenue_growth"
@@ -272,7 +251,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
             />
 
             <CustomInputField
-              key={`counterparty_losses_${caseId || "new"}_${caseData?.market_event_losses}`}
+              key={`counterparty_losses_${caseId || "new"}_${caseDetails?.market_event_losses}`}
               control={control}
               fieldType={FormFieldType.SELECT}
               name="counterparty_losses"
@@ -286,7 +265,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
             {lossIsDrivenByMarketEvent && (
               <>
                 <CustomInputField
-                  key={`market_events_${caseId || "new"}_${caseData?.applicable_market_events}`}
+                  key={`market_events_${caseId || "new"}_${caseDetails?.applicable_market_events}`}
                   control={control}
                   fieldType={FormFieldType.SELECT}
                   name="market_events"
@@ -297,7 +276,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
                   disabled={isLoading}
                 />
                 <CustomInputField
-                  key={`market_event_description_${caseId || "new"}_${caseData?.market_event_description}`}
+                  key={`market_event_description_${caseId || "new"}_${caseDetails?.market_event_description}`}
                   control={control}
                   fieldType={FormFieldType.INPUT}
                   name="market_event_description"
@@ -306,9 +285,8 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
                   className="bg-InfraBorder rounded-[10px] h-[44px]"
                   disabled={isLoading}
                 />
-
                 <CustomInputField
-                  key={`year_of_financials_${caseId || "new"}_${caseData?.year_of_financials}`}
+                  key={`year_of_financials_${caseId || "new"}_${caseDetails?.year_of_financials}`}
                   control={control}
                   fieldType={FormFieldType.INPUT}
                   name="year_of_financials"
@@ -321,7 +299,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
             )}
 
             <CustomInputField
-              key={`dre_project_${caseId || "new"}_${caseData?.dre_project_selection ? JSON.stringify(caseData.dre_project_selection) : "empty"}`}
+              key={`dre_project_${caseId || "new"}_${caseDetails?.dre_project_selection ? JSON.stringify(caseDetails.dre_project_selection) : "empty"}`}
               control={control}
               fieldType={FormFieldType.SELECT}
               name="dre_project"
@@ -339,7 +317,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
                 <CustomButton
                   type="button"
                   title="Previous"
-                  onClick={handlePrevious}
+                  onClick={onPrevious}
                   disabled={isLoading}
                   className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
                 />
@@ -348,7 +326,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
                 <CustomButton
                   type="button"
                   title="Skip"
-                  onClick={handleSkip}
+                  onClick={onSkip}
                   disabled={isLoading}
                   className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
                 />

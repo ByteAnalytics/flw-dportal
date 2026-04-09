@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
@@ -15,7 +16,6 @@ import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 import {
-  useCaseDetails,
   useParseTemplate,
   useSaveDraft,
   useUpdateProgress,
@@ -33,9 +33,6 @@ import {
   RATIOS_KEY_MAP,
 } from "@/constants/risk-overview";
 import CustomButton from "@/components/ui/custom-button";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/set-state-in-effect */
 
 type FinancialValues = Record<string, Record<number, string>>;
 
@@ -65,16 +62,11 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
 
-  const {
-    data: caseData,
-    isLoading: isLoadingCase,
-    refetch,
-  } = useCaseDetails(caseId || undefined);
-
-  const [activeTab, setActiveTab] = useState("Balance Sheet");
+ const { setPFFinancialsData, caseDetails, isLoadingCaseDetails } =
+    useRiskOverviewStore();
+ 
   const [inputMode, setInputMode] = useState<"manual" | "upload">("manual");
   const [years, setYears] = useState<any[]>(DEFAULT_YEARS);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -83,8 +75,6 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   const [cashFlow, setCashFlow] = useState<FinancialValues>({});
   const [otherInputs, setOtherInputs] = useState<FinancialValues>({});
   const [ratios, setRatios] = useState<FinancialValues>({});
-
-  const { setPFFinancialsData } = useRiskOverviewStore();
 
   const parseTemplate = useParseTemplate();
   const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
@@ -118,9 +108,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   };
 
   const safeObjectEntries = (obj: any): [string, any][] => {
-    if (!obj || typeof obj !== "object") {
-      return [];
-    }
+    if (!obj || typeof obj !== "object") return [];
     return Object.entries(obj);
   };
 
@@ -133,7 +121,6 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
 
     const apiYears = pfData.years;
     if (apiYears && Array.isArray(apiYears) && apiYears.length > 0) {
-      console.log("api years:", apiYears);
       setYears(apiYears);
     }
 
@@ -190,17 +177,11 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     if (showToast) toast.success("File uploaded and parsed successfully!");
   };
 
-  const handlePrevious = () => {
-    onPrevious?.();
-  };
-
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    setSelectedFile(file);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -215,19 +196,16 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
           extractSuccessMessage(response, "File uploaded successfully"),
         );
       } else {
-        console.log(response?.message);
         toast.error(
           extractErrorMessage(
             response,
-            `Failed to parse file. Please try again.`,
+            "Failed to parse file. Please try again.",
           ),
         );
       }
     } catch (error: any) {
-      console.error("Upload error:", error);
-      console.log("error message:", error?.message);
       toast.error(
-        extractErrorMessage(error, `Failed to upload file. Please try again.`),
+        extractErrorMessage(error, "Failed to upload file. Please try again."),
       );
     }
 
@@ -243,12 +221,8 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   const initializeValues = useCallback(
     (rows: FinancialRow[], currentValues: FinancialValues): FinancialValues => {
       const newValues = { ...currentValues };
-
       rows.forEach((row) => {
-        if (!newValues[row.key]) {
-          newValues[row.key] = {};
-        }
-
+        if (!newValues[row.key]) newValues[row.key] = {};
         years.forEach((year) => {
           if (
             newValues[row.key][year] === undefined ||
@@ -258,26 +232,19 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
           }
         });
       });
-
       return newValues;
     },
     [years],
   );
 
-  // Force refetch when caseId changes
+  // Populate from store whenever caseDetails changes (driven by CaseSheetFlow)
   useEffect(() => {
-    if (caseId) {
-      refetch();
-    }
-  }, [caseId, refetch]);
-
-  useEffect(() => {
-    if (!caseData?.data?.pf_financials) return;
+    if (!caseDetails?.pf_financials) return;
     populateDataFromResponse(
-      { pf_financials: caseData.data.pf_financials },
+      { pf_financials: caseDetails.pf_financials },
       false,
     );
-  }, [caseData]);
+  }, [caseDetails]);
 
   useEffect(() => {
     setBalanceSheet((prev) => initializeValues(BALANCE_SHEET_ROWS, prev));
@@ -357,24 +324,34 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     </div>
   );
 
+  const buildData = (): PFFinancialsData => ({
+    balanceSheet,
+    incomeStatement,
+    cashFlow,
+    otherInputs,
+    ratios,
+    years,
+  });
+
   const handleSaveAsDraft = async () => {
-    const data: PFFinancialsData = {
-      balanceSheet,
-      incomeStatement,
-      cashFlow,
-      otherInputs,
-      ratios,
-      years,
-    };
-
+    const data = buildData();
     setPFFinancialsData(data);
-
     const success = await saveDraft(data);
-
-    if (success && onSaveAsDraft) {
-      onSaveAsDraft();
-    }
+    if (success && onSaveAsDraft) onSaveAsDraft();
   };
+
+  const handleNext = async () => {
+    const data = buildData();
+    setPFFinancialsData(data);
+    const success = await updateProgress(data);
+    if (success) onNext(data);
+  };
+
+  const toggleClass = (mode: "manual" | "upload") =>
+    cn(
+      "px-3 py-1.5 text-[12px] font-semibold h-full flex items-center gap-1 rounded-[6px]",
+      inputMode === mode ? "bg-white text-black" : "text-InfraMuted",
+    );
 
   const tabOptions = [
     {
@@ -396,11 +373,6 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
       label: "Cash Flow",
       content: renderTable(CASH_FLOW_ROWS, cashFlow, setCashFlow),
     },
-    // {
-    //   value: "Other Inputs",
-    //   label: "Other Inputs",
-    //   content: renderTable(OTHER_INPUTS_ROWS, otherInputs, setOtherInputs),
-    // },
     {
       value: "Ratios",
       label: "Ratios",
@@ -408,32 +380,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     },
   ];
 
-  const toggleClass = (mode: "manual" | "upload") =>
-    cn(
-      "px-3 py-1.5 text-[12px] font-semibold h-full flex items-center gap-1 rounded-[6px]",
-      inputMode === mode ? "bg-white text-black" : "text-InfraMuted",
-    );
-
-  const handleNext = async () => {
-    const data: PFFinancialsData = {
-      balanceSheet,
-      incomeStatement,
-      cashFlow,
-      otherInputs,
-      ratios,
-      years,
-    };
-
-    setPFFinancialsData(data);
-
-    const success = await updateProgress(data);
-
-    if (success) {
-      onNext(data);
-    }
-  };
-
-  if (isLoadingCase) return <LoadingSpinner />;
+  if (isLoadingCaseDetails) return <LoadingSpinner />;
 
   return (
     <div className="flex flex-col min-h-[82vh] w-full">
@@ -449,7 +396,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
         <CustomTabs
           defaultValue="Balance Sheet"
           options={tabOptions}
-          onValueChange={(value) => setActiveTab(value)}
+          onValueChange={(value) => value}
           className="w-full border-none"
           triggerClassName="max-w-fit"
           contentClassName="max-h-[60vh] overflow-y-auto"
@@ -479,7 +426,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
           <CustomButton
             type="button"
             title="Previous"
-            onClick={handlePrevious}
+            onClick={onPrevious}
             disabled={isSavingDraft || isUpdating}
             className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
           />
@@ -492,7 +439,6 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
           >
             {isSavingDraft ? "Saving..." : "Save as draft"}
           </Button>
-
           <Button
             onClick={handleNext}
             disabled={isUpdating}

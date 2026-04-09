@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { CustomTabs } from "@/components/shared/CustomTab";
-
 import CFBalanceSheetTab from "./CFBalanceSheetTab";
 import CFIncomeStatementTab from "./CFIncomeStatementTab";
 import CFOtherInputTab from "./CFOtherInputTab";
@@ -13,19 +12,15 @@ import { cn, extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { usePost } from "@/hooks/use-queries";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
-import {
-  useCaseDetails,
-  useSaveDraft,
-  useUpdateProgress,
-} from "@/hooks/use-risk-overview";
+import { useSaveDraft, useUpdateProgress } from "@/hooks/use-risk-overview";
 import {
   CF_BALANCE_SHEET_KEY_MAP,
   CF_INCOME_STATEMENT_KEY_MAP,
   CF_OTHER_INPUTS_KEY_MAP,
 } from "@/constants/risk-overview";
 import CustomButton from "@/components/ui/custom-button";
+import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 
-/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface CFFinancialsSheetProps {
@@ -57,16 +52,14 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
 
-  const { data: caseData, refetch } = useCaseDetails(caseId || undefined);
-
+  const { caseDetails } = useRiskOverviewStore();
+  
   const [inputMode, setInputMode] = useState<"manual" | "upload">("manual");
 
   const [bsCurrent, setBsCurrent] = useState<Record<string, string>>({});
   const [bsPrevious, setBsPrevious] = useState<Record<string, string>>({});
-
   const [isCurrent, setIsCurrent] = useState<Record<string, string>>({});
   const [isPrevious, setIsPrevious] = useState<Record<string, string>>({});
-
   const [oiCurrent, setOiCurrent] = useState<Record<string, string>>({});
   const [oiPrevious, setOiPrevious] = useState<Record<string, string>>({});
 
@@ -79,12 +72,12 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
 
   const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
     "cf_financials",
-    caseId || '',
+    caseId || "",
   );
 
   const { updateProgress, isPending: isUpdating } = useUpdateProgress(
     "cf_financials",
-    caseId || '',
+    caseId || "",
   );
 
   const populateCFDataFromResponse = (
@@ -97,84 +90,61 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
       return;
     }
 
-    const balanceSheetMain = cfData.balance_sheet_main;
-    if (balanceSheetMain) {
+    const {
+      balance_sheet_main,
+      income_statement,
+      balance_sheet_other_details,
+    } = cfData;
+
+    if (balance_sheet_main) {
       const current: Record<string, string> = {};
       const previous: Record<string, string> = {};
-
-      Object.entries(balanceSheetMain).forEach(([apiKey, values]) => {
+      Object.entries(balance_sheet_main).forEach(([apiKey, values]) => {
         const mappedKey = CF_BALANCE_SHEET_KEY_MAP[apiKey];
         if (mappedKey && Array.isArray(values)) {
-          current[mappedKey] =
-            values[0] !== undefined && values[0] !== null
-              ? values[0].toString()
-              : "";
-          previous[mappedKey] =
-            values[1] !== undefined && values[1] !== null
-              ? values[1].toString()
-              : "";
+          current[mappedKey] = values[0] != null ? values[0].toString() : "";
+          previous[mappedKey] = values[1] != null ? values[1].toString() : "";
         }
       });
-
       setBsCurrent(current);
       setBsPrevious(previous);
     }
 
-    const incomeStatement = cfData.income_statement;
-    if (incomeStatement) {
+    if (income_statement) {
       const current: Record<string, string> = {};
       const previous: Record<string, string> = {};
-
-      Object.entries(incomeStatement).forEach(([apiKey, value]) => {
+      Object.entries(income_statement).forEach(([apiKey, value]) => {
         const mappedKey = CF_INCOME_STATEMENT_KEY_MAP[apiKey];
         if (mappedKey) {
-          const stringValue =
-            value !== undefined && value !== null ? value.toString() : "";
-          current[mappedKey] = stringValue;
-          previous[mappedKey] = stringValue;
+          const str = value != null ? value.toString() : "";
+          current[mappedKey] = str;
+          previous[mappedKey] = str;
         }
       });
-
       setIsCurrent(current);
       setIsPrevious(previous);
     }
 
-    const otherDetails = cfData.balance_sheet_other_details;
-    if (otherDetails) {
+    if (balance_sheet_other_details) {
       const current: Record<string, string> = {};
-
-      Object.entries(otherDetails).forEach(([apiKey, value]) => {
+      Object.entries(balance_sheet_other_details).forEach(([apiKey, value]) => {
         const mappedKey = CF_OTHER_INPUTS_KEY_MAP[apiKey];
-        if (mappedKey) {
-          current[mappedKey] =
-            value !== undefined && value !== null ? value.toString() : "";
-        }
+        if (mappedKey)
+          current[mappedKey] = value != null ? value.toString() : "";
       });
-
       setOiCurrent(current);
     }
 
     if (showToast) toast.success("CF data loaded successfully!");
   };
 
-  const handlePrevious = () => {
-    onPrevious?.();
-  };
-
-  // Force refetch when caseId changes
-  useEffect(() => {
-    if (caseId) {
-      refetch();
-    }
-  }, [caseId, refetch]);
-
-  useEffect(() => {
-    if (!caseData?.data?.cf_financials) return;
+ useEffect(() => {
+    if (!caseDetails?.cf_financials) return;
     populateCFDataFromResponse(
-      { cf_financials: caseData.data.cf_financials },
+      { cf_financials: caseDetails.cf_financials },
       false,
     );
-  }, [caseData]);
+  }, [caseDetails]);
 
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -187,7 +157,6 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
 
     try {
       const response = await parseTemplate.mutateAsync(formData);
-
       if (response.success && response.data) {
         populateCFDataFromResponse(response.data);
         setInputMode("upload");
@@ -198,48 +167,38 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
         toast.error(
           extractErrorMessage(
             response,
-            `Failed to parse file. Please try again.`,
+            "Failed to parse file. Please try again.",
           ),
         );
       }
     } catch (error: any) {
-      console.error("Upload error:", error);
       toast.error(
-        extractErrorMessage(error, `Failed to upload file. Please try again.`),
+        extractErrorMessage(error, "Failed to upload file. Please try again."),
       );
     }
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const triggerFileUpload = () => {
-    fileInputRef.current?.click();
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const buildData = (): CFFinancialsData => ({
-    balanceSheet: {
-      current: bsCurrent,
-      previous: bsPrevious,
-    },
+    balanceSheet: { current: bsCurrent, previous: bsPrevious },
     incomeStatement: {
       current: isCurrent,
       previous: isPrevious,
       autoComputed: {},
     },
-    otherInput: {
-      current: oiCurrent,
-      previous: oiPrevious,
-      autoComputed: {},
-    },
+    otherInput: { current: oiCurrent, previous: oiPrevious, autoComputed: {} },
   });
 
   const handleSaveAsDraft = async () => {
     const success = await saveDraft(buildData());
-    if (success && onSaveAsDraft) {
-      onSaveAsDraft();
-    }
+    if (success && onSaveAsDraft) onSaveAsDraft();
+  };
+
+  const handleNext = async () => {
+    const data = buildData();
+    const success = await updateProgress(data);
+    if (success) onNext(data);
   };
 
   const toggleClass = (mode: "manual" | "upload") =>
@@ -247,25 +206,6 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
       "px-3 py-1.5 text-[12px] font-semibold h-full flex items-center gap-1 rounded-[6px]",
       inputMode === mode ? "bg-white text-black" : "text-InfraMuted",
     );
-
-  const inputModeToggle = (
-    <div className="flex items-center bg-InfraBorder p-1 rounded-[10px] h-[44px]">
-      <button
-        onClick={() => setInputMode("manual")}
-        className={toggleClass("manual")}
-      >
-        Manual Input
-      </button>
-      <button
-        onClick={triggerFileUpload}
-        className={toggleClass("upload")}
-        disabled={parseTemplate.isPending}
-      >
-        <Upload className="w-3 h-3" />
-        {parseTemplate.isPending ? "Uploading..." : "Upload File"}
-      </button>
-    </div>
-  );
 
   const tabOptions = [
     {
@@ -330,7 +270,24 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
         className="w-full border-none"
         triggerClassName="max-w-fit"
         contentClassName="max-h-[60vh] overflow-y-auto"
-        headerRight={inputModeToggle}
+        headerRight={
+          <div className="flex items-center bg-InfraBorder p-1 rounded-[10px] h-[44px]">
+            <button
+              onClick={() => setInputMode("manual")}
+              className={toggleClass("manual")}
+            >
+              Manual Input
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className={toggleClass("upload")}
+              disabled={parseTemplate.isPending}
+            >
+              <Upload className="w-3 h-3" />
+              {parseTemplate.isPending ? "Uploading..." : "Upload File"}
+            </button>
+          </div>
+        }
       />
 
       <div className="pt-6 flex flex-wrap items-center gap-3 justify-between mt-auto">
@@ -338,12 +295,12 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
           <CustomButton
             type="button"
             title="Previous"
-            onClick={handlePrevious}
+            onClick={onPrevious}
             disabled={isSavingDraft || isUpdating}
             className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
           />
         )}
-        <div className="ms-auto py-4 border-t border-gray-200 flex justify-end gap-6 ">
+        <div className="ms-auto py-4 border-t border-gray-200 flex justify-end gap-6">
           <button
             onClick={handleSaveAsDraft}
             disabled={isSavingDraft}
@@ -351,15 +308,8 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
           >
             {isSavingDraft ? "Saving..." : "Save as draft"}
           </button>
-
           <Button
-            onClick={async () => {
-              const data = buildData();
-              const success = await updateProgress(data);
-              if (success) {
-                onNext(data);
-              }
-            }}
+            onClick={handleNext}
             disabled={isUpdating}
             className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
           >

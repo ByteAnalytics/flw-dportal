@@ -53,7 +53,7 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
 
   if (isCalculating) return <LoadingSpinner />;
   if (calculateError)
-    return <ReportCalculateError onRetry={refetchCalculate} />;
+    return <ReportCalculateError onRetry={refetchCalculate}  onPrevious={onPrevious}/>;
 
   const showstoppersFromResponse = calculateResponse?.data?.showstoppers;
   const showstoppersDisplay = showstoppersFromResponse

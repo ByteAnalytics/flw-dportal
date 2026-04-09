@@ -13,6 +13,7 @@ import {
 } from "@/hooks/use-non-financials-form";
 import { useState } from "react";
 import NonFinancialsForm from "./NonFinancialsForm";
+import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
@@ -55,7 +56,8 @@ export default function PFNonFinancialsTab({
   const caseId = searchParams.get("caseId");
   const [initialValues, setInitialValues] = useState<PFNonFinancialsData>({});
 
-  const { data: caseData, refetch } = useCaseDetails(caseId || undefined);
+  const { caseDetails, isLoadingCaseDetails } =
+        useRiskOverviewStore();
   const { data: questionsData, isLoading: isLoadingQuestions } = usePFQuestions(
     caseId || undefined,
   );
@@ -65,19 +67,19 @@ export default function PFNonFinancialsTab({
     [questionsData],
   );
 
-  useEffect(() => {
-    if (caseId) refetch();
-  }, [caseId, refetch]);
+  // useEffect(() => {
+  //   if (caseId) refetch();
+  // }, [caseId, refetch]);
 
   useEffect(() => {
     if (
-      !caseData?.data?.pf_non_financials ||
+      !caseDetails?.pf_non_financials ||
       sections.length === 0 ||
       !questionsData?.data
     )
       return;
 
-    const savedData = caseData.data.pf_non_financials as Record<
+    const savedData = caseDetails?.pf_non_financials as Record<
       string,
       Record<string, Record<string, string>>
     >;
@@ -110,7 +112,7 @@ export default function PFNonFinancialsTab({
     });
 
     setInitialValues(populated);
-  }, [caseData, sections, questionsData]);
+  }, [caseDetails, sections, questionsData]);
 
   return (
     <NonFinancialsForm

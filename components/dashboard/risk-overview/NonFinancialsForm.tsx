@@ -1,4 +1,3 @@
-// components/shared/NonFinancialsForm.tsx
 import {
   Select,
   SelectContent,
@@ -13,6 +12,7 @@ import {
   useNonFinancialsForm,
 } from "@/hooks/use-non-financials-form";
 import { PFNonFinancialsData } from "./PFNonFinancialsTab";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface NonFinancialsFormProps {
   progressType: "pf_non_financials" | "cf_non_financials";
@@ -52,11 +52,7 @@ export default function NonFinancialsForm({
   });
 
   if (isLoadingQuestions) {
-    return (
-      <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
-        Loading questions…
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
