@@ -1,10 +1,6 @@
 import { useRouter } from "nextjs-toploader/app";
 import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 
-/**
- * Hook for handling case navigation logic
- * Manages navigation to draft cases and sheet state
- */
 export const useCaseNavigation = () => {
   const router = useRouter();
   const { setSelectedCaseId, setIsSheetOpen } = useRiskOverviewStore();

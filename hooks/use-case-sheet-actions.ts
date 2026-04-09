@@ -7,10 +7,6 @@ interface CaseActionParams {
   status: string;
 }
 
-/**
- * Hook for handling case sheet selection based on status
- * Determines which sheet/modal to open when a case is clicked
- */
 export const useCaseSheetActions = () => {
   const { setSelectedCaseId, setActiveDetailsSheet } = useRiskOverviewStore();
   const { goToPageIfDraft } = useCaseNavigation();

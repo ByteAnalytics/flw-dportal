@@ -173,20 +173,6 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     });
     setCashFlow(newCashFlow);
 
-    // const newOtherInputs: FinancialValues = {};
-    // safeObjectEntries(pfData.other_inputs).forEach(([apiKey, values]) => {
-    //   const mappedKey = OTHER_INPUTS_KEY_MAP[apiKey];
-    //   if (mappedKey) {
-    //     newOtherInputs[mappedKey] = mapArrayToYears(
-    //       values as number[],
-    //       apiYears || years,
-    //     );
-    //   }
-    // });
-
-    // console.log("Mapped Other Inputs:", newOtherInputs, pfData.other_inputs);
-    // setOtherInputs(newOtherInputs);
-
     if (pfData.ratios) {
       const newRatios: FinancialValues = {};
       safeObjectEntries(pfData.ratios).forEach(([apiKey, values]) => {
@@ -498,7 +484,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
             className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
           />
         )}
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-6">
+        <div className="ms-auto py-4 border-t border-gray-200 flex justify-end gap-6">
           <Button
             onClick={handleSaveAsDraft}
             disabled={isSavingDraft}

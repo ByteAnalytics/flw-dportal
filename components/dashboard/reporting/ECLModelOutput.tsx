@@ -356,9 +356,9 @@ const ECLModelOutput: React.FC = () => {
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[1.4rem] text-[#111827] font-[700]">
+          {/* <h1 className="text-[1.4rem] text-[#111827] font-[700]">
             ECL Model Report - {dataName ?? id}
-          </h1>
+          </h1> */}
           <p className="font-[600] text-base text-[#5B5F5E] mt-1">
             View full ECL report
           </p>

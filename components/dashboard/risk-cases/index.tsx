@@ -1,33 +1,21 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight, ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import CustomTable, { TableColumn } from "@/components/ui/custom-table";
+import CustomTable from "@/components/ui/custom-table";
 import CustomDropdown, { DropdownItem } from "@/components/ui/custom-dropdown";
-import { useGet, useDynamicDelete } from "@/hooks/use-queries";
+import { useGet } from "@/hooks/use-queries";
 import { facilityTypeOptions } from "@/constants/risk-overview";
 import { STATUS_OPTIONS } from "@/constants/risk-cases";
-import { useRouter } from "nextjs-toploader/app";
 import { ApiPaginatedResponse } from "@/types";
-import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 import { CaseItem } from "@/types/risk-overview";
 import CaseSheetFlow from "../risk-overview/CaseSheetFlow";
 import { CaseSheets } from "../risk-overview/CaseSheets";
-import { buildTableRows } from "@/lib/build-table-rows";
 import { TableSkeleton } from "@/skeleton";
-import { toast } from "sonner";
-import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
-import { useAuthStore } from "@/stores/auth-store";
-import { UserRole } from "@/types";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useCaseTable } from "@/hooks/use-case-table";
+import { buildCaseTableColumns } from "@/lib/case-table-columns";
+import { CaseDeleteBanner } from "../risk-overview/CaseDeleteBanner";
 
 const STATUS_API_MAP: Record<string, string> = {
   "Pending Review": "Pending_Review",
@@ -37,26 +25,11 @@ const STATUS_API_MAP: Record<string, string> = {
 };
 
 const RiskCases = () => {
-  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedFacility, setSelectedFacility] =
     useState("All Facility Types");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-  const [selectAll, setSelectAll] = useState(false);
-
-  const { user } = useAuthStore((s) => s);
-  const isValidValidator = user?.role === UserRole?.["SUPER USER"];
-
-  const {
-    isSheetOpen,
-    activeDetailsSheet,
-    selectedCaseId,
-    setIsSheetOpen,
-    setActiveDetailsSheet,
-    setSelectedCaseId,
-  } = useRiskOverviewStore();
 
   const queryParams = buildQueryParams({
     currentPage,
@@ -81,120 +54,41 @@ const RiskCases = () => {
     { refetchOnMount: "always" },
   );
 
-  const deleteCase = useDynamicDelete<any>();
-
   const casesData = casesResponse?.data;
   const totalPages = casesData?.pages ?? 1;
   const currentPageNum = casesData?.page ?? currentPage;
 
-  const resetPage = () => setCurrentPage(1);
-
-  const handleSelectAll = () => {
-    if (selectAll) {
-      setSelectedRows(new Set());
-      setSelectAll(false);
-    } else {
-      const allIds = casesData?.data?.map((c) => c.id) ?? [];
-      setSelectedRows(new Set(allIds));
-      setSelectAll(true);
-    }
-  };
-
-  const handleRowSelect = (caseId: string) => {
-    const updated = new Set(selectedRows);
-    if (updated.has(caseId)) updated.delete(caseId);
-    else updated.add(caseId);
-    setSelectedRows(updated);
-    setSelectAll(updated.size === (casesData?.data?.length ?? 0));
-  };
-
-  const handleDeleteSelected = async () => {
-    const selectedIds = Array.from(selectedRows);
-
-    if (selectedIds.length === 0) {
-      toast.error("Please select at least one case to delete");
-      return;
-    }
-
-    try {
-      let url = "/crr/cases";
-
-      if (
-        !(selectAll && selectedIds.length === (casesData?.data?.length ?? 0))
-      ) {
-        const queryParams = selectedIds.map((id) => `id=${id}`).join("&");
-        url = `/crr/cases${queryParams ? `?${queryParams}` : ""}`;
-      }
-
-      const success = await deleteCase.mutateAsync(url);
-
-      toast.success(
-        extractSuccessMessage(
-          success,
-          selectAll && selectedIds.length === (casesData?.data?.length ?? 0)
-            ? "Successfully deleted all cases"
-            : `Successfully deleted ${selectedIds.length} case(s)`,
-        ),
-      );
-
-      setSelectedRows(new Set());
-      setSelectAll(false);
-      refetch();
-    } catch (error: any) {
-      toast.error(
-        extractErrorMessage(error, "Failed to delete cases. Please try again."),
-      );
-      console.error("Delete error:", error);
-    }
-  };
-
-  const goToPageIfDraft = useCallback(
-    (caseId: string, facilityType: string) => {
-      setSelectedCaseId(caseId);
-      setIsSheetOpen(true);
-      router.push(
-        `/dashboard/ccr/overview?step=model_info&caseId=${caseId}&facilityType=${encodeURIComponent(facilityType)}`,
-      );
-    },
-    [setSelectedCaseId, setIsSheetOpen, router],
-  );
-
-  const RECENT_RISK_CASES_COLUMN: TableColumn[] = [
-    {
-      key: "checkbox",
-      label: (
-        <input
-          type="checkbox"
-          checked={selectAll}
-          onChange={handleSelectAll}
-          className="w-4 h-4 rounded border-gray-300 text-[#006F37] focus:ring-[#006F37] cursor-pointer"
-        />
-      ),
-      width: "w-12",
-    },
-    { key: "caseId", label: "CASE NO", width: "w-[100px]" },
-    {
-      key: "customerName",
-      label: "CUSTOMER NAME",
-      width: "md:w-[200px] w-[150px]",
-    },
-    { key: "facilityType", label: "FACILITY TYPE", align: "left" },
-    { key: "rater", label: "RATER", align: "left" },
-    { key: "validator", label: "VALIDATOR", align: "left" },
-    { key: "lastUpdated", label: "LAST UPDATED", align: "left" },
-    { key: "status", label: "STATUS", align: "left" },
-    { key: "rating", label: "RATING", align: "left" },
-    { key: "actions", label: "ACTIONS", align: "left" },
-  ];
-
-  const tableRows = buildTableRows(casesData?.data, {
-    setSelectedCaseId,
+  const {
+    isSheetOpen,
+    setIsSheetOpen,
+    activeDetailsSheet,
     setActiveDetailsSheet,
-    goToPageIfDraft,
+    selectedCaseId,
+    selectAll,
+    hasSelectedRows,
     selectedRows,
+    handleSelectAll,
     handleRowSelect,
+    handleDeleteSelected,
+    isDeleting,
+    tableRows,
     isValidValidator,
+    clearSelection,
+  } = useCaseTable({
+    casesData,
+    onDeleteSuccess: () => refetch(),
   });
+
+  const resetPage = () => {
+    setCurrentPage(1);
+    clearSelection();
+  };
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    clearSelection();
+  };
+
+  const columns = buildCaseTableColumns(selectAll, handleSelectAll);
 
   const facilityDropdownItems: DropdownItem[] = [
     {
@@ -230,8 +124,6 @@ const RiskCases = () => {
     })),
   ];
 
-  const hasSelectedRows = selectedRows.size > 0;
-
   return (
     <>
       <div className="min-h-screen">
@@ -261,7 +153,6 @@ const RiskCases = () => {
               className="w-full font-semibold bg-background text-sm text-gray-700 placeholder:text-gray-400 outline-none"
             />
           </div>
-
           <FilterDropdown
             label={selectedFacility}
             items={facilityDropdownItems}
@@ -273,19 +164,12 @@ const RiskCases = () => {
           {totalPages > 0 && (
             <div className="flex justify-between items-center mb-4">
               {hasSelectedRows && (
-                <div className="flex items-center gap-3 bg-red-50 p-3 rounded-lg border border-red-200">
-                  <span className="text-red-800 font-medium">
-                    {selectedRows.size} case(s) selected
-                  </span>
-                  <Button
-                    onClick={handleDeleteSelected}
-                    disabled={deleteCase.isPending}
-                    className="h-[35px] bg-red-600 hover:bg-red-700 text-white text-sm"
-                  >
-                    {deleteCase.isPending ? "Deleting..." : "Delete Selected"}
-                    <Trash2 className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
+                <CaseDeleteBanner
+                  count={selectedRows.size === tableRows?.length ? "all" : selectedRows?.size?.toString()}
+                  isDeleting={isDeleting}
+                  onDelete={handleDeleteSelected}
+                  compact
+                />
               )}
               <div className="flex items-center gap-3 ml-auto">
                 <span className="text-sm text-gray-600">
@@ -295,13 +179,14 @@ const RiskCases = () => {
                   <ChevronLeft
                     className={`w-4 h-4 cursor-pointer ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : ""}`}
                     onClick={() =>
-                      currentPage > 1 && setCurrentPage((p) => p - 1)
+                      currentPage > 1 && handlePageChange(currentPage - 1)
                     }
                   />
                   <span
                     className="cursor-pointer"
                     onClick={() =>
-                      currentPage < totalPages && setCurrentPage((p) => p + 1)
+                      currentPage < totalPages &&
+                      handlePageChange(currentPage + 1)
                     }
                   >
                     Next
@@ -309,7 +194,8 @@ const RiskCases = () => {
                   <ChevronRight
                     className={`w-4 h-4 cursor-pointer ${currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : ""}`}
                     onClick={() =>
-                      currentPage < totalPages && setCurrentPage((p) => p + 1)
+                      currentPage < totalPages &&
+                      handlePageChange(currentPage + 1)
                     }
                   />
                 </div>
@@ -321,7 +207,7 @@ const RiskCases = () => {
             <TableSkeleton />
           ) : (
             <CustomTable
-              columns={RECENT_RISK_CASES_COLUMN}
+              columns={columns}
               rows={tableRows}
               emptyMessage="No cases available"
               hasCheckbox

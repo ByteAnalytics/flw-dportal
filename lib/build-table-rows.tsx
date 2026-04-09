@@ -1,4 +1,3 @@
-// build-table-rows.ts
 import { formatDate, formatLabel } from "@/lib/utils";
 import { ActiveDetailsSheet, CaseItem } from "@/types/risk-overview";
 
@@ -30,18 +29,14 @@ export function buildTableRows(
     const caseStatus = c.status?.toUpperCase() ?? "";
     const statusLabel = formatLabel(c.status);
 
-    // Determine if user can review based on role and case status
-    const canReview = isValidValidator && caseStatus === "PENDING_REVIEW";
+   const canReview =
+     isValidValidator &&
+     (caseStatus === "PENDING_REVIEW" || caseStatus === "IN_REVIEW");
 
-    // Determine if action is clickable
-    const isClickable =
-      canReview ||
-      caseStatus === "REJECTED" ||
-      caseStatus === "DRAFT" ||
-      caseStatus !== "PENDING_REVIEW";
+    const isClickable = isValidValidator ? caseStatus !== "DRAFT" : true;
 
     const actionLabel =
-      caseStatus === "PENDING_REVIEW"
+      caseStatus === "PENDING_REVIEW" || caseStatus === "IN_REVIEW"
         ? canReview
           ? "Review"
           : "View Only"
@@ -50,20 +45,19 @@ export function buildTableRows(
           : "Open";
 
     const handleAction = () => {
-      // Only proceed if action is clickable
       if (!isClickable) return;
 
       setSelectedCaseId(c.id);
-      if (caseStatus === "PENDING_REVIEW") {
+      if (caseStatus === "PENDING_REVIEW" || caseStatus === "IN_REVIEW") {
         if (canReview) {
           setActiveDetailsSheet("validation");
         } else {
-          setActiveDetailsSheet("details"); // Only view details if not validator
+          setActiveDetailsSheet("details");
         }
       } else if (caseStatus === "REJECTED") {
         setActiveDetailsSheet("returned");
       } else if (caseStatus === "DRAFT") {
-        goToPageIfDraft(c.id, c.facility_type);
+        goToPageIfDraft(c.id, c.facility_type); // unreachable for validators since isClickable=false
       } else {
         setActiveDetailsSheet("details");
       }

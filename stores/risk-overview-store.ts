@@ -76,6 +76,7 @@ export interface CaseDetails {
       initial_pf_score: number | null;
       initial_cf_score: number | null;
       baseline_score: number | null;
+      baseline_rating: string | null;
     };
     showstoppers?: {
       SHOWSTOPPERS: string[];

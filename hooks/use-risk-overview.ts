@@ -41,6 +41,26 @@ export const useCaseDetails = (caseId?: string) => {
   );
 };
 
+export const usePFQuestions = (caseId?: string) => {
+  return useGet<
+    ApiResponse<Record<string, Record<string, Record<string, string[]>>>>
+  >(
+    ["pf-questions", caseId ?? ""],
+    caseId ? `/crr/cases/${caseId}/pf-questions` : "",
+    { enabled: !!caseId, staleTime: 0 },
+  );
+};
+
+export const useCFQuestions = (caseId?: string) => {
+  return useGet<
+    ApiResponse<Record<string, Record<string, string[]>>>
+  >(
+    ["cf-questions", caseId ?? ""],
+    caseId ? `/crr/cases/${caseId}/cf-questions` : "",
+    { enabled: !!caseId, staleTime: 0 },
+  );
+};
+
 export const useGetValidators = () => {
   return useGet<ValidatorsResponse>(["validators"], "/users/validators", {
     staleTime: 5 * 60 * 1000, // 5 min — validator list changes infrequently
@@ -134,6 +154,9 @@ export const useUpdateProgress = (
             data.credit_history_adjustment || "Not applicable",
         };
       } else payload = data;
+
+      
+    console.log(`Updating progress for ${type} with data:`, payload);
 
       const success = await updateCase.mutateAsync(payload);
       toast.success(

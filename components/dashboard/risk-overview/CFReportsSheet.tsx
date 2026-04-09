@@ -1,90 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import AccordionSection from "@/components/shared/CaseAccordium";
 import ShowstoppersTable from "./ShowstoppersTable";
-import { useSearchParams } from "next/navigation";
-import {
-  useCalculateCase,
-  useSubmitCase,
-  useApproveCase,
-  useCaseDetails,
-  Validator,
-} from "@/hooks/use-risk-overview";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { CalculateResponse } from "@/types/risk-overview";
-import { toast } from "sonner";
 import CustomButton from "@/components/ui/custom-button";
-import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
-import { useAuthStore } from "@/stores/auth-store";
-import { UserRole } from "@/types";
+import { formatNumber } from "@/lib/utils";
 import ValidatorsSheet from "./ValidatorsSheet";
 import ApproveConfirmationSheet from "./ApproveConfirmationSheet";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-export type ReportSummaryData = {
-  customer: string;
-  projectType: string;
-  yearOfFinancials: string;
-  financialRisk: number | string;
-  operationalRisk: number | string;
-  structureRisk: number | string;
-  pfScore?: string;
-  cfScore?: string;
-  probabilityOfDefault: number | string;
-  baselineCreditScore: string;
-  finalCreditScore: string;
-};
-
-export type CombinedReportData = {
-  customer: string;
-  projectType: string;
-  yearOfFinancials: string;
-  pf: {
-    financialRisk: number | string;
-    operationalRisk: number | string;
-    structureRisk: number | string;
-    pfScore: number | string;
-  };
-  cf: {
-    financialRisk: number | string;
-    operationalRisk: number | string;
-    structureRisk: number | string;
-    cfScore: number | string;
-  };
-  initialPFScore: string;
-  initialCFScore: string;
-  probabilityOfDefault: number | string;
-  baselineCreditScore: string;
-  finalCreditScore: string;
-};
-
-export const InfoCard = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-[12px] border border-gray-200 bg-[#F9FAFB] p-5">
-    {children}
-  </div>
-);
-
-export const InfoField = ({
-  label,
-  value,
-  valueClassName,
-}: {
-  label: string;
-  value: React.ReactNode;
-  valueClassName?: string;
-}) => (
-  <div className="flex flex-col gap-1">
-    <span className="text-[13px] font-medium text-gray-400">{label}</span>
-    <span
-      className={`text-[15px] font-bold text-gray-900 ${valueClassName ?? ""}`}
-    >
-      {value}
-    </span>
-  </div>
-);
+import { useReportSheet } from "@/hooks/use-report-sheet";
+import { InfoCard, InfoField } from "./ReportInfoCard";
+import ReportCalculateError from "./ReportCalculateError";
 
 interface CombinedReportsSheetProps {
   onClose: () => void;
@@ -99,94 +26,31 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
   onSaveAsDraft,
   onPrevious,
 }) => {
-  const searchParams = useSearchParams();
-  const caseId = searchParams.get("caseId");
-  const { user } = useAuthStore((s) => s);
-  const isValidValidator = user?.role === UserRole?.["SUPER USER"];
-
-  const [calculateResponse, setCalculateResponse] =
-    useState<CalculateResponse | null>(null);
-
-  // Approve sheet state
-  const [isApproveSheetOpen, setIsApproveSheetOpen] = useState(false);
-  const [approvalComment, setApprovalComment] = useState("");
-
-  // Validator selection sheet state (only for submit, not approve)
-  const [isValidatorSheetOpen, setIsValidatorSheetOpen] = useState(false);
-  const [selectedValidator, setSelectedValidator] = useState<Validator | null>(
-    null,
-  );
-
-  const { data: caseData } = useCaseDetails(caseId || undefined);
-  const details = caseData?.data;
-
-  const { mutateAsync: calculateCase, isPending: isCalculating } =
-    useCalculateCase(caseId || undefined);
-  const { mutateAsync: submitCase, isPending: isSubmitting } = useSubmitCase(
-    caseId || "",
-  );
-  const { mutateAsync: approveCase, isPending: isApproving } = useApproveCase(
-    caseId || undefined,
-  );
-
-  useEffect(() => {
-    if (caseId) {
-      calculateCase({}).then((response) => {
-        if (response) {
-          setCalculateResponse(response);
-        }
-      });
-    }
-  }, [caseId, calculateCase]);
-
-  // Opens the approve sheet (validator flow) or the approve confirmation
-  const handleSubmit = async () => {
-    if (isValidValidator) {
-      setIsApproveSheetOpen(true);
-      return;
-    }
-    // Not validating → open validator picker sheet first
-    setIsValidatorSheetOpen(true);
-  };
-
-  // Called once a validator has been selected and the user confirms submission
-  const confirmSubmitWithValidator = async () => {
-    if (!selectedValidator) {
-      toast.error("Please select a validator before submitting.");
-      return;
-    }
-
-    try {
-      const success = await submitCase({ validator_id: selectedValidator.id });
-      if (success) {
-        toast.success(extractSuccessMessage(success, "Submitted successfully"));
-        setIsValidatorSheetOpen(false);
-        onSubmitForValidation();
-      }
-    } catch (error: any) {
-      console.error("Error submitting case:", error);
-      toast.error(
-        extractErrorMessage(error, "Failed to submit case. Please try again."),
-      );
-    }
-  };
-
-  const confirmApproveRating = async () => {
-    if (!approvalComment.trim()) {
-      alert("Please provide a comment before approving.");
-      return;
-    }
-
-    try {
-      await approveCase({ comment: approvalComment });
-      setIsApproveSheetOpen(false);
-      onSubmitForValidation();
-    } catch (error) {
-      console.error("Error approving rating:", error);
-    }
-  };
+  const {
+    isValidValidator,
+    calculateResponse,
+    isCalculating,
+    isSubmitting,
+    isApproving,
+    details,
+    isApproveSheetOpen,
+    setIsApproveSheetOpen,
+    approvalComment,
+    setApprovalComment,
+    isValidatorSheetOpen,
+    setIsValidatorSheetOpen,
+    selectedValidator,
+    setSelectedValidator,
+    handleSubmit,
+    confirmSubmitWithValidator,
+    confirmApproveRating,
+    calculateError,
+    refetchCalculate,
+  } = useReportSheet(onSubmitForValidation);
 
   if (isCalculating) return <LoadingSpinner />;
+  if (calculateError)
+    return <ReportCalculateError onRetry={refetchCalculate} />;
 
   const showstoppersFromResponse = calculateResponse?.data?.showstoppers;
   const showstoppersDisplay = showstoppersFromResponse
@@ -200,10 +64,11 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
   const customerName = calculateResponse?.data?.customer_name || "—";
   const dateOfRating = calculateResponse?.data?.date_of_rating || "—";
   const projectType = calculateResponse?.data?.project_type || "—";
-  const yearOfFinancials = calculateResponse?.data?.year_of_financials || "—";
-  const pfScore = calculateResponse?.data?.initial_pf_score || "—";
-  const cfScore = calculateResponse?.data?.initial_cf_score || "—";
-  const baselineScore = calculateResponse?.data?.baseline_score || "—";
+  const yearOfFinancials = calculateResponse?.data?.year_of_financials;
+  const pfScore = calculateResponse?.data?.initial_pf_score;
+  const cfScore = calculateResponse?.data?.initial_cf_score;
+  const baselineScore = calculateResponse?.data?.baseline_score;
+  const baselineRating = calculateResponse?.data?.baseline_rating;
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -229,11 +94,24 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
           </AccordionSection>
         )}
 
-        <div className="rounded-[12px] bg-[#1A5FA8] p-5 grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="rounded-[12px] bg-[#1A5FA8] p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {[
-            { label: "Initial PF Score", value: pfScore },
-            { label: "Initial CF Score", value: cfScore },
-            { label: "Baseline Credit Score Rating", value: baselineScore },
+            {
+              label: "Initial PF Score",
+              value: pfScore ? formatNumber(pfScore ?? 0) : "—",
+            },
+            {
+              label: "Initial CF Score",
+              value: cfScore ? formatNumber(cfScore ?? 0) : "—",
+            },
+            {
+              label: "Baseline Credit Score",
+              value: baselineScore ? formatNumber(baselineScore ?? 0) : "—",
+            },
+            {
+              label: "Baseline Credit Score Rating",
+              value: baselineRating || "—",
+            },
           ].map((item) => (
             <div key={item.label} className="flex flex-col gap-1">
               <span className="text-[13px] font-medium text-blue-200">
@@ -257,7 +135,7 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
             className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
           />
         )}
-        <div className="px-6 py-4 border-t border-gray-200 flex flex-wrap items-center justify-end gap-3">
+        <div className="ms-auto py-4 border-t border-gray-200 flex flex-wrap items-center justify-end gap-3">
           <button
             type="button"
             onClick={onSaveAsDraft}
@@ -291,7 +169,6 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
         confirmSubmitWithValidator={confirmSubmitWithValidator}
         isSubmitting={isSubmitting}
       />
-      {/* ── Approve Confirmation Sheet (validate flow only) ── */}
       <ApproveConfirmationSheet
         isApproveSheetOpen={isApproveSheetOpen}
         setIsApproveSheetOpen={setIsApproveSheetOpen}
