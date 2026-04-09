@@ -141,14 +141,14 @@ export default function NonFinancialsForm({
             {isSavingDraft ? "Saving..." : "Save as draft"}
           </button>
 
-          <Button
+          <CustomButton
             type="button"
             onClick={handleNext}
+            title="Next"
+            isLoading={isUpdating}
             disabled={isUpdating}
-            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isUpdating ? "Saving..." : "Next"}
-          </Button>
+            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
+          />
         </div>
       </div>
     </div>

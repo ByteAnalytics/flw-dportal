@@ -148,20 +148,21 @@ const CombinedReportsSheet: React.FC<CombinedReportsSheetProps> = ({
           >
             Save as draft
           </button>
-          <Button
+          <CustomButton
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting || isApproving}
             className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting || isApproving
-              ? isValidValidator
-                ? "Approving..."
-                : "Submitting..."
-              : isValidValidator
-                ? "Approve Case"
-                : "Submit for Validation"}
-          </Button>
+            title={
+              isSubmitting || isApproving
+                ? isValidValidator
+                  ? "Approving..."
+                  : "Submitting..."
+                : isValidValidator
+                  ? "Approve Case"
+                  : "Submit for Validation"
+            }
+          />
         </div>
       </div>
 

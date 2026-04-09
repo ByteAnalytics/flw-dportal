@@ -64,9 +64,9 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
 
- const { setPFFinancialsData, caseDetails, isLoadingCaseDetails } =
+  const { setPFFinancialsData, caseDetails, isLoadingCaseDetails } =
     useRiskOverviewStore();
- 
+
   const [inputMode, setInputMode] = useState<"manual" | "upload">("manual");
   const [years, setYears] = useState<any[]>(DEFAULT_YEARS);
 
@@ -114,7 +114,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
     return Object.entries(obj);
   };
 
-  const populateDataFromResponse = (responseData: any, showToast = true) => {
+  const populateDataFromResponse = (responseData: any) => {
     const pfData = responseData?.pf_financials;
     if (!pfData) {
       toast.error("No PF financials data in response");
@@ -175,8 +175,6 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
       });
       setRatios(newRatios);
     }
-
-    if (showToast) toast.success("File uploaded and parsed successfully!");
   };
 
   const handleFileSelect = async (
@@ -243,8 +241,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
   useEffect(() => {
     if (!caseDetails?.pf_financials) return;
     populateDataFromResponse(
-      { pf_financials: caseDetails.pf_financials },
-      false,
+      { pf_financials: caseDetails.pf_financials }
     );
   }, [caseDetails]);
 
@@ -441,13 +438,14 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
           >
             {isSavingDraft ? "Saving..." : "Save as draft"}
           </Button>
-          <Button
+          <CustomButton
+            type="button"
             onClick={handleNext}
+            title="Next"
+            isLoading={isUpdating}
             disabled={isUpdating}
-            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isUpdating ? "Saving..." : "Next"}
-          </Button>
+            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
+          />
         </div>
       </div>
     </div>
