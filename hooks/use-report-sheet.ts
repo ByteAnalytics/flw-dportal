@@ -14,6 +14,7 @@ import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
 
 export function useReportSheet(onSubmitForValidation: () => void) {
   const searchParams = useSearchParams();

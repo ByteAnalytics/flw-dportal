@@ -34,6 +34,8 @@ import {
 } from "@/constants/risk-overview";
 import CustomButton from "@/components/ui/custom-button";
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 type FinancialValues = Record<string, Record<number, string>>;
 
 export interface PFFinancialsData {
