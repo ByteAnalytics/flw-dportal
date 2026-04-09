@@ -36,7 +36,7 @@ export function useValidationReview(
   const isMounted = useRef(true);
 
   useEffect(() => {
-    if (status && status !== "PENDING_REVIEW") {
+    if (status && status.toLowerCase() !== "pending_review") {
       setIsInitialized(true);
       initializationAttempted.current = true;
     }
@@ -52,7 +52,7 @@ export function useValidationReview(
     if (
       !caseId ||
       initializationAttempted.current ||
-      status !== "PENDING_REVIEW"
+      status?.toLowerCase() !== "pending_review"
     ) {
       return;
     }
@@ -162,13 +162,10 @@ export function useValidationReview(
   };
 
   return {
-    // Initialization
     isStartingReview,
     initError,
     isInitialized,
     retryInitialization,
-
-    // Approve
     isApproving,
     isApproveSheetOpen,
     setIsApproveSheetOpen,
@@ -176,8 +173,6 @@ export function useValidationReview(
     setApprovalComment,
     handleApproveRating,
     confirmApproveRating,
-
-    // Return
     isReturning,
     isReturnSheetOpen,
     setIsReturnSheetOpen,

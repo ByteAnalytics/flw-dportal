@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React from "react";
@@ -28,6 +27,9 @@ import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 import SuccessIcon from "@/public/assets/icon/success-icon.svg";
 import { CustomImage } from "@/components/ui/custom-image";
 import { useValidationReview } from "@/hooks/use-validation-review";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
 
 interface Props {
   onClose: () => void;
@@ -74,11 +76,10 @@ const ValidationReviewSheet: React.FC<Props> = ({
     data?.data?.status,
   );
 
-  if (isLoadingCase || isStartingReview) {
+  if (isLoadingCase || (isStartingReview && !isInitialized)) {
     return <LoadingSpinner />;
   }
 
-  // Show error state if initialization failed
   if (initError) {
     return (
       <div className="flex flex-col items-center justify-center p-8 space-y-4 min-h-[400px]">
@@ -144,7 +145,6 @@ const ValidationReviewSheet: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col gap-4 pb-6 px-4">
-      {/* HEADER with Edit Button */}
       <div className="border-b pb-2 flex justify-between items-center">
         <span className="font-semibold text-teal-600">
           {details.case_number}
@@ -160,7 +160,6 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </Button>
       </div>
 
-      {/* INFO */}
       <div className="bg-white rounded-lg border p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Info label="Customer" value={details.customer_name} />
         <Info label="Project Type" value={details.project_type} />
@@ -168,42 +167,36 @@ const ValidationReviewSheet: React.FC<Props> = ({
         <Info label="Year" value={details.year_of_financials ?? "-"} />
       </div>
 
-      {/* PF FINANCIALS - Balance Sheet */}
       {pfFinancialsRows.length > 0 && (
         <AccordionSection title="PF Financials - Balance Sheet">
           <FinancialTable rows={pfFinancialsRows} years={pfYears} />
         </AccordionSection>
       )}
 
-      {/* PF FINANCIALS - Income Statement */}
       {pfIncomeRows.length > 0 && (
         <AccordionSection title="PF Financials - Income Statement">
           <FinancialTable rows={pfIncomeRows} years={pfYears} />
         </AccordionSection>
       )}
 
-      {/* PF FINANCIALS - Cash Flow */}
       {pfCashFlowRows.length > 0 && (
         <AccordionSection title="PF Financials - Cash Flow">
           <FinancialTable rows={pfCashFlowRows} years={pfYears} />
         </AccordionSection>
       )}
 
-      {/* PF FINANCIALS - Ratios */}
       {pfRatiosRows.length > 0 && (
         <AccordionSection title="PF Financials - Ratios">
           <FinancialTable rows={pfRatiosRows} years={pfYears} />
         </AccordionSection>
       )}
 
-      {/* PF NON FINANCIALS */}
       {pfNonFinancialsRows.length > 0 && (
         <AccordionSection title="PF Non Financials">
           <NonFinancialsTable rows={pfNonFinancialsRows} />
         </AccordionSection>
       )}
 
-      {/* CF FINANCIALS - Balance Sheet */}
       {cfBalanceSheetRows.length > 0 && (
         <AccordionSection title="CF Financials - Balance Sheet">
           <FinancialTable
@@ -214,7 +207,6 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </AccordionSection>
       )}
 
-      {/* CF FINANCIALS - Income Statement */}
       {cfIncomeRows.length > 0 && (
         <AccordionSection title="CF Financials - Income Statement">
           <FinancialTable
@@ -225,7 +217,6 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </AccordionSection>
       )}
 
-      {/* CF FINANCIALS - Other Inputs */}
       {cfOtherInputsRows.length > 0 && (
         <AccordionSection title="CF Financials - Other Inputs">
           <FinancialTable
@@ -236,21 +227,18 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </AccordionSection>
       )}
 
-      {/* CF NON FINANCIALS */}
       {cfNonFinancialsRows.length > 0 && (
         <AccordionSection title="CF Non Financials">
           <NonFinancialsTable rows={cfNonFinancialsRows} />
         </AccordionSection>
       )}
 
-      {/* SHOWSTOPPERS */}
       {showstoppersDisplay && showstoppersDisplay.length > 0 && (
         <AccordionSection title="Showstoppers">
           <ShowstoppersTable showstoppers={showstoppersDisplay ?? []} />
         </AccordionSection>
       )}
 
-      {/* CREDIT HISTORY ADJUSTMENT */}
       {details.credit_history_adjustment && (
         <AccordionSection title="Credit History Adjustment">
           <div className="p-4 bg-white rounded-lg border">
@@ -259,7 +247,6 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </AccordionSection>
       )}
 
-      {/* SCORES */}
       {combined?.dashboard_rater && (
         <div className="bg-[#1A5FA8] text-white rounded-lg p-4 grid md:grid-cols-4 xl:grid-cols-5 sm:grid-cols-3 gap-4">
           <ScoreCard
@@ -282,7 +269,6 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </div>
       )}
 
-      {/* ACTIONS */}
       <div className="flex gap-3 justify-end pt-4 border-t mt-2">
         <button
           onClick={openReturnSheet}
@@ -300,7 +286,6 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </Button>
       </div>
 
-      {/* Approve Confirmation Sheet */}
       <SheetWrapper
         open={isApproveSheetOpen}
         setOpen={setIsApproveSheetOpen}
@@ -323,15 +308,11 @@ const ValidationReviewSheet: React.FC<Props> = ({
         </div>
 
         <div className="mb-3 px-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Comment <span className="text-red-500">*</span>
-          </label>
           <textarea
             value={approvalComment}
             onChange={(e) => setApprovalComment(e.target.value)}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
             rows={4}
-            placeholder="Add your approval comment here..."
           />
         </div>
 
@@ -342,47 +323,28 @@ const ValidationReviewSheet: React.FC<Props> = ({
           >
             Cancel
           </Button>
-          <Button
-            onClick={confirmApproveRating}
-            disabled={isApproving}
-            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
-          >
+          <Button onClick={confirmApproveRating} disabled={isApproving}>
             {isApproving ? "Approving..." : "Confirm Approve"}
           </Button>
         </div>
       </SheetWrapper>
 
-      {/* Return for Revision Sheet */}
       <SheetWrapper
         open={isReturnSheetOpen}
         setOpen={setIsReturnSheetOpen}
         title="Return for Revision"
         width="sm:max-w-[540px]"
-        headerClassName="bg-orange-600 !text-white"
-        titleClassName="text-white px-6 py-4"
-        SheetContentClassName="p-0 bg-white"
       >
         <div className="flex flex-col gap-2 mb-4 items-center justify-center p-4">
           <CornerDownLeft className="w-10 h-10 mb-4 text-orange-400" />
-          <p className="text-center text-gray-700">
-            Are you sure you want to return the credit risk rating for{" "}
-            <span className="font-semibold">
-              {details.customer_name ?? "this case"}
-            </span>
-            ? The rater will need to make revisions before resubmission.
-          </p>
         </div>
 
         <div className="mb-3 px-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Notes <span className="text-red-500">*</span>
-          </label>
           <textarea
             value={returnNotes}
             onChange={(e) => setReturnNotes(e.target.value)}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
             rows={4}
-            placeholder="Provide detailed notes for revision..."
           />
         </div>
 
@@ -393,11 +355,7 @@ const ValidationReviewSheet: React.FC<Props> = ({
           >
             Cancel
           </Button>
-          <Button
-            onClick={confirmReturnForRevision}
-            disabled={isReturning}
-            className="h-[40px] px-6 bg-orange-600 text-white text-[14px] font-semibold rounded-[8px] hover:bg-orange-700"
-          >
+          <Button onClick={confirmReturnForRevision} disabled={isReturning}>
             {isReturning ? "Returning..." : "Confirm Return"}
           </Button>
         </div>
@@ -406,7 +364,6 @@ const ValidationReviewSheet: React.FC<Props> = ({
   );
 };
 
-// Helper Components
 const Info = ({ label, value }: { label: string; value: any }) => (
   <div>
     <p className="text-sm text-gray-500">{label}</p>

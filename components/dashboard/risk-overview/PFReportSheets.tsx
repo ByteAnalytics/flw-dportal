@@ -53,7 +53,12 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
 
   if (isCalculating) return <LoadingSpinner />;
   if (calculateError)
-    return <ReportCalculateError onRetry={refetchCalculate}  onPrevious={onPrevious}/>;
+    return (
+      <ReportCalculateError
+        onRetry={refetchCalculate}
+        onPrevious={onPrevious}
+      />
+    );
 
   const showstoppersFromResponse = calculateResponse?.data?.showstoppers;
   const showstoppersDisplay = showstoppersFromResponse
@@ -67,7 +72,7 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
   const customerName = calculateResponse?.data?.customer_name || "—";
   const dateOfRating = calculateResponse?.data?.date_of_rating || "—";
   const projectType = calculateResponse?.data?.project_type || "—";
-  const yearOfFinancials = calculateResponse?.data?.year_of_financials; ;
+  const yearOfFinancials = calculateResponse?.data?.year_of_financials;
   const pfScore = calculateResponse?.data?.initial_pf_score;
   const baselineScore = calculateResponse?.data?.baseline_score;
   const baselineRating = calculateResponse?.data?.baseline_rating;
@@ -153,20 +158,21 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
           >
             Save as draft
           </Button>
-          <Button
+          <CustomButton
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting || isApproving}
             className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting || isApproving
-              ? isValidValidator
-                ? "Approving..."
-                : "Submitting..."
-              : isValidValidator
-                ? "Approve Case"
-                : "Submit for Validation"}
-          </Button>
+            title={
+              isSubmitting || isApproving
+                ? isValidValidator
+                  ? "Approving..."
+                  : "Submitting..."
+                : isValidValidator
+                  ? "Approve Case"
+                  : "Submit for Validation"
+            }
+          />
         </div>
       </div>
 

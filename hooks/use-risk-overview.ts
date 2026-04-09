@@ -37,6 +37,8 @@ export const useCaseDetails = (caseId?: string) => {
     {
       enabled: !!caseId,
       staleTime: 0,
+      refetchOnMount: true,
+      refetchOnWindowFocus: false,
     },
   );
 };
@@ -52,9 +54,7 @@ export const usePFQuestions = (caseId?: string) => {
 };
 
 export const useCFQuestions = (caseId?: string) => {
-  return useGet<
-    ApiResponse<Record<string, Record<string, string[]>>>
-  >(
+  return useGet<ApiResponse<Record<string, Record<string, string[]>>>>(
     ["cf-questions", caseId ?? ""],
     caseId ? `/crr/cases/${caseId}/cf-questions` : "",
     { enabled: !!caseId, staleTime: 0 },
@@ -155,15 +155,11 @@ export const useUpdateProgress = (
         };
       } else payload = data;
 
-      
-    console.log(`Updating progress for ${type} with data:`, payload);
+      console.log(`Updating progress for ${type} with data:`, payload);
 
       const success = await updateCase.mutateAsync(payload);
       toast.success(
-        extractSuccessMessage(
-          success,
-          `Progress saved successfully!`,
-        ),
+        extractSuccessMessage(success, `Progress saved successfully!`),
       );
       return true;
     } catch (error: any) {

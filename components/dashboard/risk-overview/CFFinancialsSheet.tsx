@@ -54,7 +54,7 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
   const caseId = searchParams.get("caseId");
 
   const { caseDetails } = useRiskOverviewStore();
-  
+
   const [inputMode, setInputMode] = useState<"manual" | "upload">("manual");
 
   const [bsCurrent, setBsCurrent] = useState<Record<string, string>>({});
@@ -82,8 +82,7 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
   );
 
   const populateCFDataFromResponse = (
-    responseData: ParseTemplateResponse["data"],
-    showToast = true,
+    responseData: ParseTemplateResponse["data"]
   ) => {
     const cfData = responseData.cf_financials;
     if (!cfData) {
@@ -135,15 +134,12 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
       });
       setOiCurrent(current);
     }
-
-    if (showToast) toast.success("CF data loaded successfully!");
   };
 
- useEffect(() => {
+  useEffect(() => {
     if (!caseDetails?.cf_financials) return;
     populateCFDataFromResponse(
-      { cf_financials: caseDetails.cf_financials },
-      false,
+      { cf_financials: caseDetails.cf_financials }
     );
   }, [caseDetails]);
 
@@ -309,13 +305,14 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
           >
             {isSavingDraft ? "Saving..." : "Save as draft"}
           </button>
-          <Button
+          <CustomButton
+            type="button"
             onClick={handleNext}
+            title="Next"
+            isLoading={isUpdating}
             disabled={isUpdating}
-            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isUpdating ? "Saving..." : "Next"}
-          </Button>
+            className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
+          />
         </div>
       </div>
     </div>
