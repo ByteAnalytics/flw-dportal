@@ -77,7 +77,7 @@ const ReportTable = ({
 
       // If not deleting all, add id query parameters
       if (!(selectAll && selectedIds.length === data.length)) {
-        const queryParams = selectedIds.map((id) => `id=${id}`).join("&");
+        const queryParams = selectedIds.map((id) => `ids=${id}`).join("&");
         url = `/guarantees/runs${queryParams ? `?${queryParams}` : ""}`;
       }
 

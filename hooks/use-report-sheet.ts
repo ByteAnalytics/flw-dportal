@@ -5,22 +5,23 @@ import {
   useCalculateCase,
   useSubmitCase,
   useApproveCase,
-  useCaseDetails,
   Validator,
 } from "@/hooks/use-risk-overview";
 import { CalculateResponse } from "@/types/risk-overview";
 import { useAuthStore } from "@/stores/auth-store";
 import { UserRole } from "@/types";
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
+import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/set-state-in-effect */
 
 export function useReportSheet(onSubmitForValidation: () => void) {
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
   const { user } = useAuthStore((s) => s);
   const isValidValidator = user?.role === UserRole?.["SUPER USER"];
+
+  const { caseDetails } = useRiskOverviewStore();
 
   const [calculateResponse, setCalculateResponse] =
     useState<CalculateResponse | null>(null);
@@ -31,7 +32,7 @@ export function useReportSheet(onSubmitForValidation: () => void) {
     null,
   );
   const [calculateError, setCalculateError] = useState(false);
-  const { data: caseData } = useCaseDetails(caseId || undefined);
+
   const { mutateAsync: calculateCase, isPending: isCalculating } =
     useCalculateCase(caseId || undefined);
   const { mutateAsync: submitCase, isPending: isSubmitting } = useSubmitCase(
@@ -117,7 +118,7 @@ export function useReportSheet(onSubmitForValidation: () => void) {
     isCalculating,
     isSubmitting,
     isApproving,
-    details: caseData?.data,
+    details: caseDetails,
     isApproveSheetOpen,
     setIsApproveSheetOpen,
     approvalComment,

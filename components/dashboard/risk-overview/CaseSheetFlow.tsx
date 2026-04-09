@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useEffect } from "react";
@@ -18,6 +17,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CFFinancialsData } from "@/types/risk-overview";
 import { VALID_STEPS, SHEET_CONFIG, Step } from "@/constants/risk-overview";
 import CreditHistorySheet from "./CreditHistorySheet";
+import { useCaseDetails } from "@/hooks/use-risk-overview";
 
 interface Props {
   open: boolean;
@@ -40,19 +40,31 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
     setPFNonFinancialsData,
     setCFFinancialsData,
     setCFNonFinancialsData,
+    setCaseDetails,
+    setIsLoadingCaseDetails,
     resetAll,
   } = useRiskOverviewStore();
 
+  const { data: caseData, isLoading: isLoadingCase } = useCaseDetails(
+    caseId || undefined,
+  );
+
+  useEffect(() => {
+    setIsLoadingCaseDetails(isLoadingCase);
+  }, [isLoadingCase, setIsLoadingCaseDetails]);
+
+  useEffect(() => {
+    setCaseDetails(caseData?.data ?? null);
+  }, [caseData, setCaseDetails]);
+  
   const updateUrl = (nextStep: Step, id?: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("step", nextStep);
-
     if (id) {
       params.set("caseId", id);
     } else {
       params.delete("caseId");
     }
-
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -79,7 +91,6 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
     updateUrl(next, id ?? caseId);
   };
 
-  // Get previous step based on current step and project path
   const getPreviousStep = (): Step | null => {
     const stepFlow: Record<Step, Step | null> = {
       model_info: null,
@@ -94,11 +105,9 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
       pf_reports: "credit_history",
       combined_reports: "credit_history",
     };
-
     return stepFlow[currentStep] || null;
   };
 
-  // Get next step based on current step and project path
   const getNextStep = (): Step | null => {
     const stepFlow: Record<Step, Step | null> = {
       model_info: "pf_financials",
@@ -116,22 +125,17 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
       pf_reports: null,
       combined_reports: null,
     };
-
     return stepFlow[currentStep] || null;
   };
 
   const handlePrevious = () => {
     const prevStep = getPreviousStep();
-    if (prevStep) {
-      goTo(prevStep);
-    }
+    if (prevStep) goTo(prevStep);
   };
 
   const handleSkip = () => {
     const nextStep = getNextStep();
-    if (nextStep && nextStep !== currentStep) {
-      goTo(nextStep);
-    }
+    if (nextStep && nextStep !== currentStep) goTo(nextStep);
   };
 
   const handleClose = () => {
@@ -139,6 +143,9 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
     onClose();
     setTimeout(() => resetAll(), 200);
   };
+
+  const showPrevious = getPreviousStep() !== null;
+  const showSkip = getNextStep() !== null;
 
   const handlers = {
     modelInfo: (facilityType?: string, newCaseId?: string) => {
@@ -186,20 +193,7 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
     submit: handleClose,
   };
 
-  // Determine if Previous button should be shown
-  const showPrevious = getPreviousStep() !== null;
-
-  // Determine if Skip button should be shown (not on last steps)
-  const showSkip = getNextStep() !== null;
-
-  // Pass navigation handlers to child components
   const renderContent = () => {
-    const commonProps = {
-      onClose: handleClose,
-      onPrevious: showPrevious ? handlePrevious : undefined,
-      onSkip: showSkip ? handleSkip : undefined,
-    };
-
     switch (currentStep) {
       case "model_info":
         return (
@@ -209,7 +203,6 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
             onSkip={showSkip ? handleSkip : undefined}
           />
         );
-
       case "pf_financials":
         return (
           <PFFinancialsSheet
@@ -219,7 +212,6 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
             onPrevious={showPrevious ? handlePrevious : undefined}
           />
         );
-
       case "pf_non_financials":
         return (
           <PFNonFinancialsTab
@@ -229,7 +221,6 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
             onPrevious={showPrevious ? handlePrevious : undefined}
           />
         );
-
       case "pf_reports":
         return (
           <PFReportsSheet
@@ -239,7 +230,6 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
             onPrevious={showPrevious ? handlePrevious : undefined}
           />
         );
-
       case "cf_financials":
         return (
           <CFFinancialsSheet
@@ -249,7 +239,6 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
             onPrevious={showPrevious ? handlePrevious : undefined}
           />
         );
-
       case "cf_non_financials":
         return (
           <CFNonFinancialsTab
@@ -259,7 +248,6 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
             onPrevious={showPrevious ? handlePrevious : undefined}
           />
         );
-
       case "credit_history":
         return (
           <CreditHistorySheet
@@ -269,7 +257,6 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
             onPrevious={showPrevious ? handlePrevious : undefined}
           />
         );
-
       case "combined_reports":
         return (
           <CombinedReportsSheet
@@ -279,7 +266,6 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
             onPrevious={showPrevious ? handlePrevious : undefined}
           />
         );
-
       default:
         return null;
     }

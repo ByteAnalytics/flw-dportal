@@ -6,6 +6,7 @@ import { useCaseDetails, useCFQuestions } from "@/hooks/use-risk-overview";
 import { DynamicSection, DynamicField } from "@/hooks/use-non-financials-form";
 import { PFNonFinancialsData } from "./PFNonFinancialsTab";
 import NonFinancialsForm from "./NonFinancialsForm";
+import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
@@ -44,7 +45,8 @@ export default function CFNonFinancialsTab({
   const caseId = searchParams.get("caseId");
   const [initialValues, setInitialValues] = useState<PFNonFinancialsData>({});
 
-  const { data: caseData, refetch } = useCaseDetails(caseId || undefined);
+  const { caseDetails, isLoadingCaseDetails } =
+      useRiskOverviewStore();
   const { data: questionsData, isLoading: isLoadingQuestions } = useCFQuestions(
     caseId || undefined,
   );
@@ -55,20 +57,18 @@ export default function CFNonFinancialsTab({
   );
 
   useEffect(() => {
-    if (caseId) refetch();
-  }, [caseId, refetch]);
-
-  useEffect(() => {
     if (
-      !caseData?.data?.cf_non_financials ||
+      !caseDetails?.cf_non_financials ||
       sections.length === 0 ||
       !questionsData?.data
     )
       return;
 
-    const savedData = caseData.data.cf_non_financials?.[
+    const savedData = caseDetails?.cf_non_financials?.[
       "Corporate Non-financial"
     ] as Record<string, Record<string, string>>;
+
+    console.log("Saved CF Non-Financials Data:", savedData);
     const questionsRaw = questionsData.data as Record<
       string,
       Record<string, string[]>
@@ -87,7 +87,7 @@ export default function CFNonFinancialsTab({
     });
 
     setInitialValues(populated);
-  }, [caseData, sections, questionsData]);
+  }, [caseDetails, sections, questionsData]);
 
   return (
     <NonFinancialsForm

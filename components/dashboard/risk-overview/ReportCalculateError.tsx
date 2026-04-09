@@ -1,4 +1,12 @@
-const ReportCalculateError = ({ onRetry }: { onRetry: () => void }) => (
+import CustomButton from "@/components/ui/custom-button";
+
+const ReportCalculateError = ({
+  onRetry,
+  onPrevious,
+}: {
+  onRetry: () => void;
+  onPrevious?: () => void;
+}) => (
   <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
     <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
       <svg
@@ -23,12 +31,20 @@ const ReportCalculateError = ({ onRetry }: { onRetry: () => void }) => (
         Something went wrong while calculating the case. Please try again.
       </p>
     </div>
-    <button
-      onClick={onRetry}
-      className="text-[13px] font-semibold text-white bg-[#1A5FA8] px-5 py-2 rounded-[8px] hover:opacity-90"
-    >
-      Retry
-    </button>
+    <div className="flex items-center gap-3">
+      <CustomButton
+        type="button"
+        title="Previous"
+        onClick={() => onPrevious?.()}
+        className="w-[100px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[13px] font-semibold"
+      />
+      <button
+        onClick={onRetry}
+        className="text-[13px] font-semibold text-white bg-[#1A5FA8] px-5 py-2 rounded-[8px] hover:opacity-90"
+      >
+        Retry
+      </button>
+    </div>
   </div>
 );
 

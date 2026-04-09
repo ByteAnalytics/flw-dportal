@@ -71,8 +71,8 @@ export function useCaseTable({
     try {
       const isAll =
         selectAll && selectedIds.length === (casesData?.data?.length ?? 0);
-      const queryParams = selectedIds.map((id) => `id=${id}`).join("&");
-      const url = isAll ? "/crr/cases" : `/crr/cases?${queryParams}`;
+      const queryParams = selectedIds.map((id) => `ids=${id}`).join("&");
+      const url = isAll ? "/crr/cases" : `/crr/cases${queryParams?`?${queryParams}`:""}`;
 
       const success = await deleteCase.mutateAsync(url);
       toast.success(
