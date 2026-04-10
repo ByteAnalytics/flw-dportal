@@ -24,11 +24,6 @@ export const CaseSheets = ({
 
   const close = () => setActiveDetailsSheet(null);
 
-  const handleCaseApproved = () => {
-   
-    close();
-  };
-
   const handleEdit = () => {
     close();
     router.push(
@@ -48,7 +43,8 @@ export const CaseSheets = ({
         titleClassName="text-white px-6 py-4"
         SheetContentClassName="p-0 bg-white"
       >
-        {selectedCaseId && (
+        {/* ✅ unmount when not open so it refetches fresh on next open */}
+        {activeDetailsSheet === "details" && selectedCaseId && (
           <CaseDetailsSheet caseId={selectedCaseId} onClose={close} />
         )}
       </SheetWrapper>
@@ -62,7 +58,8 @@ export const CaseSheets = ({
         titleClassName="text-white px-6 py-4"
         SheetContentClassName="p-0 bg-white"
       >
-        {selectedCaseId && (
+        {/* ✅ unmount when not open */}
+        {activeDetailsSheet === "returned" && selectedCaseId && (
           <ReturnedCaseSheet
             caseId={selectedCaseId}
             onClose={close}
@@ -80,14 +77,14 @@ export const CaseSheets = ({
         titleClassName="text-white px-6 py-4"
         SheetContentClassName="p-0 bg-white"
       >
-        {selectedCaseId && (
+        {/* ✅ unmount when not open + pass status from table cache */}
+        {activeDetailsSheet === "validation" && selectedCaseId && (
           <ValidationReviewSheet
             caseId={selectedCaseId}
             onClose={close}
-            onReturnForRevision={() => {
-              close();
-            }}
-            onApproveRating={handleCaseApproved}
+            initialStatus={selectedCaseDetails?.status ?? null}
+            onReturnForRevision={close}
+            onApproveRating={close}
           />
         )}
       </SheetWrapper>
