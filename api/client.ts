@@ -82,9 +82,10 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        const { refreshToken } = useAuthStore.getState();
         const refreshRes = await axios.post(
           `${API_BASE}/auth/refresh`,
-          {},
+          { refresh_token: refreshToken },
           {
             withCredentials: true,
           },
@@ -108,7 +109,7 @@ apiClient.interceptors.response.use(
 
         const { hydrate } = useAuthStore.getState();
 
-        hydrate(user, newAccessToken);
+        hydrate(user, newAccessToken, refreshToken);
 
         processQueue(null, newAccessToken);
         return apiClient(originalRequest);

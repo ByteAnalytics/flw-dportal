@@ -420,7 +420,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
         />
       </div>
 
-      <div className="pt-6 flex flex-wrap items-center gap-3 justify-between mt-auto">
+      <div className="pt-6 mb-4 flex flex-wrap items-center gap-3 justify-between mt-auto">
         {onPrevious && (
           <CustomButton
             type="button"
@@ -430,7 +430,7 @@ const PFFinancialsSheet: React.FC<PFFinancialsSheetProps> = ({
             className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
           />
         )}
-        <div className="ms-auto py-4 border-t border-gray-200 flex justify-end gap-6">
+        <div className="ms-auto flex justify-end gap-6">
           <Button
             onClick={handleSaveAsDraft}
             disabled={isSavingDraft}

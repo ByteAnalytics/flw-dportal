@@ -31,6 +31,8 @@ interface Props {
 const CaseDetailsSheet: React.FC<Props> = ({ onClose, caseId }) => {
   const { data, isLoading } = useCaseDetails(caseId || undefined);
 
+  console.log("CaseDetailsSheet render", data);
+
   if (isLoading) return <LoadingSpinner />;
 
   const details = data?.data;

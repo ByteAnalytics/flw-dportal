@@ -285,19 +285,19 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
                   className="bg-InfraBorder rounded-[10px] h-[44px]"
                   disabled={isLoading}
                 />
-                <CustomInputField
-                  key={`year_of_financials_${caseId || "new"}_${caseDetails?.year_of_financials}`}
-                  control={control}
-                  fieldType={FormFieldType.INPUT}
-                  name="year_of_financials"
-                  label="Year of Financials"
-                  placeholder="e.g. 2023"
-                  className="bg-InfraBorder rounded-[10px] h-[44px]"
-                  disabled={isLoading}
-                />
               </>
             )}
 
+            <CustomInputField
+              key={`year_of_financials_${caseId || "new"}_${caseDetails?.year_of_financials}`}
+              control={control}
+              fieldType={FormFieldType.INPUT}
+              name="year_of_financials"
+              label="Year of Financials"
+              placeholder="e.g. 2023"
+              className="bg-InfraBorder rounded-[10px] h-[44px]"
+              disabled={isLoading}
+            />
             <CustomInputField
               key={`dre_project_${caseId || "new"}_${caseDetails?.dre_project_selection ? JSON.stringify(caseDetails.dre_project_selection) : "empty"}`}
               control={control}

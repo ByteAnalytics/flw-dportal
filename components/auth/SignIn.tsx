@@ -56,9 +56,9 @@ const SignIn: React.FC = () => {
       });
 
       const responseData = response?.data;
-      const { user, access_token } = responseData.data;
+      const { user, access_token, refresh_token } = responseData.data;
       const isLoggedIn = Boolean(access_token && user);
-      hydrate(user, access_token);
+      hydrate(user, access_token, refresh_token);
       setAuthCookies(isLoggedIn);
       toast.success(extractSuccessMessage(response));
       router.push("/dashboard");

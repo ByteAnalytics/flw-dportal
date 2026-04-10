@@ -20,6 +20,7 @@ import {
 } from "@/constants/risk-overview";
 import CustomButton from "@/components/ui/custom-button";
 import { useRiskOverviewStore } from "@/stores/risk-overview-store";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
@@ -53,7 +54,7 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
 
-  const { caseDetails } = useRiskOverviewStore();
+  const { caseDetails, isLoadingCaseDetails } = useRiskOverviewStore();
 
   const [inputMode, setInputMode] = useState<"manual" | "upload">("manual");
 
@@ -82,7 +83,7 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
   );
 
   const populateCFDataFromResponse = (
-    responseData: ParseTemplateResponse["data"]
+    responseData: ParseTemplateResponse["data"],
   ) => {
     const cfData = responseData.cf_financials;
     if (!cfData) {
@@ -138,9 +139,7 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
 
   useEffect(() => {
     if (!caseDetails?.cf_financials) return;
-    populateCFDataFromResponse(
-      { cf_financials: caseDetails.cf_financials }
-    );
+    populateCFDataFromResponse({ cf_financials: caseDetails.cf_financials });
   }, [caseDetails]);
 
   const handleFileSelect = async (
@@ -251,6 +250,8 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
     },
   ];
 
+  if (isLoadingCaseDetails) return <LoadingSpinner />;
+
   return (
     <div className="flex flex-col h-full w-full">
       <input
@@ -287,7 +288,7 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
         }
       />
 
-      <div className="pt-6 flex flex-wrap items-center gap-3 justify-between mt-auto">
+      <div className="pt-6 mb-4 border-t border-gray-200 flex flex-wrap items-center gap-3 justify-between mt-auto">
         {onPrevious && (
           <CustomButton
             type="button"
@@ -297,7 +298,7 @@ const CFFinancialsSheet: React.FC<CFFinancialsSheetProps> = ({
             className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
           />
         )}
-        <div className="ms-auto py-4 border-t border-gray-200 flex justify-end gap-6">
+        <div className="ms-auto  flex justify-end gap-6">
           <button
             onClick={handleSaveAsDraft}
             disabled={isSavingDraft}

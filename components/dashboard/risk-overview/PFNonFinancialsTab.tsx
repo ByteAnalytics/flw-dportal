@@ -14,6 +14,7 @@ import {
 import { useState } from "react";
 import NonFinancialsForm from "./NonFinancialsForm";
 import { useRiskOverviewStore } from "@/stores/risk-overview-store";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
@@ -67,10 +68,6 @@ export default function PFNonFinancialsTab({
     [questionsData],
   );
 
-  // useEffect(() => {
-  //   if (caseId) refetch();
-  // }, [caseId, refetch]);
-
   useEffect(() => {
     if (
       !caseDetails?.pf_non_financials ||
@@ -113,6 +110,8 @@ export default function PFNonFinancialsTab({
 
     setInitialValues(populated);
   }, [caseDetails, sections, questionsData]);
+
+  if (isLoadingCaseDetails) return <LoadingSpinner />;
 
   return (
     <NonFinancialsForm
