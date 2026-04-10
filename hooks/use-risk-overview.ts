@@ -37,7 +37,7 @@ export const useCaseDetails = (caseId?: string) => {
     {
       enabled: !!caseId,
       staleTime: 0,
-      refetchOnMount: true,
+      refetchOnMount: "always",
       refetchOnWindowFocus: false,
     },
   );
@@ -154,8 +154,6 @@ export const useUpdateProgress = (
             data.credit_history_adjustment || "Not applicable",
         };
       } else payload = data;
-
-      console.log(`Updating progress for ${type} with data:`, payload);
 
       const success = await updateCase.mutateAsync(payload);
       toast.success(

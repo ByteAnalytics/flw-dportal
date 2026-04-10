@@ -7,6 +7,7 @@ import { DynamicSection, DynamicField } from "@/hooks/use-non-financials-form";
 import { PFNonFinancialsData } from "./PFNonFinancialsTab";
 import NonFinancialsForm from "./NonFinancialsForm";
 import { useRiskOverviewStore } from "@/stores/risk-overview-store";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
@@ -68,7 +69,6 @@ export default function CFNonFinancialsTab({
       "Corporate Non-financial"
     ] as Record<string, Record<string, string>>;
 
-    console.log("Saved CF Non-Financials Data:", savedData);
     const questionsRaw = questionsData.data as Record<
       string,
       Record<string, string[]>
@@ -89,15 +89,17 @@ export default function CFNonFinancialsTab({
     setInitialValues(populated);
   }, [caseDetails, sections, questionsData]);
 
-  return (
-    <NonFinancialsForm
-      progressType="cf_non_financials"
-      sections={sections}
-      initialValues={initialValues}
-      isLoadingQuestions={isLoadingQuestions}
-      onNext={onNext}
-      onSaveAsDraft={onSaveAsDraft}
-      onPrevious={onPrevious}
-    />
-  );
+  if (isLoadingCaseDetails) return <LoadingSpinner />;
+  
+    return (
+      <NonFinancialsForm
+        progressType="cf_non_financials"
+        sections={sections}
+        initialValues={initialValues}
+        isLoadingQuestions={isLoadingQuestions}
+        onNext={onNext}
+        onSaveAsDraft={onSaveAsDraft}
+        onPrevious={onPrevious}
+      />
+    );
 }

@@ -120,7 +120,7 @@ export default function NonFinancialsForm({
         </p>
       )}
 
-      <div className="pt-6 flex flex-wrap items-center gap-3 justify-between mt-auto">
+      <div className="pt-6 border-t border-gray-200 flex flex-wrap items-center gap-3 justify-between mt-auto">
         {onPrevious && (
           <CustomButton
             type="button"
@@ -131,7 +131,7 @@ export default function NonFinancialsForm({
           />
         )}
 
-        <div className="ms-auto py-4 border-t border-gray-200 flex items-center justify-end gap-3">
+        <div className="ms-auto  flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={handleSaveAsDraft}

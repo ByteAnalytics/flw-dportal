@@ -16,6 +16,8 @@ import {
 import { extractErrorMessage } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { z } from "zod";
+import { useRiskOverviewStore } from "@/stores/risk-overview-store";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const CREDIT_HISTORY_OPTIONS = [
@@ -58,9 +60,7 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
 
-  // Fetch case data
-  const { data: caseData, refetch } = useCaseDetails(caseId || undefined);
-
+  const { caseDetails, isLoadingCaseDetails } = useRiskOverviewStore();
   const form = useForm<CreditHistoryFormData>({
     resolver: zodResolver(CreditHistorySchema),
     defaultValues: {
@@ -74,36 +74,37 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
     formState: { isSubmitting, isValid },
     getValues,
     reset,
+    trigger,
   } = form;
 
   const { saveDraft, isPending: isSavingDraft } = useSaveDraft(
     "credit_history",
-    caseId || '',
+    caseId || "",
   );
   const { updateProgress, isPending: isUpdating } = useUpdateProgress(
     "credit_history",
-    caseId || '',
+    caseId || "",
   );
 
   const isLoading = isSavingDraft || isSubmitting || isUpdating;
 
-  // Fetch case data on mount
-  useEffect(() => {
-    if (caseId) {
-      refetch();
-    }
-  }, [caseId, refetch]);
-
   // Initialize form from fetched case data
   useEffect(() => {
-    if (caseData?.data?.credit_history_adjustment) {
-      const creditHistoryData = caseData.data.credit_history_adjustment;
+    if (!caseDetails?.credit_history_adjustment) return;
 
-      reset({
-        credit_history_adjustment: creditHistoryData || "",
-      });
-    }
-  }, [caseData, reset]);
+    const timeoutId = setTimeout(() => {
+      const creditHistoryData = caseDetails.credit_history_adjustment;
+      reset(
+        {
+          credit_history_adjustment: creditHistoryData,
+        },
+        { keepDefaultValues: false },
+      );
+      trigger();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [caseDetails, reset, trigger]);
 
   const onSubmit = async (data: CreditHistoryFormData) => {
     const success = await updateProgress(data);
@@ -134,6 +135,8 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
     onPrevious?.();
   };
 
+  if (isLoadingCaseDetails) return <LoadingSpinner />;
+
   return (
     <div className="flex flex-col h-fit w-full">
       <Form {...form}>
@@ -158,8 +161,8 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
             />
           </div>
 
-          <div className="pt-6 flex flex-wrap items-center gap-3 justify-between mt-auto">
-            {onPrevious &&  (
+          <div className="pt-6 border-t border-gray-200 flex flex-wrap items-center gap-3 justify-between mt-auto">
+            {onPrevious && (
               <CustomButton
                 type="button"
                 title="Previous"
@@ -168,7 +171,7 @@ const CreditHistorySheet: React.FC<CreditHistorySheetProps> = ({
                 className="w-[117px] h-[40px] flex items-center gap-2 border bg-white hover:bg-gray-600 hover:text-white text-gray-600 text-[16px] font-semibold"
               />
             )}
-            <div className="ms-auto py-4 border-t border-gray-200 flex justify-end gap-6 ">
+            <div className="ms-auto  flex justify-end gap-6 ">
               <button
                 type="button"
                 onClick={handleSaveAsDraft}

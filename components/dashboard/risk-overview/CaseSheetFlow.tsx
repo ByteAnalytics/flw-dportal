@@ -285,7 +285,7 @@ const CaseSheetFlow: React.FC<Props> = ({ open, onClose }) => {
       titleClassName="text-white px-6 py-4"
       SheetContentClassName="p-0"
     >
-      <div className="px-6 h-full">{renderContent()}</div>
+      <div className="md:px-6 px-4 h-full">{renderContent()}</div>
     </SheetWrapper>
   );
 };
