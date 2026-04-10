@@ -3,7 +3,6 @@ import CaseDetailsSheet from "./CaseDetailsSheet";
 import { ReturnedCaseSheet } from "./ReturnedCaseSheet";
 import ValidationReviewSheet from "./ValidationReviewSheet";
 import { ActiveDetailsSheet, CaseItem } from "@/types/risk-overview";
-import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "nextjs-toploader/app";
 
 interface CaseSheetsProps {
@@ -21,18 +20,12 @@ export const CaseSheets = ({
   setActiveDetailsSheet,
   setIsSheetOpen,
 }: CaseSheetsProps) => {
-  const queryClient = useQueryClient();
   const router = useRouter();
 
   const close = () => setActiveDetailsSheet(null);
 
   const handleCaseApproved = () => {
-    // Invalidate the case details to refresh the data
-    if (selectedCaseId) {
-      queryClient.invalidateQueries({
-        queryKey: ["case-details", selectedCaseId],
-      });
-    }
+   
     close();
   };
 
@@ -93,7 +86,6 @@ export const CaseSheets = ({
             onClose={close}
             onReturnForRevision={() => {
               close();
-              setIsSheetOpen(true);
             }}
             onApproveRating={handleCaseApproved}
           />

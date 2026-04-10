@@ -320,10 +320,15 @@ const ValidationReviewSheet: React.FC<Props> = ({
           <Button
             variant="secondary"
             onClick={() => setIsApproveSheetOpen(false)}
+            className="h-[40px] px-6"
           >
             Cancel
           </Button>
-          <Button onClick={confirmApproveRating} disabled={isApproving}>
+          <Button
+            onClick={confirmApproveRating}
+            disabled={isApproving}
+            className="ms-auto h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
+          >
             {isApproving ? "Approving..." : "Confirm Approve"}
           </Button>
         </div>
@@ -334,9 +339,20 @@ const ValidationReviewSheet: React.FC<Props> = ({
         setOpen={setIsReturnSheetOpen}
         title="Return for Revision"
         width="sm:max-w-[540px]"
+        headerClassName="bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] !text-white"
+        titleClassName="text-white px-6 py-4"
+        SheetContentClassName="p-0 bg-white"
       >
         <div className="flex flex-col gap-2 mb-4 items-center justify-center p-4">
-          <CornerDownLeft className="w-10 h-10 mb-4 text-orange-400" />
+          <div className="flex flex-col gap-2 mb-4 items-center justify-center p-4">
+            <CornerDownLeft className="w-10 h-10 mb-4 text-orange-400" />
+          </div>
+          <p className="text-center text-gray-700">
+            Are you sure you want to return the credit risk rating for{" "}
+            <span className="font-semibold">
+              {details.customer_name ?? "this case"}
+            </span>
+          </p>
         </div>
 
         <div className="mb-3 px-4">
@@ -352,10 +368,15 @@ const ValidationReviewSheet: React.FC<Props> = ({
           <Button
             variant="secondary"
             onClick={() => setIsReturnSheetOpen(false)}
+            className="h-[40px] px-6"
           >
             Cancel
           </Button>
-          <Button onClick={confirmReturnForRevision} disabled={isReturning}>
+          <Button
+            onClick={confirmReturnForRevision}
+            disabled={isReturning}
+            className="ms-auto h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
+          >
             {isReturning ? "Returning..." : "Confirm Return"}
           </Button>
         </div>

@@ -38,7 +38,7 @@ export default function RootLayout({
         <Suspense fallback={<div></div>}>
           <QueryProvider>
             <TooltipProvider>
-              <AuthProvider>{children}</AuthProvider>
+              {children}
             </TooltipProvider>
             <Toaster richColors position="top-right" closeButton />
           </QueryProvider>
