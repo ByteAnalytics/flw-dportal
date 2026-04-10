@@ -34,13 +34,7 @@ export function useValidationReview(
 
   const initializationAttempted = useRef(false);
   const isMounted = useRef(true);
-
-  useEffect(() => {
-    if (status && status.toLowerCase() !== "pending_review") {
-      setIsInitialized(true);
-      initializationAttempted.current = true;
-    }
-  }, [status]);
+  const prevCaseId = useRef<string | null | undefined>(null);
 
   useEffect(() => {
     return () => {
@@ -48,33 +42,40 @@ export function useValidationReview(
     };
   }, []);
 
+  // Reset when caseId changes so a new case always re-evaluates
   useEffect(() => {
-    if (
-      !caseId ||
-      initializationAttempted.current ||
-      status?.toLowerCase() !== "pending_review"
-    ) {
+    if (prevCaseId.current !== caseId) {
+      prevCaseId.current = caseId;
+      initializationAttempted.current = false;
+      setIsInitialized(false);
+    }
+  }, [caseId]);
+
+  // Handle initialization based on status
+  useEffect(() => {
+    if (!caseId || !status) return;
+
+    const normalized = status.toLowerCase();
+
+    const alreadyInitialized = normalized !== 'pending_review'
+
+    if (alreadyInitialized) {
+      setIsInitialized(true);
+      initializationAttempted.current = true;
       return;
     }
 
-    const initializeReview = async () => {
+    if (normalized === "pending_review" && !initializationAttempted.current) {
       initializationAttempted.current = true;
-      setIsInitialized(false);
 
-      const success = await startReviewForCase();
-
-      if (!isMounted.current) return;
-
-      if (success) {
-        setIsInitialized(true);
-      } else {
-        setIsInitialized(false);
-        initializationAttempted.current = false;
-      }
-    };
-
-    initializeReview();
-  }, [caseId, status]);
+      (async () => {
+        const success = await startReviewForCase();
+        if (!isMounted.current) return;
+        setIsInitialized(success);
+        if (!success) initializationAttempted.current = false; // allow retry
+      })();
+    }
+  }, [caseId, status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleReturnForRevision = () => {
     if (!isInitialized) {
@@ -149,16 +150,10 @@ export function useValidationReview(
   const retryInitialization = async () => {
     clearError();
     initializationAttempted.current = false;
-
     const success = await startReviewForCase();
-
     if (!isMounted.current) return;
-
-    if (success) {
-      setIsInitialized(true);
-    } else {
-      setIsInitialized(false);
-    }
+    setIsInitialized(success);
+    if (success) initializationAttempted.current = true;
   };
 
   return {

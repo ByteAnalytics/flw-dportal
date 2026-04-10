@@ -19,7 +19,7 @@ export function useInitializeReviewSheet(
   caseId?: string | null,
   onSuccess?: () => void,
 ) {
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
   const { mutateAsync: startReview, isPending: isStartingReview } =
     useStartReview(caseId || "");
 
@@ -31,9 +31,12 @@ export function useInitializeReviewSheet(
     try {
       setInitError(null);
       await startReview({});
-      queryClient.invalidateQueries({
-        queryKey: ["case-details", caseId],
-      });
+
+     await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["case-details", caseId] }),
+        queryClient.invalidateQueries({ queryKey: ["cases"] }), 
+      ]);
+
       onSuccess?.();
       return true;
     } catch (error) {
