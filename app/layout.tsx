@@ -7,7 +7,6 @@ import { Suspense } from "react";
 import QueryProvider from "@/providers/QueryProvider";
 import NextTopLoader from "nextjs-toploader";
 import { EnvironmentHelper } from "@/lib/environment-utils";
-import { AuthProvider } from "@/providers/AuthProvider";
 
 const pt_sans = PT_Sans({
   subsets: ["latin"],

@@ -36,6 +36,7 @@ interface Props {
   onReturnForRevision: () => void;
   onApproveRating: () => void;
   caseId?: string | null;
+  initialStatus?: string | null;
 }
 
 const ValidationReviewSheet: React.FC<Props> = ({
@@ -43,12 +44,10 @@ const ValidationReviewSheet: React.FC<Props> = ({
   onApproveRating,
   caseId,
   onClose,
+  initialStatus,
 }) => {
   const router = useRouter();
   const { setIsSheetOpen } = useRiskOverviewStore();
-  const { data, isLoading: isLoadingCase } = useCaseDetails(
-    caseId || undefined,
-  );
 
   const {
     isStartingReview,
@@ -73,7 +72,11 @@ const ValidationReviewSheet: React.FC<Props> = ({
     caseId,
     onReturnForRevision,
     onApproveRating,
-    data?.data?.status,
+    initialStatus,
+  );
+
+  const { data, isLoading: isLoadingCase } = useCaseDetails(
+    isInitialized ? caseId || undefined : undefined,
   );
 
   if (isLoadingCase || (isStartingReview && !isInitialized)) {
