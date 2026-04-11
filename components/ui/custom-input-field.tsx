@@ -249,6 +249,46 @@ const RenderField = <T extends FieldValues>({
           </Select>
         </InputWrapper>
       );
+    case FormFieldType.MULTI_SELECT:
+      return (
+        <InputWrapper
+          className={cn(className, "w-full p-2 h-fit overflow-none")}
+        >
+          <div className="w-full flex flex-wrap gap-1 py-1 overflow-x-auto">
+            {options?.map((option) => {
+              const value = typeof option === "string" ? option : option.value;
+              const label = typeof option === "string" ? option : option.label;
+              const selected: string[] = Array.isArray(field.value)
+                ? field.value
+                : [];
+              const isSelected = selected.includes(value);
+
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => {
+                    const next = isSelected
+                      ? selected.filter((v) => v !== value)
+                      : [...selected, value];
+                    field.onChange(next);
+                  }}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-[11px] font-medium border transition-colors whitespace-nowrap",
+                    isSelected
+                      ? "bg-[#1E6FB8] text-white border-[#1E6FB8]"
+                      : "bg-white text-[#404040] border-[#e5e5e5] hover:border-[#1E6FB8]",
+                    disabled && "opacity-50 cursor-not-allowed",
+                  )}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </InputWrapper>
+      );
 
     default:
       return null;

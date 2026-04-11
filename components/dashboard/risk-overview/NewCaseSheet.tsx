@@ -75,10 +75,8 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
   const queryClient = useQueryClient();
   const caseId = searchParams.get("caseId");
 
-  // ─── Read from store (fetched once in CaseSheetFlow) ──────────────────────
   const { caseDetails, isLoadingCaseDetails } = useRiskOverviewStore();
-  // ───────────────────────────────────────────────────────────────────────────
-
+ 
   const form = useForm<NewCaseFormData>({
     resolver: zodResolver(NewCaseSchema),
     defaultValues: {
@@ -90,7 +88,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
       market_events: "",
       market_event_description: "",
       year_of_financials: "",
-      dre_project: "",
+      dre_project: [],
     },
   });
 
@@ -111,10 +109,10 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
             ? String(caseDetails.year_of_financials)
             : "",
           dre_project: caseDetails.dre_project_selection
-            ? (Object.keys(caseDetails.dre_project_selection).find(
+            ? Object.keys(caseDetails.dre_project_selection).filter(
                 (key) => caseDetails.dre_project_selection![key] === "Yes",
-              ) ?? "")
-            : "",
+              )
+            : [],
         },
         { keepDefaultValues: false },
       );
@@ -154,16 +152,17 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
       const payload: any = {
         customer_name: data.customer_name,
         facility_type: data.facility_type,
-        project_type: data.select_project_type === "yes" ? "DRE" : "Others",
+        project_type: data.select_project_type,
         consistent_revenue_growth: data.revenue_growth === "yes" ? "Yes" : "No",
         market_event_losses: data.counterparty_losses === "yes" ? "Yes" : "No",
         ...(data.counterparty_losses === "yes" && {
           applicable_market_events: data.market_events,
           market_event_description: data.market_event_description ?? "",
         }),
-        dre_project_selection: data.dre_project
-          ? { [data.dre_project]: "Yes" }
-          : {},
+       dre_project_selection: (data.dre_project as string[]).reduce(
+          (acc, key) => ({ ...acc, [key]: "Yes" }),
+          {} as Record<string, string>,
+        ),
         manual_weights: "No",
         year_of_financials: Number(data.year_of_financials ?? 0),
       };
@@ -172,7 +171,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
         const success = await updateProgress(payload);
         if (success) {
           await queryClient.invalidateQueries({
-            queryKey: ["crr-cases"],
+            queryKey: ["cases"],
             exact: false,
             refetchType: "all",
           });
@@ -182,7 +181,7 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
         const response = await createNewCase.mutateAsync(payload);
         toast.success(extractSuccessMessage(response));
         await queryClient.invalidateQueries({
-          queryKey: ["crr-cases"],
+          queryKey: ["cases"],
           exact: false,
           refetchType: "all",
         });
@@ -298,10 +297,12 @@ const NewCaseSheet: React.FC<NewCaseSheetProps> = ({
               className="bg-InfraBorder rounded-[10px] h-[44px]"
               disabled={isLoading}
             />
+
+            {/* ✅ MULTI_SELECT allows selecting more than one DRE project */}
             <CustomInputField
               key={`dre_project_${caseId || "new"}_${caseDetails?.dre_project_selection ? JSON.stringify(caseDetails.dre_project_selection) : "empty"}`}
               control={control}
-              fieldType={FormFieldType.SELECT}
+              fieldType={FormFieldType.MULTI_SELECT}
               name="dre_project"
               label="Select DRE project"
               placeholder="select DRE project type"

@@ -220,7 +220,7 @@ const CaseDetailsSheet: React.FC<Props> = ({ onClose, caseId }) => {
       )}
 
       {/* ACTION */}
-      <div className="flex justify-end pt-4">
+      <div className="flex justify-end pt-4 mt-auto">
         <button
           onClick={onClose}
           className="bg-white border text-[13px] font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"

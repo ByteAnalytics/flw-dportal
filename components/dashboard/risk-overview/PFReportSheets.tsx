@@ -140,7 +140,7 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
         </div>
       </div>
 
-      <div className="pt-6 border-t border-gray-200 flex flex-wrap items-center gap-3 justify-between mt-auto">
+      <div className="pt-6 mb-4 border-t border-gray-200 flex flex-wrap items-center gap-3 justify-between mt-auto">
         {onPrevious && (
           <CustomButton
             type="button"
@@ -162,6 +162,7 @@ const PFReportsSheet: React.FC<PFReportsSheetProps> = ({
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting || isApproving}
+            isLoading={isSubmitting || isApproving}
             className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] hover:opacity-90 text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
             title={
               isSubmitting || isApproving
