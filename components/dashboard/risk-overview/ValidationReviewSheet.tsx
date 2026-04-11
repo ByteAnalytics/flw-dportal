@@ -27,6 +27,7 @@ import { useRiskOverviewStore } from "@/stores/risk-overview-store";
 import SuccessIcon from "@/public/assets/icon/success-icon.svg";
 import { CustomImage } from "@/components/ui/custom-image";
 import { useValidationReview } from "@/hooks/use-validation-review";
+import CustomButton from "@/components/ui/custom-button";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
@@ -327,13 +328,13 @@ const ValidationReviewSheet: React.FC<Props> = ({
           >
             Cancel
           </Button>
-          <Button
+          <CustomButton
             onClick={confirmApproveRating}
             disabled={isApproving}
+            title={isApproving ? "Approving..." : "Confirm Approve"}
+            isLoading={isApproving}
             className="ms-auto h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
-          >
-            {isApproving ? "Approving..." : "Confirm Approve"}
-          </Button>
+          ></CustomButton>
         </div>
       </SheetWrapper>
 
@@ -375,13 +376,13 @@ const ValidationReviewSheet: React.FC<Props> = ({
           >
             Cancel
           </Button>
-          <Button
+          <CustomButton
             onClick={confirmReturnForRevision}
             disabled={isReturning}
+            isLoading={isReturning}
+            title={isReturning ? "Returning..." : "Confirm Return"}
             className="ms-auto h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
-          >
-            {isReturning ? "Returning..." : "Confirm Return"}
-          </Button>
+          ></CustomButton>
         </div>
       </SheetWrapper>
     </div>

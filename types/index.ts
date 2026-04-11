@@ -12,6 +12,7 @@ export enum FormFieldType {
   SELECT = "select",
   SKELETON = "skeleton",
   EMAIL = "email",
+  MULTI_SELECT = "multiSelect",
 }
 
 export enum UserRole {

@@ -3,6 +3,7 @@ import ValidatorPicker from "./ValidatorPicker";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useGetValidators, Validator } from "@/hooks/use-risk-overview";
+import CustomButton from "@/components/ui/custom-button";
 
 interface ValidatorsSheetProps {
   isValidatorSheetOpen: boolean;
@@ -97,13 +98,13 @@ const ValidatorsSheet: React.FC<ValidatorsSheetProps> = ({
         >
           Cancel
         </Button>
-        <Button
+        <CustomButton
           onClick={confirmSubmitWithValidator}
           disabled={!selectedValidator || isSubmitting}
+          isLoading={isSubmitting}
+          title={isSubmitting ? "Submitting…" : "Submit for Validation"}
           className="h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? "Submitting…" : "Submit for Validation"}
-        </Button>
+        />
       </div>
     </SheetWrapper>
   );

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import CustomButton from "@/components/ui/custom-button";
 import { CustomImage } from "@/components/ui/custom-image";
 import { SheetWrapper } from "@/components/ui/custom-sheet";
 import SuccessIcon from "@/public/assets/icon/success-icon.svg";
@@ -65,13 +66,13 @@ const ApproveConfirmationSheet: React.FC<ApproveConfirmationSheetProps> = ({
         >
           Cancel
         </Button>
-        <Button
+        <CustomButton
           onClick={confirmApproveRating}
           disabled={isApproving}
+          isLoading={isApproving}
+          title={isApproving ? "Approving..." : "Confirm Approve"}
           className="ms-auto h-[40px] px-6 bg-gradient-to-r from-[#1E6FB8] to-[#49A85ACC] text-white text-[14px] font-semibold rounded-[8px]"
-        >
-          {isApproving ? "Approving..." : "Confirm Approve"}
-        </Button>
+        />
       </div>
     </SheetWrapper>
   );
