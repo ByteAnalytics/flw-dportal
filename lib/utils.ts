@@ -4,8 +4,6 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import axios from "axios";
 import { PaginatedResponse } from "@/types";
-import { ExecutableModels, ExecutionModel } from "@/types/model-execution";
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -81,112 +79,6 @@ export function formatDateOnly(dateString?: string | null): string {
     timeZone: "Africa/Lagos",
   });
 }
-
-export function transformExecutionModelsResponse(
-  response: any,
-): PaginatedResponse<ExecutionModel> {
-  if (!response) {
-    return {
-      page: 1,
-      page_size: 10,
-      total: 0,
-      pages: 1,
-      data: [],
-    };
-  }
-
-  return {
-    page: response.current_page,
-    page_size: response.page_size,
-    total: response.total_logs,
-    pages: response.total_pages,
-    data: response.model_data,
-  };
-}
-
-export function getModelLabel(model: string): string {
-  switch (model) {
-    case ExecutableModels.PD:
-      return "PD Model";
-    case ExecutableModels.LGD:
-      return "LGD Model";
-    case ExecutableModels.EAD:
-      return "EAD Model";
-    // case ExecutableModels.CCF:
-    //   return "CCF Model";
-    case ExecutableModels.FLI:
-      return "FLI Scalar";
-    case ExecutableModels.ECL:
-      return "ECL Model";
-    default:
-      return model;
-  }
-}
-
-export const getModelTypeFromTab = (tab: string): string | null => {
-  const tabToModelMap: { [key: string]: string } = {
-    "ead-model": "guarantees_ead",
-    "lgd-model": "guarantees_lgd",
-    "ecl-model": "guarantees_ecl",
-    "ccf-model": "guarantees_ccf",
-    "pd-model": "guarantees_pd",
-    "fli-model": "guarantees_fli",
-  };
-  return tabToModelMap[tab] || null;
-};
-
-export const getFileNameFromTab = (tabValue: string): string => {
-  const tabToFileMap: { [key: string]: string } = {
-    "yearly-combo-metrics": "pd_yearly_combo_metrics",
-    "monthly-combo-metrics": "pd_monthly_combo_metrics",
-    "monthly-marginal": "Monthly_Marginal_PD",
-    "monthly-cumulative": "Monthly_Cummulative_PD",
-    "scaled-monthly-conditional": "Scaled_Monthly_Conditional_PD",
-    "monthly-pd": "Monthly_Conditional_PD",
-    "annual-pd": "Annual_Conditional_PD",
-  };
-  return tabToFileMap[tabValue] || "pd_yearly_combo_metrics";
-};
-
-export const formatColumnHeader = (key: string): string => {
-  const formatMap: { [key: string]: string } = {
-    rating_index: "Index",
-    Rating: "Rating",
-    PD_Metric: "PD Metric",
-    Annual_Conditional_PD: "Annual Conditional PD",
-    Marginal_PD: "Marginal PD",
-    Cumulative_PD: "Cumulative PD",
-    Conditional_PD: "Conditional PD",
-    "Year 1": "Year 1",
-    "Year 2": "Year 2",
-    "Year 3": "Year 3",
-    "Year 4": "Year 4",
-    "Year 5": "Year 5",
-    "Year 6": "Year 6",
-    "Year 7": "Year 7",
-    "Year 8": "Year 8",
-    "Year 9": "Year 9",
-    "Year 10": "Year 10",
-    "Month 1": "Month 1",
-    "Month 2": "Month 2",
-    "Month 3": "Month 3",
-    "Month 4": "Month 4",
-    "Month 5": "Month 5",
-    "Month 6": "Month 6",
-    "Month 7": "Month 7",
-    "Month 8": "Month 8",
-    "Month 9": "Month 9",
-    "Month 10": "Month 10",
-    "Month 11": "Month 11",
-    "Month 12": "Month 12",
-  };
-
-  if (formatMap[key]) {
-    return formatMap[key];
-  }
-
-  return key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
-};
 
 export function isValidDate(date: Date | undefined) {
   if (!date) {

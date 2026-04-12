@@ -8,8 +8,6 @@ import { Menu, X } from "lucide-react";
 import { NavItem } from "@/types/navigation";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
-import { CCR_BASE } from "@/constants/model-management";
-import { ccrNavItems } from "@/constants/navigation";
 
 interface MobileNavProps {
   items: readonly NavItem[];
@@ -32,8 +30,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ items }) => {
     () => false,
   );
 
-  const isCCRSection = pathname.startsWith(CCR_BASE);
-  const activeItems = isCCRSection ? ccrNavItems : items;
+  const activeItems = items;
 
   const filteredItems = React.useMemo(() => {
     if (!userRole) return [];
@@ -120,7 +117,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ items }) => {
                           className={cn(
                             "group flex items-center rounded-full shadow-md transition-colors text-InfraMuted cursor-pointer",
                             "hover:bg-neutral-800",
-                            active && "bg-InfraGreen text-white",
+                            active && "bg-[#E8A020] text-white",
                           )}
                         >
                           <div className="flex h-14 w-14 shrink-0 items-center justify-center">

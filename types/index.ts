@@ -92,6 +92,18 @@ export interface PaginationParams {
   [key: string]: any;
 }
 
+export interface Process {
+  id: number;
+  title: string;
+  category: string;
+  categoryType: "chargeback" | "refunds" | "other";
+  frequency: string;
+  description: string;
+  icons: Array<"shield" | "card" | "globe">;
+  inputs?: string;
+  status?: "active" | "draft" | "archived";
+}
+ 
 export type ApiPaginatedResponse<T> = ApiResponse<PaginatedResponse<T>>;
 
 
