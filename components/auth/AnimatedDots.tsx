@@ -2,13 +2,9 @@
 
 import { motion } from "framer-motion";
 
-import "swiper/css";
-import "swiper/css/pagination";
-import "swiper/css/navigation";
-
 const AnimatedDots = ({ position }: { position: "top" | "bottom" }) => {
   const dotsPattern = Array.from({ length: 8 }, (_, row) =>
-    Array.from({ length: 16 }, (_, col) => ({ row, col }))
+    Array.from({ length: 16 }, (_, col) => ({ row, col })),
   ).flat();
 
   return (

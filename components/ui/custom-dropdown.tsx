@@ -40,10 +40,12 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 }) => {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild disabled={disabled}>
+      <DropdownMenuTrigger asChild disabled={disabled} className="cursor-pointer">
         {trigger}
       </DropdownMenuTrigger>
-      <DropdownMenuContent className={cn("w-[145px]", className)}>
+      <DropdownMenuContent
+        className={cn("max-w-[200px] sm:max-w-[200px] w-full", className)}
+      >
         {label && <DropdownMenuLabel>{label}</DropdownMenuLabel>}
         {items.map((item, i) => {
           if (item.separator) return <DropdownMenuSeparator key={i} />;

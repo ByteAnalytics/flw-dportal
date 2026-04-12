@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import {
   Sheet,
   SheetContent,
@@ -25,58 +25,70 @@ interface SheetWrapperProps {
   setOpen?: (open: boolean) => void;
   bg?: string;
   isAlert?: boolean;
+  headerClassName?: string;
+  titleClassName?: string;
+  SheetContentClassName?: string;
+  descriptionClassName?: string;
 }
 
-export const SheetWrapper = memo<SheetWrapperProps>(
-  ({
-    children,
-    width,
-    title,
-    description,
-    trigger,
-    side = "right",
-    open,
-    setOpen,
-    bg,
-    isAlert = false,
-  }) => {
-    return (
-      <Sheet open={open} onOpenChange={setOpen}>
-        {/* Trigger */}
-        {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
+export const SheetWrapper: React.FC<SheetWrapperProps> = ({
+  children,
+  width,
+  title,
+  description,
+  trigger,
+  side = "right",
+  open,
+  setOpen,
+  bg,
+  isAlert = false,
+  headerClassName,
+  titleClassName,
+  SheetContentClassName,
+  descriptionClassName,
+}) => {
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
 
-        {/* Content */}
-        <SheetContent
-          side={side}
-          className={cn(
-            "p-6  overflow-y-auto max-h-[100vh] custom-scroll sm:max-w-[400px] w-full",
-            width && width,
-            bg
-          )}
+      <SheetContent
+        side={side}
+        className={cn(
+          "p-6 overflow-y-auto max-h-[100vh] custom-scroll sm:max-w-[400px] w-full",
+          width,
+          bg,
+          SheetContentClassName,
+        )}
+      >
+        <SheetHeader
+          className={cn("mb-4 p-0", title && "block", headerClassName)}
         >
-          <SheetHeader className={cn("mb-4 p-0", title && "block")}>
-            {title && (
-              <SheetTitle
-                className={cn("text-start mb-2", isAlert && "text-center")}
-              >
-                {title}
-              </SheetTitle>
-            )}
-            {description && <SheetDescription>{description}</SheetDescription>}
-          </SheetHeader>
+          {title && (
+            <SheetTitle
+              className={cn(
+                "text-start mb-2",
+                isAlert && "text-center",
+                titleClassName,
+              )}
+            >
+              {title}
+            </SheetTitle>
+          )}
+          {description && (
+            <SheetDescription className={cn(descriptionClassName)}>
+              {description}
+            </SheetDescription>
+          )}
+        </SheetHeader>
 
-          {children}
+        {children}
 
-          {/* Optional footer (hidden by default) */}
-          <SheetFooter className="sm:justify-start hidden">
-            <SheetClose asChild>
-              <Button variant="secondary">Close</Button>
-            </SheetClose>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-    );
-  }
-);
-
-SheetWrapper.displayName = "SheetWrapper";
+        <SheetFooter className="sm:justify-start hidden">
+          <SheetClose asChild>
+            <Button variant="secondary">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  );
+};

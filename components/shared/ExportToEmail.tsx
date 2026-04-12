@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { CustomModal } from "@/components/ui/custom-modal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,10 +15,10 @@ import { useGet, usePost } from "@/hooks/use-queries";
 import { TeamUsersResponse } from "@/types/team-management";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { LoadingSpinner } from "../ui/loading-spinner";
 import { toast } from "sonner";
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import CustomInputField from "../ui/custom-input-field";
+import { LoadingSpinner } from "../ui/loading-spinner";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -33,9 +33,13 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
   setIsEmailPromptOpen,
   emailExportApiUrl,
 }) => {
+
   const { data, isLoading } = useGet<TeamUsersResponse>(
     ["users", "email-recipients"],
     "/users/email_recipients",
+    // {
+    //   enabled: isAdmin,
+    // },
   );
 
   const sendToEmail = usePost<ApiResponse<null>, any>(emailExportApiUrl, [
@@ -72,7 +76,7 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
     form.setValue("email", updated.join(", "));
   };
 
-  const handleSubmitForm = async (values: ExportToEmailFormData) => {
+  const handleSubmitForm = async (_values: ExportToEmailFormData) => {
     try {
       const response = await sendToEmail.mutateAsync({
         recipients: selectedRecipients,

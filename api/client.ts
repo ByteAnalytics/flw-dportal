@@ -3,11 +3,9 @@
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth-store";
 import { EnvironmentHelper } from "@/lib/environment-utils";
-import { useModelTypeStore } from "@/stores/model-type-store";
-import { ModelTypeEnum } from "@/types/model-type-store";
 
-const isProduction =
-  EnvironmentHelper.isProduction() || EnvironmentHelper.isDemo();
+// const isProduction =
+//   EnvironmentHelper.isProduction() || EnvironmentHelper.isDemo();
 
 const apiBaseUrl = EnvironmentHelper.getApiBaseUrl();
 
@@ -82,9 +80,10 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        const { refreshToken } = useAuthStore.getState();
         const refreshRes = await axios.post(
           `${API_BASE}/auth/refresh`,
-          {},
+          { refresh_token: refreshToken },
           {
             withCredentials: true,
           },
@@ -108,18 +107,15 @@ apiClient.interceptors.response.use(
 
         const { hydrate } = useAuthStore.getState();
 
-        hydrate(user, newAccessToken);
+        hydrate(user, newAccessToken, refreshToken);
 
         processQueue(null, newAccessToken);
         return apiClient(originalRequest);
       } catch (err) {
         // Refresh failed - reject all queued requests
         const { logout } = useAuthStore.getState();
-        const { setSelectedModel } = useModelTypeStore.getState();
-
         processQueue(err, null);
         logout();
-        setSelectedModel(ModelTypeEnum.ECLGuarantee);
         window.location.replace("/auth/sign-in");
 
         return Promise.reject(err);

@@ -1,5 +1,4 @@
-import BrandLogo from "@/public/assets/Brand.svg";
-import ByteLogo from "@/public/assets/byte-logo-white.svg";
+import ByteLogo from "@/public/assets/BYTE ANALYTICS.svg";
 import { StaticImageData } from "next/image";
 
 export type Environment = "development" | "demo" | "production";
@@ -60,11 +59,7 @@ export class EnvironmentHelper {
   }
 
   static getBrandLogo(): StaticImageData {
-    const env = EnvironmentHelper.getCurrent();
-    const isDemo = env === "demo";
-
-    if (isDemo) return ByteLogo;
-    return BrandLogo;
+    return ByteLogo;
   }
 
   static getMetaDescription(baseDescription: string): string {
@@ -80,14 +75,6 @@ export class EnvironmentHelper {
   }
 
   static getMetaTitle(): string {
-    const env = EnvironmentHelper.getCurrent();
-
-    const prefixes: Record<Environment, string> = {
-      development: "InfraCredit",
-      demo: "Byte Analytics ",
-      production: "InfraCredit",
-    };
-
-    return `${prefixes[env] || "InfraCredit"} IFRS9`;
+    return `Ray Process Automation`;
   }
 }
