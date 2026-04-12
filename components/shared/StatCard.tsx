@@ -9,6 +9,8 @@ interface StatCardProps {
   value: string;
   className?: string;
   icon?: React.ReactNode;
+  subValue?: string;
+  subLabel?: string;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -16,6 +18,8 @@ export const StatCard: React.FC<StatCardProps> = ({
   value,
   className,
   icon,
+  subValue,
+  subLabel,
 }) => {
   return (
     <div
@@ -30,6 +34,19 @@ export const StatCard: React.FC<StatCardProps> = ({
       <div className="text-[20px] md:text-[22px] font-bold text-gray-900 break-all">
         {value}
       </div>
+
+      {subValue && (
+        <div className="flex items-center gap-1.5 border-t border-gray-100 pt-2">
+          {subLabel && (
+            <span className="text-[12px] text-gray-400 font-medium">
+              {subLabel}
+            </span>
+          )}
+          <span className="text-[13px] font-semibold text-gray-600">
+            {subValue}
+          </span>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,54 @@
 export type IconProps = React.HTMLAttributes<SVGElement>;
 
+const ProcessAutomationIcon = () => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    className="w-10 h-10 text-[#E8A020]"
+    stroke="currentColor"
+    strokeWidth="1.5"
+  >
+    <path
+      d="M24 44s16-8 16-20V10L24 4 8 10v14c0 12 16 20 16 20z"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M17 24l5 5 9-10" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ApiConnectionIcon = () => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    className="w-10 h-10 text-[#E8A020]"
+    stroke="currentColor"
+    strokeWidth="1.5"
+  >
+    <circle cx="12" cy="24" r="6" />
+    <circle cx="36" cy="12" r="6" />
+    <circle cx="36" cy="36" r="6" />
+    <line x1="18" y1="21" x2="30" y2="15" strokeLinecap="round" />
+    <line x1="18" y1="27" x2="30" y2="33" strokeLinecap="round" />
+  </svg>
+);
+
+const ActivityTracking = () => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    className="w-10 h-10 text-[#E8A020]"
+    stroke="currentColor"
+    strokeWidth="1.5"
+  >
+    <rect x="8" y="6" width="32" height="36" rx="3" />
+    <line x1="16" y1="16" x2="32" y2="16" strokeLinecap="round" />
+    <line x1="16" y1="24" x2="32" y2="24" strokeLinecap="round" />
+    <line x1="16" y1="32" x2="24" y2="32" strokeLinecap="round" />
+  </svg>
+);
+
+
 const DashboardIcon = ({ isActive = false }) => (
   <svg
     width="16"
@@ -99,7 +148,7 @@ const SideBarCollapseTrigger = () => (
     xmlns="http://www.w3.org/2000/svg"
   >
     <g filter="url(#filter0_d_906_3055)">
-      <rect x="2" y="1" width="36" height="36" rx="18" fill="#49A85A" />
+      <rect x="2" y="1" width="36" height="36" rx="18" fill="#E8A020" />
       <rect x="2.5" y="1.5" width="35" height="35" rx="17.5" stroke="#404040" />
       <path
         d="M15 23.1666L19.1667 19L15 14.8333M20.8333 23.1666L25 19L20.8333 14.8333"
@@ -386,4 +435,7 @@ export {
   NPLSvg,
   Check,
   Redirect,
+  ProcessAutomationIcon,
+  ActivityTracking,
+  ApiConnectionIcon
 };

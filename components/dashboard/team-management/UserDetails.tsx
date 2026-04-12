@@ -130,17 +130,17 @@ const UserDetails = () => {
     setIsEditSheetOpen(false);
   };
 
-  const handleToggleEmailRecipient = async (checked: boolean) => {
-    try {
-      const response = await updateUserMutation.mutateAsync({
-        is_email_recipient: checked,
-      });
-      toast.success(extractSuccessMessage(response));
-      refetch();
-    } catch (error: any) {
-      toast.error(extractErrorMessage(error));
-    }
-  };
+  // const handleToggleEmailRecipient = async (checked: boolean) => {
+  //   try {
+  //     const response = await updateUserMutation.mutateAsync({
+  //       is_email_recipient: checked,
+  //     });
+  //     toast.success(extractSuccessMessage(response));
+  //     refetch();
+  //   } catch (error: any) {
+  //     toast.error(extractErrorMessage(error));
+  //   }
+  // };
 
   const isUserActive = userDetails?.status?.toLowerCase() === "active";
   const isActionLoading =

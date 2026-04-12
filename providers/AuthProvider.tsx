@@ -16,13 +16,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const response = await apiClient.get("/users/me");
           const user = response.data?.data;
-          hydrate(user, null);
+          hydrate(user, null, null);
         } catch (error) {
           console.error("Auth hydration failed:", error);
-          hydrate(null, null);
+          hydrate(null, null, null);
         }
       } else {
-        hydrate(null, null);
+        hydrate(null, null, null);
       }
     }
 
