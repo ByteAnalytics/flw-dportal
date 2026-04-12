@@ -1,14 +1,47 @@
-export const CustomerSegChart = {
-  labels: ["Retail", "Corporate"],
-  colors: ["#FDDD48", "#96D4AB"],
-};
+import { Process } from "../types";
 
-export const ECLChart = {
-  labels: ["Stage 1", "Stage 2", "Stage 3"],
-  colors: ["#2B4DED", "#FFD1A7", "#FF9E69"],
-};
+export type DataSourceType = "upload" | "api" | "both" | null;
+export type PanelStep = "datasource" | "configure" | "execute";
+export type ExecPhase = "idle" | "running" | "done";
 
-export const LoanPerformanceChart = {
-  labels: ["NPL", "Performing"],
-  colors: ["#FF9E69", "#2B4DED"],
-};
+export type ProcessCategory =
+  | "all"
+  | "dispute"
+  | "reconciliation"
+  | "reporting";
+export type ProcessStatus = "all" | "active" | "draft" | "archived";
+
+export const API_CONNECTIONS = [
+  {
+    name: "Arbiter 2.0",
+    desc: "Dispute management and chargeback portal",
+    sync: "2026-03-26 09:15",
+    icon: "🛡️",
+  },
+  {
+    name: "CC Portal",
+    desc: "Core commerce portal for transaction data",
+    sync: "2026-03-26 08:45",
+    icon: "💳",
+  },
+  {
+    name: "Slack",
+    desc: "Notifications and alerts for process completion",
+    sync: "2026-03-26 09:30",
+    icon: "🌐",
+  },
+];
+
+export const CATEGORY_OPTIONS = [
+  { label: "All Categories", value: "all" },
+  { label: "Dispute Management", value: "dispute" },
+  { label: "Reconciliation", value: "reconciliation" },
+  { label: "Reporting", value: "reporting" },
+];
+
+export const STATUS_OPTIONS = [
+  { label: "All Status", value: "all" },
+  { label: "Active", value: "active" },
+  { label: "Draft", value: "draft" },
+  { label: "Archived", value: "archived" },
+];

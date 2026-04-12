@@ -3,8 +3,6 @@
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth-store";
 import { EnvironmentHelper } from "@/lib/environment-utils";
-import { useModelTypeStore } from "@/stores/model-type-store";
-import { ModelTypeEnum } from "@/types/model-type-store";
 
 // const isProduction =
 //   EnvironmentHelper.isProduction() || EnvironmentHelper.isDemo();
@@ -116,11 +114,8 @@ apiClient.interceptors.response.use(
       } catch (err) {
         // Refresh failed - reject all queued requests
         const { logout } = useAuthStore.getState();
-        const { setSelectedModel } = useModelTypeStore.getState();
-
         processQueue(err, null);
         logout();
-        setSelectedModel(ModelTypeEnum.ECLGuarantee);
         window.location.replace("/auth/sign-in");
 
         return Promise.reject(err);

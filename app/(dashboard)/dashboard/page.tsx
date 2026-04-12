@@ -1,4 +1,4 @@
-import DashboardOverviewPage from "@/components/dashboard/overview";
+import Dashboard from "@/components/dashboard/overview";
 import { EnvironmentHelper } from "@/lib/environment-utils";
 import { Metadata } from "next";
 
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardPage() {
-  return <DashboardOverviewPage />;
+  return <Dashboard />;
 }

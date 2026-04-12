@@ -203,10 +203,11 @@ const RenderField = <T extends FieldValues>({
         <InputWrapper className={className}>
           <input
             {...field}
+            suppressHydrationWarning
             type="date"
             disabled={disabled}
             placeholder={placeholder}
-            className="w-full h-full text-[12px] bg-transparent text-[#171717] dark:text-white text-sm md:text-base placeholder:text-[#A3A3A3] dark:placeholder:text-neutral-400 placeholder:font-light outline-none"
+            className="w-full h-full text-[12px] bg-transparent text-[#171717] dark:text-white text-[13px] placeholder:text-[#A3A3A3] dark:placeholder:text-neutral-400 placeholder:font-light outline-none"
           />
           {renderIcon()}
         </InputWrapper>

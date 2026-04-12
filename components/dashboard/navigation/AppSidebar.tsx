@@ -21,7 +21,6 @@ import AlertModal from "@/components/shared/AlertModal";
 import { useAuthStore } from "@/stores/auth-store";
 import { usePost } from "@/hooks/use-queries";
 import { ApiResponse } from "@/types";
-import { CCR_BASE } from "@/constants/model-management";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   data: AppSidebarData;
@@ -36,7 +35,6 @@ export function AppSidebar({ data, ...props }: AppSidebarProps) {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
 
   const isCollapsed = state === "collapsed";
-  const isCCRSection = pathname.startsWith(CCR_BASE);
 
   const logout = useAuthStore((s) => s.logout);
   const logoutApi = usePost<ApiResponse<string>, null>("/auth/logout");
@@ -58,10 +56,8 @@ export function AppSidebar({ data, ...props }: AppSidebarProps) {
       {...props}
       style={
         {
-          "--sidebar": isCCRSection ? "#021E07" : "#F3F3F3",
-          "--sidebar-foreground": isCCRSection
-            ? "oklch(0.985 0 0)"
-            : "oklch(0.145 0 0)",
+          "--sidebar": "#F3F3F3",
+          "--sidebar-foreground": "oklch(0.145 0 0)",
         } as React.CSSProperties
       }
     >
@@ -70,7 +66,7 @@ export function AppSidebar({ data, ...props }: AppSidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              className="mt-6 mb-[2rem] h-[71px] data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground !px-1"
+              className="mt-2 mb-[2rem] h-[71px] data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground !px-1"
             >
               {LogoComponent && !isCollapsed && <LogoComponent />}
             </SidebarMenuButton>
@@ -78,7 +74,7 @@ export function AppSidebar({ data, ...props }: AppSidebarProps) {
         </SidebarMenu>
         <div
           onClick={toggleSidebar}
-          className="cursor-pointer mr-[-2rem] w-fit absolute top-[6rem] right-[1rem]"
+          className="cursor-pointer mr-[-2rem] w-fit absolute top-[5rem] right-[1rem]"
         >
           <SideBarCollapseTrigger />
         </div>
