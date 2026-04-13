@@ -22,7 +22,7 @@ const ProfileDetails = () => {
 
   const { data, isLoading } = useGet<TeamUserResponse>(
     ["user-profile-me"],
-    "/users/me",
+    "auth/users/me",
     {
       staleTime: 0,
       gcTime: 0,

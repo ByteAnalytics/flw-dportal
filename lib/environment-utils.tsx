@@ -39,7 +39,7 @@ export class EnvironmentHelper {
 
     if (!apiUrl) {
       console.error("NEXT_PUBLIC_API_BASE_URL is not set!");
-      return "http://66.42.92.219/api";
+      return "https://api.byteanalytics.tech/api/v1";
     }
 
     return apiUrl;
