@@ -7,10 +7,7 @@ export const authService = {
   login: async (
     credentials: LoginCredentials,
   ): Promise<AxiosResponse<ApiResponse<LoginResponse>>> => {
-    return apiClient.post<ApiResponse<LoginResponse>>(
-      "/auth/login",
-      credentials,
-    );
+    return apiClient.post("/auth/login", credentials);
   },
 
   resetPassword: async (

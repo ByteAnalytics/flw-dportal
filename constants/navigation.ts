@@ -1,9 +1,6 @@
 import {
   DashboardIcon,
   ModelExecutionIcon,
-  ModelManagementIcon,
-  ReportingIcon,
-  SettingsIcon,
   TeamManagementIcon,
 } from "@/svg";
 import { UserRole } from "@/types";
@@ -24,7 +21,12 @@ export const navItems = [
     title: "Run Process",
     url: "/dashboard/run-process",
     icon: ModelExecutionIcon,
-    roles: [UserRole.USER, UserRole["SUPER USER"], UserRole["USER ADMIN"]],
+    roles: [
+      UserRole.USER,
+      UserRole["SUPER USER"],
+      UserRole["USER ADMIN"],
+      UserRole["ADMIN"],
+    ],
   },
   {
     title: "Team Management",
