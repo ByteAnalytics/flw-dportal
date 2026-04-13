@@ -76,10 +76,11 @@ const SignIn: React.FC = () => {
         email: values.email,
         password: values.pwd,
       });
+      console.log(response?.data);
 
       const responseData = response?.data;
-      const { user, access_token, refresh_token } = responseData.data;
-      hydrate(user, access_token, refresh_token);
+      const { user, access_token } = responseData?.data;
+      hydrate(user, access_token, null);
       setAuthCookies(Boolean(access_token && user));
       toast.success(extractSuccessMessage(response));
       router.push("/dashboard");
