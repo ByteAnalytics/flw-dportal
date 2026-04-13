@@ -16,7 +16,7 @@ export enum FormFieldType {
 }
 
 export enum UserRole {
-  ADMIN = "ADMIN",
+  ADMIN = "admin",
   USER = "USER",
   "SUPER USER" = "SUPERUSER",
   "USER ADMIN" = "USER_ADMIN",
