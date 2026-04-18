@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AddAsEmailReceipient, UserRole } from "@/types";
+import { AddAsEmailReceipient, UserRole, UserStatus } from "@/types";
 
 export const UserFormSchema = z.object({
   first_name: z
@@ -26,6 +26,8 @@ export const UserFormSchema = z.object({
       message: "Please select a valid role",
     })
     .optional(),
+
+  is_active: z.boolean().optional(),
 
   addAsEmailReceipient: z
     .nativeEnum(AddAsEmailReceipient, {

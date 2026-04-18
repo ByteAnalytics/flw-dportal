@@ -122,8 +122,7 @@ export function NavMain({ items }: NavMainProps) {
         )}
       </SidebarMenu>
 
-      {/* ── My Team ── */}
-      <Divider />
+      {/* <Divider />
       <SectionLabel>My Team</SectionLabel>
       <div className="px-2">
         <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-[10px] hover:bg-InfraBorder/20 transition-colors cursor-pointer">
@@ -134,10 +133,9 @@ export function NavMain({ items }: NavMainProps) {
             {TEAM.name}
           </p>
         </div>
-      </div>
+      </div> */}
 
-      {/* ── Active APIs ── */}
-      <Divider />
+      {/* <Divider />
       <SectionLabel>Active APIs</SectionLabel>
       <div className="flex flex-col gap-1 px-2">
         {ACTIVE_APIS.map((api) => (
@@ -162,7 +160,7 @@ export function NavMain({ items }: NavMainProps) {
             </span>
           </div>
         ))}
-      </div>
+      </div> */}
     </SidebarGroup>
   );
 }

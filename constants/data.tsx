@@ -1,53 +1,5 @@
-import { Process } from "@/types";
 import React from "react";
-import { DataSourceType } from "./overview";
-
-export const PROCESSES: Process[] = [
-  {
-    id: 1,
-    title: "Generating POS Chargeback Evidence on CP",
-    category: "Chargeback",
-    categoryType: "chargeback",
-    frequency: "Daily",
-    description:
-      "Finding transactions singly on CP and generating evidence for successful transactions which takes up to a minute per transaction...",
-    icons: ["shield", "card"],
-    inputs: "RRN, JPEG, PNG, CP",
-  },
-  {
-    id: 2,
-    title: "Transaction Settlement Confirmation",
-    category: "Chargeback",
-    categoryType: "chargeback",
-    frequency: "Daily",
-    description:
-      "Confirming settlement for failed transactions across all rails. Confirming settlement by checking through different daily...",
-    icons: ["shield", "globe"],
-    inputs: "CSVs, Excel",
-  },
-  {
-    id: 3,
-    title: "Retrieving Evidence & Declining/Accepting Disputes on Arbiter 2.0",
-    category: "Chargeback",
-    categoryType: "chargeback",
-    frequency: "Daily",
-    description:
-      "The officer validates the claims singly on the dispute portal which takes 40 hours/week based on volume received...",
-    icons: ["shield", "card", "globe"],
-    inputs: "JPEG, PDF, PNG, CP",
-  },
-  {
-    id: 4,
-    title: "RRN Retrievals & IPG Refunds Processing",
-    category: "Refunds",
-    categoryType: "refunds",
-    frequency: "Daily",
-    description:
-      "Opening reports singly to retrieve details for processing refunds on Arbiter 2.0, this takes one minute per transactions...",
-    icons: ["shield", "globe"],
-    inputs: "—",
-  },
-];
+import { DataSourceType } from "@/types/processes";
 
 export const ICON_MAP: Record<string, React.ReactNode> = {
   shield: (
@@ -94,8 +46,7 @@ export const CATEGORY_STYLES: Record<string, string> = {
   other: "bg-[#F3F3F3] text-[#5B5F5E]",
 };
 
-export // Source options data
-const SOURCE_OPTIONS: {
+export const SOURCE_OPTIONS: {
   key: DataSourceType;
   icon: string;
   title: string;

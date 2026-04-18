@@ -4,10 +4,9 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { ArrowLeft, Info, Calendar, Flag, FileText, Bell } from "lucide-react";
 import CustomButton from "@/components/ui/custom-button";
-import { Process } from "@/types";
-import { DataSourceType } from "@/constants/overview";
 import { FormFieldType } from "@/types";
 import CustomInputField from "@/components/ui/custom-input-field";
+import { DataSourceType, Process } from "@/types/processes";
 
 interface ConfigureStepProps {
   process: Process;
@@ -161,7 +160,7 @@ export const ConfigureStep: React.FC<ConfigureStepProps> = ({
 
   // Summary items configuration
   const SUMMARY_ITEMS = [
-    { label: "Process", value: process.title },
+    { label: "Process", value: process.process_name },
     { label: "Data Source", value: dsLabel },
     { label: "APIs Connected", value: "Arbiter 2.0, CC Portal, Slack" },
   ];

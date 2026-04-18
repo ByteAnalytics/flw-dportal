@@ -1,5 +1,4 @@
-import { ProcessCategory, ProcessStatus } from "@/constants/overview";
-import { Process } from "@/types";
+import { Process, ProcessCategory, ProcessStatus } from "@/types/processes";
 
 export const filterProcesses = (
   processes: Process[],
@@ -10,7 +9,7 @@ export const filterProcesses = (
   processes.filter((process) => {
     const matchesSearch =
       searchTerm === "" ||
-      process.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      process.process_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       process.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCategory = category === "all" || process.category === category;

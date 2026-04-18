@@ -1,4 +1,4 @@
-import ManageUsersTable from "@/components/dashboard/team-management/Usertable";
+import Teams from "@/components/dashboard/team-management";
 import { EnvironmentHelper } from "@/lib/environment-utils";
 import { Metadata } from "next";
 
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function TeamManagementPage() {
-  return <ManageUsersTable />;
+  return <Teams/>;
 }

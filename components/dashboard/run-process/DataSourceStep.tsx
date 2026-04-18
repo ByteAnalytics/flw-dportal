@@ -3,9 +3,9 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import CustomButton from "@/components/ui/custom-button";
-import { Process } from "@/types";
-import { API_CONNECTIONS, DataSourceType } from "@/constants/overview";
+import { API_CONNECTIONS} from "@/constants/overview";
 import { SOURCE_OPTIONS } from "@/constants/data";
+import { DataSourceType, Process } from "@/types/processes";
 
 interface DataSourceStepProps {
   process: Process;
@@ -151,7 +151,7 @@ interface InfoCardProps {
 
 const InfoCard: React.FC<InfoCardProps> = ({ process }) => (
   <div className="bg-[#EFF4FF] rounded-[10px] p-3.5 text-[12px] text-[#2E5DB0] leading-relaxed">
-    {process.title} · Daily · Input: JPEG, PDF, PNG, Arbiter 2.0, CSVs, Excel,
+    {process.process_name} · Daily · Input: JPEG, PDF, PNG, Arbiter 2.0, CSVs, Excel,
     CC · Output: A drafted Email and Slack notification · 3 API(s) available
   </div>
 );

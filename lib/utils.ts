@@ -145,3 +145,20 @@ export const generateDynamicYears = (): any[] => {
   }
   return years;
 };
+
+export const buildQueryString = <T extends Record<string, any>>(
+  filters?: T,
+): string => {
+  if (!filters) return "";
+
+  const params = new URLSearchParams();
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      params.append(key, String(value));
+    }
+  });
+
+  const paramsString = params.toString();
+  return paramsString ? `?${paramsString}` : "";
+};
