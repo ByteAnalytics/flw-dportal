@@ -1,8 +1,17 @@
 import { cn, formatLabel } from "@/lib/utils";
 import { BadgeIcon } from "@/svg";
 
-const getStatusBadge = (status: string) => {
-  const isActive = status?.toLocaleLowerCase() === "active";
+const getStatusBadge = (status: string | boolean) => {
+  let isActive: boolean;
+  let displayText: string;
+
+  if (typeof status === "boolean") {
+    isActive = status;
+    displayText = isActive ? "Active" : "Inactive";
+  } else {
+    isActive = status?.toLowerCase() === "active";
+    displayText = status;
+  }
 
   return (
     <span
@@ -14,7 +23,7 @@ const getStatusBadge = (status: string) => {
       )}
     >
       <BadgeIcon fill={isActive ? "#39D98A" : "#FF5C5C"} />
-      {status}
+      {displayText}
     </span>
   );
 };

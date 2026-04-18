@@ -43,3 +43,23 @@ export const TableSkeleton = () => (
     </div>
   </div>
 );
+
+export const UserDashboardSkeleton = () => (
+  <div className="min-h-screen">
+    <div className="flex items-center justify-between mb-8">
+      <Skeleton className="h-8 w-32" />
+      <Skeleton className="h-9 w-40 rounded-md" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-4 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
+      <StatCardSkeleton />
+      <StatCardSkeleton />
+      <StatCardSkeleton />
+      <StatCardSkeleton />
+    </div>
+    <TableSkeleton />
+    {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <ChartCardSkeleton />
+      <ChartCardSkeleton />
+    </div> */}
+  </div>
+);

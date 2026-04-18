@@ -29,10 +29,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: (user) => set({ user }),
   setAccessToken: (token) => set({ accessToken: token }),
 
-  hydrate: (user, accessToken = null) =>
+  hydrate: (user, accessToken = null, refreshToken = null) =>
     set({
       user,
       accessToken,
+      refreshToken,
       isLoading: false,
       isHydrated: true,
     }),

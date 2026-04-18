@@ -18,7 +18,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
     trigger={
       <Button
         variant="outline"
-        className="h-[40px] flex items-center gap-2 text-gray-500 font-semibold text-[13px] max-w-[200px] w-full justify-between border-InfraBorder"
+        className="h-[40px] bg-white flex items-center gap-2 text-gray-500 font-semibold text-[13px] max-w-[200px] w-full justify-between border-InfraBorder"
       >
         {label}
         <ChevronDown className="w-4 h-4" />

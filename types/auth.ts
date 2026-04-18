@@ -8,7 +8,7 @@ export interface LoginCredentials {
 
 export interface LoginResponse {
   access_token: string;
-  refresh_token?: string;
+  refresh_token: string;
   user: User;
 }
 
