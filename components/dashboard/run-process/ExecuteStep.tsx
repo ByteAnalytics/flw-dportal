@@ -3,8 +3,7 @@
 import React from "react";
 import { ArrowLeft, Download } from "lucide-react";
 import CustomButton from "@/components/ui/custom-button";
-import { Process } from "@/types";
-import { ExecPhase } from "@/constants/overview";
+import { ExecPhase, Process } from "@/types/processes";
 
 interface ExecuteStepProps {
   process: Process;
@@ -192,13 +191,13 @@ export const ExecuteStep: React.FC<ExecuteStepProps> = ({
   onDashboard,
 }) => {
   if (execPhase === "running") {
-    return <ExecutingState processTitle={process.title} />;
+    return <ExecutingState processTitle={process.process_name} />;
   }
 
   return (
     <div className="flex flex-col gap-4">
       {/* Success Header */}
-      <SuccessHeader processTitle={process.title} />
+      <SuccessHeader processTitle={process.process_name} />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-2.5">

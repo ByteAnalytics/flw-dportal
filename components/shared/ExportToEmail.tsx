@@ -58,15 +58,15 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
     ? emailValue.split(", ").filter(Boolean)
     : [];
 
-  useEffect(() => {
-    if (data?.data && data.data.length > 0) {
-      const defaultRecipients = data.data
-        .filter((user) => user.is_email_recipient)
-        .map((user) => user.email);
+  // useEffect(() => {
+  //   if (data?.data && data.data.length > 0) {
+  //     const defaultRecipients = data.data
+  //       .filter((user) => user.is_email_recipient)
+  //       .map((user) => user.email);
 
-      form.setValue("email", defaultRecipients.join(", "));
-    }
-  }, [data?.data, form]);
+  //     form.setValue("email", defaultRecipients.join(", "));
+  //   }
+  // }, [data?.data, form]);
 
   const toggleRecipient = (email: string) => {
     const updated = selectedRecipients.includes(email)
