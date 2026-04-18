@@ -2,7 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { PanelStep } from "@/constants/overview";
+import { PanelStep } from "@/types/processes";
 
 const TABS: { key: PanelStep; icon: string; label: string }[] = [
   { key: "datasource", icon: "📋", label: "Data Source" },

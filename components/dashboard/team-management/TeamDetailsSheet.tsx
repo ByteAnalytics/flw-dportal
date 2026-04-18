@@ -41,7 +41,7 @@ const TeamDetailsSheet: React.FC<TeamDetailsSheetProps> = ({
 
   const handleOnMemeberUpdate = () => {
     refetch();
-    queryClient.invalidateQueries({ queryKey: ["teams", teamId] });
+    queryClient.invalidateQueries({ queryKey: ["teams"] });
   };
   return (
     <>
