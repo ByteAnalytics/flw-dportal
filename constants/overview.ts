@@ -1,16 +1,3 @@
-import { Process } from "../types";
-
-export type DataSourceType = "upload" | "api" | "both" | null;
-export type PanelStep = "datasource" | "configure" | "execute";
-export type ExecPhase = "idle" | "running" | "done";
-
-export type ProcessCategory =
-  | "all"
-  | "dispute"
-  | "reconciliation"
-  | "reporting";
-export type ProcessStatus = "all" | "active" | "draft" | "archived";
-
 export const API_CONNECTIONS = [
   {
     name: "Arbiter 2.0",

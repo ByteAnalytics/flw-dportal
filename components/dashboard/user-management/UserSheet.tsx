@@ -6,20 +6,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import CustomButton from "@/components/ui/custom-button";
-import {
-  AddAsEmailReceipient,
-  ApiResponse,
-  FormFieldType,
-  User,
-  UserRole,
-} from "@/types";
+import { FormFieldType, User, UserRole, UserStatus } from "@/types";
 import CustomInputField from "@/components/ui/custom-input-field";
 import { Form } from "@/components/ui/form";
-import { usePost, usePut } from "@/hooks/use-queries";
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { UserFormData, UserFormSchema } from "@/schema/profile";
-import { receipientOptions, roleOptions } from "@/constants/team-management";
+import { roleOptions } from "@/constants/team-management";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCreateUser, useUpdateUser } from "@/hooks/use-users";
+import { statusOptions } from "@/constants/team-management-extended";
 
 interface UserSheetProps {
   user?: User | null;
@@ -36,10 +31,8 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
       first_name: user?.first_name ?? "",
       last_name: user?.last_name ?? "",
       email: user?.email ?? "",
-      addAsEmailReceipient: user?.is_email_recipient
-        ? AddAsEmailReceipient.YES
-        : AddAsEmailReceipient.NO,
-      role: (user?.role?.toUpperCase() as UserRole) ?? UserRole.USER,
+      role: (user?.role as UserRole) ?? UserRole.USER,
+      is_active: user?.is_active ?? false,
     },
   });
 
@@ -49,14 +42,8 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
     formState: { isSubmitting },
   } = form;
 
-  const createUser = usePost<ApiResponse<null>, UserFormData>("/auth/", [
-    "users",
-  ]);
-
-  const updateUser = usePut<ApiResponse<null>, UserFormData>(
-    `/users/${user?.id}`,
-    ["users"],
-  );
+  const createUser = useCreateUser();
+  const updateUser = useUpdateUser(user?.id || "");
 
   const refreshUsers = async () => {
     await queryClient.invalidateQueries({
@@ -72,13 +59,14 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,
-        is_email_recipient:
-          data.addAsEmailReceipient === AddAsEmailReceipient.YES,
       };
 
-      // if (canEditRole) {
+      if (user?.id) {
         payload.role = data.role;
-      // }
+        payload.status = data.is_active;
+      } else {
+        payload.role = data.role;
+      }
 
       let response;
       if (user?.id) {
@@ -142,29 +130,30 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
               disabled={isLoading}
             />
 
-            {/* {canEditRole && ( */}
-              <CustomInputField
-                control={control}
-                fieldType={FormFieldType.SELECT}
-                name="role"
-                label="Role"
-                placeholder="Select role"
-                className="bg-InfraBorder rounded-[20px] sm:h-[45px] h-[45px]"
-                options={roleOptions}
-                disabled={isLoading}
-              />
-          
-
             <CustomInputField
               control={control}
               fieldType={FormFieldType.SELECT}
-              name="addAsEmailReceipient"
-              label="Add as Email Recipient"
-              placeholder="Select choice"
+              name="role"
+              label="Role"
+              placeholder="Select role"
               className="bg-InfraBorder rounded-[20px] sm:h-[45px] h-[45px]"
-              options={receipientOptions}
+              options={roleOptions}
               disabled={isLoading}
             />
+
+            {/* Status field - only show for edit mode */}
+            {user?.id && (
+              <CustomInputField
+                control={control}
+                fieldType={FormFieldType.SELECT}
+                name="is_active"
+                label="Status"
+                placeholder="Select status"
+                className="bg-InfraBorder rounded-[20px] sm:h-[45px] h-[45px]"
+                options={statusOptions}
+                disabled={isLoading}
+              />
+            )}
           </div>
 
           <div className="pt-6">
@@ -173,7 +162,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
               title={formConfig.buttonText}
               isLoading={isLoading}
               disabled={isLoading}
-              className="w-full  hover:bg-[#005a2d] text-white rounded-[8px]"
+              className="w-full hover:bg-[#005a2d] text-white rounded-[8px]"
             />
           </div>
         </form>
