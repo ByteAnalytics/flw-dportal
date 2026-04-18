@@ -1,123 +1,97 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { SheetWrapper } from "@/components/ui/custom-sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownItem } from "@/components/ui/custom-dropdown";
-
+import { STATUS_OPTIONS } from "@/constants/overview";
+import { useProcessManagement } from "@/hooks/use-processes";
 import {
-  DataSourceType,
-  PanelStep,
-  ExecPhase,
-  ProcessCategory,
+  Process,
+  ProcessApi,
+  ProcessEffort,
   ProcessStatus,
-  CATEGORY_OPTIONS,
-  STATUS_OPTIONS,
-} from "@/constants/overview";
+} from "@/types/processes";
 import { FilterDropdown } from "./Filterdropdown";
 import { DataSourceStep } from "./DataSourceStep";
 import { ConfigureStep } from "./ConfigureStep";
 import { ExecuteStep } from "./ExecuteStep";
-import { Process } from "@/types";
-import { filterProcesses } from "@/lib/overview";
-import { PROCESSES } from "@/constants/data";
+import { StepTabs } from "@/components/dashboard/run-process/StepTabs";
 import { ProcessCard } from "../overview/ProcessCard";
-import {StepTabs} from "@/components/dashboard/run-process/StepTabs";
+
+const PLACEHOLDER_EXTRAS: Record<
+  string,
+  {
+    category: string;
+    categoryType: string;
+    icons: string[];
+    inputs: string;
+    description: string;
+    team_name: string;
+    team_id: string;
+    is_assigned: boolean;
+    effort: ProcessEffort;
+    status: ProcessStatus;
+    apis: ProcessApi[];
+    point_of_contact?: string;
+  }
+> = {
+  default: {
+    category: "Chargeback",
+    categoryType: "chargeback",
+    icons: ["shield", "card"],
+    inputs: "RRN, JPEG, PNG, CP",
+    description:
+      "Finding transactions singly on CP and generating evidence for successful transactions which takes up to a minute per transaction...",
+    team_name: "Chargeback Team",
+    team_id: "team-1",
+    is_assigned: true,
+    effort: "High",
+    status: "active",
+    apis: [],
+    point_of_contact: "Chargeback Team Lead",
+  },
+};
+
+const getPlaceholderExtras = (processId: string) =>
+  PLACEHOLDER_EXTRAS[processId] ?? PLACEHOLDER_EXTRAS.default;
 
 const RunProcess = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const idParam = searchParams.get("id");
-
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [selectedProcess, setSelectedProcess] = useState<Process | null>(null);
-  const [step, setStep] = useState<PanelStep>("datasource");
-  const [dataSource, setDataSource] = useState<DataSourceType>(null);
-  const [execPhase, setExecPhase] = useState<ExecPhase>("idle");
-
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] =
-    useState<ProcessCategory>("all");
-  const [selectedStatus, setSelectedStatus] = useState<ProcessStatus>("all");
-
-  const filteredProcesses = filterProcesses(
-    PROCESSES,
+  const {
+    isSheetOpen,
+    setIsSheetOpen,
+    selectedProcess,
+    step,
+    setStep,
+    dataSource,
+    setDataSource,
+    execPhase,
     search,
-    selectedCategory,
+    setSearch,
     selectedStatus,
-  );
+    setSelectedStatus,
+    selectedCategory,
+    processes,
+    isLoading,
+    hasActiveFilters,
+    resetFilters,
+    handleRun,
+    handleSheetClose,
+    startExecute,
+    handleRunAnother,
+    handleDashboard,
+  } = useProcessManagement({ withRunFlow: true });
 
-  const resetFilters = () => {
-    setSearch("");
-    setSelectedCategory("all");
-    setSelectedStatus("all");
-  };
-
-  useEffect(() => {
-    if (idParam) {
-      const found = PROCESSES.find((p) => p.id === Number(idParam));
-      if (found) {
-        setSelectedProcess(found);
-        setStep("datasource");
-        setDataSource(null);
-        setExecPhase("idle");
-        setIsSheetOpen(true);
-      }
-    }
-  }, [idParam]);
-
-  const handleRun = (id?: number) => {
-    const found = PROCESSES.find((p) => p.id === id);
-    if (!found) return;
-    setSelectedProcess(found);
-    setStep("datasource");
-    setDataSource(null);
-    setExecPhase("idle");
-    setIsSheetOpen(true);
-    router.push(`/dashboard/run-process?id=${id}`, { scroll: false });
-  };
-
-  const handleSheetClose = useCallback(
-    (open: boolean) => {
-      setIsSheetOpen(open);
-      if (!open) router.push("/dashboard/run-process", { scroll: false });
-    },
-    [router],
-  );
-
-  const startExecute = useCallback(() => {
-    setStep("execute");
-    setExecPhase("running");
-    setTimeout(() => setExecPhase("done"), 3200);
-  }, []);
-
-  const handleRunAnother = () => {
-    setStep("datasource");
-    setDataSource(null);
-    setExecPhase("idle");
-    setIsSheetOpen(false);
-    router.push("/dashboard/run-process", { scroll: false });
-  };
-
-  const handleDashboard = () => {
-    setIsSheetOpen(false);
-    router.push("/dashboard");
-  };
-
-  const categoryDropdownItems: DropdownItem[] = CATEGORY_OPTIONS.map((cat) => ({
-    label: cat.label,
-    onClick: () => setSelectedCategory(cat.value as ProcessCategory),
-  }));
+  // client-side category filter — API doesn't support it yet
+  const filteredProcesses = processes.filter((p) => {
+    if (selectedCategory === "all") return true;
+    return getPlaceholderExtras(p.id).categoryType === selectedCategory;
+  });
 
   const statusDropdownItems: DropdownItem[] = STATUS_OPTIONS.map((stat) => ({
     label: stat.label,
     onClick: () => setSelectedStatus(stat.value as ProcessStatus),
   }));
-
-  const hasActiveFilters =
-    search || selectedCategory !== "all" || selectedStatus !== "all";
 
   return (
     <div className="min-h-screen">
@@ -129,25 +103,17 @@ const RunProcess = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 mb-6 bg-[#F7F7F7] p-2">
-        <div className="flex items-center gap-2 h-[40px] flex-1 border border-InfraBorder bg-background rounded-[8px] px-3">
+      <div className="flex flex-wrap items-center gap-3 mb-6 bg-white p-2">
+        <div className="flex items-center gap-2 h-[40px] flex-1 border border-InfraBorder bg-white rounded-[8px] px-3">
           <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by process name or description"
-            className="w-full font-semibold bg-background text-sm text-gray-700 placeholder:text-gray-400 outline-none"
+            className="w-full font-semibold bg-white text-sm text-gray-700 placeholder:text-gray-400 outline-none"
           />
         </div>
-
-        <FilterDropdown
-          label={
-            CATEGORY_OPTIONS.find((c) => c.value === selectedCategory)?.label ??
-            "All Categories"
-          }
-          items={categoryDropdownItems}
-        />
 
         <FilterDropdown
           label={
@@ -170,11 +136,26 @@ const RunProcess = () => {
 
       {/* Results count */}
       <div className="mb-4 text-sm text-gray-600">
-        Showing {filteredProcesses.length} of {PROCESSES.length} processes
+        {isLoading ? (
+          <span className="text-gray-400">Loading processes...</span>
+        ) : (
+          <span>
+            Showing {filteredProcesses.length} of {processes.length} processes
+          </span>
+        )}
       </div>
 
       {/* Process Grid */}
-      {filteredProcesses.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-[180px] rounded-lg bg-gray-100 animate-pulse"
+            />
+          ))}
+        </div>
+      ) : filteredProcesses.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <p className="text-gray-500">No processes match your filters</p>
           <Button onClick={resetFilters} variant="outline" className="mt-3">
@@ -184,7 +165,11 @@ const RunProcess = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredProcesses.map((p) => (
-            <ProcessCard key={p.id} process={p} onRun={handleRun} />
+            <ProcessCard
+              key={p.id}
+              process={{ ...p, ...getPlaceholderExtras(p.id) }}
+              onRun={() => handleRun(p.id)}
+            />
           ))}
         </div>
       )}
@@ -192,7 +177,7 @@ const RunProcess = () => {
       {/* Sheet */}
       {selectedProcess && (
         <SheetWrapper
-          title={selectedProcess.title}
+          title={selectedProcess.process_name}
           open={isSheetOpen}
           setOpen={handleSheetClose}
           SheetContentClassName="sm:max-w-[500px] mb-4"

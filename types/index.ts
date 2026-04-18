@@ -17,9 +17,7 @@ export enum FormFieldType {
 
 export enum UserRole {
   ADMIN = "admin",
-  USER = "USER",
-  "SUPER USER" = "SUPERUSER",
-  "USER ADMIN" = "USER_ADMIN",
+  USER = "user",
 }
 
 export enum AddAsEmailReceipient {
@@ -40,16 +38,16 @@ export enum UserStatus {
 
 export interface User {
   id: string;
-  created_at: string;
-  updated_at: string;
+  // created_at: string;
+  // updated_at: string;
   email: string;
   first_name: string;
   last_name: string;
   role: UserRole;
-  status: UserStatus;
+  is_active: boolean;
   last_login: string;
-  is_temp_password: boolean;
-  is_email_recipient: boolean;
+  // is_temp_password: boolean;
+  // is_email_recipient: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -92,22 +90,25 @@ export interface PaginationParams {
   [key: string]: any;
 }
 
-export interface Process {
-  id: number;
-  title: string;
-  category: string;
-  categoryType: "chargeback" | "refunds" | "other";
-  frequency: string;
-  description: string;
-  icons: Array<"shield" | "card" | "globe">;
-  inputs?: string;
-  status?: "active" | "draft" | "archived";
-}
- 
 export type ApiPaginatedResponse<T> = ApiResponse<PaginatedResponse<T>>;
 
-
-
-
-
-
+// /components
+//   /dashboard
+//     DashboardPage.tsx
+//     StatsCards.tsx
+//     RecentActivityTable.tsx
+//     TeamsSidebar.tsx
+//   /team-management
+//     TeamManagementPage.tsx
+//     TeamCard.tsx
+//     TeamSheet.tsx (Add/Edit team - as side sheet)
+//   /user-management (already provided, but I'll extend)
+//     UserManagementPage.tsx (new version with search/filter)
+//     OnboardUserSheet.tsx
+//   /process-management
+//     ProcessManagementPage.tsx
+//     ProcessSheet.tsx
+//   /activity-log
+//     ActivityLogPage.tsx
+//   /settings
+// …

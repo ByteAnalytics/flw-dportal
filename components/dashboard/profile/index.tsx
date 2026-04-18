@@ -85,7 +85,7 @@ const ProfileDetails = () => {
                 </h3>
                 <div className="flex items-center gap-2 capitalize">
                   {getRoleBadge(userProfile.role ?? "")}
-                  {getStatusBadge(userProfile.status ?? "")}
+                  {getStatusBadge(userProfile.is_active ?? "")}
                 </div>
               </div>
             </div>

@@ -12,6 +12,7 @@ const AlertModal: React.FC<{
   description?: string;
   leftAction?: ActionButtonProps;
   rightAction?: ActionButtonProps;
+  children?: React.ReactNode;
 }> = ({
   isOpen,
   setIsOpen,
@@ -19,6 +20,7 @@ const AlertModal: React.FC<{
   leftAction,
   rightAction,
   displayIcon = false,
+  children,
 }) => {
   return (
     <CustomModal
@@ -35,7 +37,7 @@ const AlertModal: React.FC<{
             {description}
           </p>
         )}
-
+        {children}
         <div className="flex gap-6 w-full mt-auto">
           {leftAction && (
             <CustomButton
