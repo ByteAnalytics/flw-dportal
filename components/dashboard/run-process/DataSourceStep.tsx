@@ -44,8 +44,8 @@ const SourceOptionCard: React.FC<SourceOptionCardProps> = ({
     className={cn(
       "border rounded-[12px] p-4 text-center transition-all",
       isSelected
-        ? "border-[#E8A020] bg-[#FFFBF0]"
-        : "border-[#E1E3E2] bg-white hover:border-[#E8A020]",
+        ? "border-[#006D37] bg-[#FFFBF0]"
+        : "border-[#E1E3E2] bg-white hover:border-[#006D37]",
     )}
   >
     <div className="text-xl mb-2">{option.icon}</div>
@@ -105,7 +105,7 @@ const ApiConnectionCard: React.FC<ApiConnectionCardProps> = ({
   <div className="border border-[#E1E3E2] rounded-[12px] p-3.5">
     <div className="flex items-start justify-between mb-2">
       <span className="text-lg">{connection.icon}</span>
-      <div className="w-9 h-5 bg-[#E8A020] rounded-full relative flex-shrink-0">
+      <div className="w-9 h-5 bg-[#006D37] rounded-full relative flex-shrink-0">
         <div className="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full" />
       </div>
     </div>
@@ -199,7 +199,7 @@ export const DataSourceStep: React.FC<DataSourceStepProps> = ({
           title="Continue"
           onClick={onContinue}
           textClassName="!text-[0.875rem] font-[600]"
-          className="w-full rounded-[12px] !h-[45px] bg-[#E8A020] hover:bg-[#D4911A]"
+          className="w-full rounded-[12px] !h-[45px] bg-[#006D37] hover:bg-[#D4911A]"
         />
       )}
     </div>

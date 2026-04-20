@@ -75,6 +75,6 @@ export class EnvironmentHelper {
   }
 
   static getMetaTitle(): string {
-    return `Ray Process Automation`;
+    return `flw dportal`;
   }
 }

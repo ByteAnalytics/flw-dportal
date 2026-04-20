@@ -19,7 +19,7 @@ const pt_sans = PT_Sans({
 
 export const metadata: Metadata = {
   title: EnvironmentHelper.getMetaTitle(),
-  description: EnvironmentHelper.getMetaDescription("IFRS9 Model Execution"),
+  description: EnvironmentHelper.getMetaDescription("flw dportal"),
   icons: {
     icon: "/favicon.ico",
   },

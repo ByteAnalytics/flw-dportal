@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Navigation, Autoplay } from "swiper/modules";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Brand } from "../shared/Brand";
+import { Brand, FlwLogo } from "../shared/Brand";
 import { Form } from "../ui/form";
 import CustomInputField from "../ui/custom-input-field";
 import CustomButton from "../ui/custom-button";
@@ -146,7 +146,7 @@ const SignIn: React.FC = () => {
       {/* RIGHT — Form */}
       <div className="ms-auto flex flex-col h-full w-full items-center justify-center overflow-y-auto lg:w-1/2 relative z-10">
         <div className="my-auto w-full max-w-md md:px-6 px-4 py-8">
-          <Brand />
+          <FlwLogo />
 
           <h1 className="my-2 text-[1.7rem] font-semibold text-gray-900">
             Log in
@@ -194,7 +194,7 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="w-full px-6 py-8">
-          <p className="text-gray-500 text-[13px]">© Ray 2026</p>
+          <p className="text-gray-500 text-[13px]">flw data © 2026</p>
         </div>
       </div>
     </div>
