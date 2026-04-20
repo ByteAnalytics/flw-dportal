@@ -120,7 +120,7 @@ const FooterActions: React.FC<FooterActionsProps> = ({
       onClick={onExecute}
       disabled={isSubmitting}
       textClassName="!text-[0.875rem] font-[600]"
-      className="rounded-[8px] !h-[38px] min-w-[110px] bg-[#E8A020] hover:bg-[#D4911A] disabled:opacity-50"
+      className="rounded-[8px] !h-[38px] min-w-[110px] bg-[#006D37] hover:bg-[#D4911A] disabled:opacity-50"
     />
   </div>
 );

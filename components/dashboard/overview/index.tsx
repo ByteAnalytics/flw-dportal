@@ -5,9 +5,11 @@ import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/shared/StatCard";
 import { RecentActivitiesTable, RecentActivity } from "./RecentActivities";
-import { ApiResponse } from "@/types";
+import { ApiResponse, UserRole } from "@/types";
 import { useGet } from "@/hooks/use-queries";
 import { UserDashboardSkeleton } from "@/skeleton";
+import { useAuthStore } from "@/stores/auth-store";
+import AdminDashboard from "./AdminDashboard";
 
 export interface DashboardApiItem {
   stats: {
@@ -23,11 +25,16 @@ export interface DashboardApiItem {
 const Dashboard = () => {
   const router = useRouter();
 
+  const { user } = useAuthStore((s) => s);
+
+  const isAdmin = user?.role === UserRole?.ADMIN;
+
   const { data, isLoading: dashboardLoading } = useGet<
     ApiResponse<DashboardApiItem>
   >(["dashboard"], `/me/dashboard`, {
     staleTime: 0,
     refetchOnMount: "always",
+    enabled: !isAdmin,
   });
 
   const dashboardData = data?.data;
@@ -35,6 +42,8 @@ const Dashboard = () => {
   const handleRun = () => {
     router.push(`/dashboard/run-process`);
   };
+
+  if (isAdmin) return <AdminDashboard />;
 
   if (dashboardLoading) return <UserDashboardSkeleton />;
 

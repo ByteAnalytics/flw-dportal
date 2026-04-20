@@ -51,7 +51,7 @@ export const ProcessCard: React.FC<ProcessCardProps> = ({ process, onRun }) => {
         </div>
         <Button
           onClick={() => onRun(process.id)}
-          className="bg-[#E8A020] hover:bg-[#D4911A] text-white text-[12px] font-semibold h-8 px-4 rounded-[8px] flex items-center gap-1.5"
+          className="bg-[#006D37] hover:bg-[#D4911A] text-white text-[12px] font-semibold h-8 px-4 rounded-[8px] flex items-center gap-1.5"
         >
           <Play className="w-3 h-3 fill-white" />
           Run

@@ -31,13 +31,13 @@ const ExecutingState: React.FC<{ processTitle: string }> = ({
   processTitle,
 }) => (
   <div className="flex flex-col items-center justify-center py-12 text-center gap-5">
-    <div className="w-14 h-14 border-[3px] border-[#F0F2EF] border-t-[#E8A020] rounded-full animate-spin" />
+    <div className="w-14 h-14 border-[3px] border-[#F0F2EF] border-t-[#006D37] rounded-full animate-spin" />
     <div>
       <h3 className="text-[16px] font-bold mb-1.5">Executing Process...</h3>
       <p className="text-[13px] text-[#9A9E9D]">{processTitle}</p>
     </div>
     <div className="w-full h-1.5 bg-[#F0F2EF] rounded-full overflow-hidden">
-      <div className="h-full bg-[#E8A020] rounded-full w-[60%] transition-all duration-1000" />
+      <div className="h-full bg-[#006D37] rounded-full w-[60%] transition-all duration-1000" />
     </div>
     <p className="text-[12px] text-[#006D37] font-medium flex items-center gap-1.5">
       ✓ Processing records...
@@ -100,7 +100,7 @@ const OutputFileItem: React.FC<OutputFile> = ({
     <button
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[11px] font-semibold flex-shrink-0 ${
         primary
-          ? "bg-[#E8A020] text-white"
+          ? "bg-[#006D37] text-white"
           : "bg-white border border-[#E1E3E2] text-[#5B5F5E]"
       }`}
     >
@@ -150,7 +150,7 @@ const FooterActions: React.FC<FooterActionsProps> = ({
       title={runAnotherText}
       onClick={onRunAnother}
       textClassName="!text-[0.875rem] font-[600]"
-      className="flex-1 rounded-[8px] !h-[42px] bg-[#E8A020] hover:bg-[#D4911A]"
+      className="flex-1 rounded-[8px] !h-[42px] bg-[#006D37] hover:bg-[#D4911A]"
     />
     <button
       onClick={onDashboard}

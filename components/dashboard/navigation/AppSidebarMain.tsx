@@ -14,6 +14,8 @@ import * as React from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { EnvironmentHelper } from "@/lib/environment-utils";
 import { Users } from "lucide-react";
+import { useTeams } from "@/hooks/use-teams";
+import { UserRole } from "@/types";
 
 interface NavMainProps {
   items: readonly NavItem[];
@@ -44,6 +46,12 @@ const Divider = () => (
 export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname();
   const { user, isLoading } = useAuthStore((s) => s);
+
+  const isAdmin = user?.role === UserRole?.ADMIN;
+  const { data: teamsData } = useTeams();
+
+  const teams = teamsData?.data ?? [];
+  const firstFiveTeam = teams?.slice(0, 5);
   const userRole = user?.role;
 
   const isByte = EnvironmentHelper.isDemo();
@@ -102,9 +110,9 @@ export function NavMain({ items }: NavMainProps) {
                   className={cn(
                     "transition-colors duration-200 rounded-[12px] !px-4",
                     active
-                      ? "bg-[#E8A020] text-white"
-                      : "text-InfraMuted hover:text-white hover:bg-[#E8A020]/70",
-                    isByte && active && "bg-[#E8A020]",
+                      ? "bg-[#006D37] text-white"
+                      : "text-InfraMuted hover:text-white hover:bg-[#006D37]/70",
+                    isByte && active && "bg-[#006D37]",
                   )}
                   data-active={active}
                 >
@@ -122,18 +130,27 @@ export function NavMain({ items }: NavMainProps) {
         )}
       </SidebarMenu>
 
-      {/* <Divider />
-      <SectionLabel>My Team</SectionLabel>
-      <div className="px-2">
-        <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-[10px] hover:bg-InfraBorder/20 transition-colors cursor-pointer">
-          <div className="w-7 h-7 rounded-full bg-[#006D37]/20 flex items-center justify-center flex-shrink-0">
-            <Users className="w-3.5 h-3.5 text-[#006D37]" />
+      {!isAdmin && (
+        <>
+          <Divider />
+          <SectionLabel>My Team</SectionLabel>
+          <div className="px-2 flex flex-col gap-2">
+            {firstFiveTeam?.map((team) => (
+              <div
+                key={team?.id}
+                className="flex items-center gap-2.5 px-2 py-1.5 rounded-[10px] hover:bg-InfraBorder/20 transition-colors cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-full bg-[#006D37]/20 flex items-center justify-center flex-shrink-0">
+                  <Users className="w-3.5 h-3.5 text-[#006D37]" />
+                </div>
+                <p className="text-[12px] font-[500] text-InfraMuted truncate leading-none">
+                  {team?.name}
+                </p>
+              </div>
+            ))}
           </div>
-          <p className="text-[12px] font-[500] text-InfraMuted truncate leading-none">
-            {TEAM.name}
-          </p>
-        </div>
-      </div> */}
+        </>
+      )}
 
       {/* <Divider />
       <SectionLabel>Active APIs</SectionLabel>
