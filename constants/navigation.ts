@@ -18,7 +18,7 @@ export const navItems = [
     title: "Run Process",
     url: "/dashboard/run-process",
     icon: ModelExecutionIcon,
-    roles: [UserRole.USER, UserRole["ADMIN"]],
+    roles: [UserRole.USER],
   },
   {
     title: "Teams",
