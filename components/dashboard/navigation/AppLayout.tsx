@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Brand } from "@/components/shared/Brand";
+import { Brand, FlwLogo } from "@/components/shared/Brand";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { navItems } from "@/constants/navigation";
 import { AppSidebar } from "./AppSidebar";
@@ -28,9 +28,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const sidebarData: SidebarData = useMemo(
     () => ({
       navMain: navItems,
-      logoIcon: Brand,
+      logoIcon: FlwLogo,
     }),
-    []
+    [],
   );
 
   return (

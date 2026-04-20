@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import {
   Sidebar,
@@ -30,7 +29,6 @@ export function AppSidebar({ data, ...props }: AppSidebarProps) {
   const { toggleSidebar, state } = useSidebar();
   const { navMain, logoIcon: LogoComponent } = data;
   const router = useRouter();
-  const pathname = usePathname();
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
 
@@ -66,7 +64,7 @@ export function AppSidebar({ data, ...props }: AppSidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              className="mt-2 mb-[2rem] h-[71px] data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground !px-1"
+              className="mt-2 mb-5 h-[71px] data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground !px-1"
             >
               {LogoComponent && !isCollapsed && <LogoComponent />}
             </SidebarMenuButton>

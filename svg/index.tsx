@@ -148,7 +148,7 @@ const SideBarCollapseTrigger = () => (
     xmlns="http://www.w3.org/2000/svg"
   >
     <g filter="url(#filter0_d_906_3055)">
-      <rect x="2" y="1" width="36" height="36" rx="18" fill="#E8A020" />
+      <rect x="2" y="1" width="36" height="36" rx="18" fill="#006D37" />
       <rect x="2.5" y="1.5" width="35" height="35" rx="17.5" stroke="#404040" />
       <path
         d="M15 23.1666L19.1667 19L15 14.8333M20.8333 23.1666L25 19L20.8333 14.8333"

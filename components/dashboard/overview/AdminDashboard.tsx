@@ -46,12 +46,16 @@ const AdminDashboard = () => {
         />
       </div>
 
-      <div className="flex gap-6 flex-wrap lg:flex-nowrap">
-        <RecentActivityTable />
-        <TeamsSidebar
-          teams={dashboardData?.teams}
-          isLoading={dashboardLoading}
-        />
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="w-full lg:flex-1 min-w-0">
+          <RecentActivityTable />
+        </div>
+        <div className="w-full lg:w-[320px] shrink-0">
+          <TeamsSidebar
+            teams={dashboardData?.teams}
+            isLoading={dashboardLoading}
+          />
+        </div>
       </div>
     </div>
   );
