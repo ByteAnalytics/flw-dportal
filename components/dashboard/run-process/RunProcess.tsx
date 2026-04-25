@@ -180,7 +180,8 @@ const RunProcess = () => {
           title={selectedProcess.process_name}
           open={isSheetOpen}
           setOpen={handleSheetClose}
-          SheetContentClassName="sm:max-w-[500px] mb-4"
+          SheetContentClassName="sm:max-w-[500px] mb-4 px-0 bg-white"
+          headerClassName="px-4"
         >
           <div className="flex flex-col h-full pb-4">
             <span className="bg-[#E8F0FF] w-fit text-[#2E5DB0] text-[11px] font-semibold px-2.5 py-0.5 rounded-full inline-block mb-4">
@@ -189,7 +190,7 @@ const RunProcess = () => {
 
             <StepTabs step={step} onStepClick={setStep} />
 
-            <div className="flex-1 pt-5 pb-[1.5rem]">
+            <div className="flex-1 pt-5 pb-[1.5rem] px-4">
               {step === "datasource" && (
                 <DataSourceStep
                   process={selectedProcess}
