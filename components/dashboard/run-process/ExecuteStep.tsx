@@ -31,15 +31,15 @@ const ExecutingState: React.FC<{ processTitle: string }> = ({
   processTitle,
 }) => (
   <div className="flex flex-col items-center justify-center py-12 text-center gap-5">
-    <div className="w-14 h-14 border-[3px] border-[#F0F2EF] border-t-[#006D37] rounded-full animate-spin" />
+    <div className="w-14 h-14 border-[3px] border-[#F0F2EF] border-t-[#f5a623] rounded-full animate-spin" />
     <div>
       <h3 className="text-[16px] font-bold mb-1.5">Executing Process...</h3>
       <p className="text-[13px] text-[#9A9E9D]">{processTitle}</p>
     </div>
     <div className="w-full h-1.5 bg-[#F0F2EF] rounded-full overflow-hidden">
-      <div className="h-full bg-[#006D37] rounded-full w-[60%] transition-all duration-1000" />
+      <div className="h-full bg-[#f5a623] rounded-full w-[60%] transition-all duration-1000" />
     </div>
-    <p className="text-[12px] text-[#006D37] font-medium flex items-center gap-1.5">
+    <p className="text-[12px] text-[#f5a623] font-medium flex items-center gap-1.5">
       ✓ Processing records...
     </p>
   </div>
@@ -70,7 +70,7 @@ const SuccessHeader: React.FC<{ processTitle: string }> = ({
 
 // Reusable Stat Card Component
 const StatCard: React.FC<StatItem> = ({ label, value, green }) => (
-  <div className="bg-[#F9F9F9] rounded-[10px] p-3">
+  <div className="bg-[#F9F9F9] border flex flex-col items-center rounded-[10px] p-3">
     <p className="text-[11px] text-[#9A9E9D] mb-1.5">{label}</p>
     <p
       className={`text-[18px] font-bold ${green ? "text-[#006D37]" : "text-[#0A0A0A]"}`}
@@ -87,7 +87,7 @@ const OutputFileItem: React.FC<OutputFile> = ({
   icon,
   primary,
 }) => (
-  <div className="border border-[#E1E3E2] rounded-[10px] p-3 flex items-center gap-3">
+  <div className="border border-[#E1E3E2] bg-[#F9F9F9] rounded-[10px] p-3 flex items-center gap-3">
     <div className="w-8 h-8 bg-[#E8F5EC] rounded-[8px] flex items-center justify-center text-base flex-shrink-0">
       {icon}
     </div>
@@ -100,7 +100,7 @@ const OutputFileItem: React.FC<OutputFile> = ({
     <button
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[11px] font-semibold flex-shrink-0 ${
         primary
-          ? "bg-[#006D37] text-white"
+          ? "bg-[#f5a623]"
           : "bg-white border border-[#E1E3E2] text-[#5B5F5E]"
       }`}
     >
@@ -150,7 +150,7 @@ const FooterActions: React.FC<FooterActionsProps> = ({
       title={runAnotherText}
       onClick={onRunAnother}
       textClassName="!text-[0.875rem] font-[600]"
-      className="flex-1 rounded-[8px] !h-[42px] bg-[#006D37] hover:bg-[#D4911A]"
+      className="flex-1 rounded-[8px] !h-[40px]"
     />
     <button
       onClick={onDashboard}
