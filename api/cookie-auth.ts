@@ -1,16 +1,15 @@
 import { setCookie, getCookie, deleteCookie } from "cookies-next";
 
+const COOKIE_OPTS = { path: "/", sameSite: "lax", secure: false } as const;
+
 export function setAuthCookies(isLoggedIn: boolean) {
-  setCookie("auth_session_flag", isLoggedIn, {
-    // maxAge: sevenDays,
-    path: "/",
-    sameSite: "lax",
-    secure: false,
-  });
+  setCookie("auth_session_flag", isLoggedIn, COOKIE_OPTS);
 }
 
 export function clearAuthCookies() {
   deleteCookie("auth_session_flag");
+  deleteCookie("auth_user");
+  deleteCookie("auth_refresh_token");
 }
 
 export function getAuthSessionFlag() {
@@ -25,4 +24,12 @@ export function getAuthUser() {
     console.error("Failed to parse auth_user cookie:", error);
     return null;
   }
+}
+
+export function setRefreshTokenCookie(token: string) {
+  setCookie("auth_refresh_token", token, COOKIE_OPTS);
+}
+
+export function getRefreshTokenCookie(): string | null {
+  return (getCookie("auth_refresh_token") as string) ?? null;
 }
