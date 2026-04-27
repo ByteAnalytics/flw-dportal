@@ -79,8 +79,10 @@ const SignIn: React.FC = () => {
 
       const responseData = response?.data;
       const { user, access_token, refresh_token } = responseData?.data;
-      hydrate(user, access_token, refresh_token);
-      setAuthCookies(Boolean(access_token && user));
+
+      hydrate(user, access_token, refresh_token); // this handles all cookies now
+      // ❌ remove: setAuthCookies(Boolean(access_token && user));
+
       toast.success(extractSuccessMessage(response));
       router.push("/dashboard");
     } catch (err: any) {
