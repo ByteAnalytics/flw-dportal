@@ -10,6 +10,7 @@ import { Suspense } from "react";
 import QueryProvider from "@/providers/QueryProvider";
 import NextTopLoader from "nextjs-toploader";
 import { EnvironmentHelper } from "@/lib/environment-utils";
+import { AuthProvider } from "@/providers/AuthProvider";
 
 const pt_sans = PT_Sans({
   subsets: ["latin"],
@@ -38,8 +39,10 @@ export default function RootLayout({
         <NextTopLoader color="#AFEB2B" showSpinner={false} />
         <Suspense fallback={<div></div>}>
           <QueryProvider>
-            <TooltipProvider>{children}</TooltipProvider>
-            <Toaster richColors position="top-right" closeButton />
+            <AuthProvider>
+              <TooltipProvider>{children}</TooltipProvider>
+              <Toaster richColors position="top-right" closeButton />
+            </AuthProvider>
           </QueryProvider>
         </Suspense>
       </body>

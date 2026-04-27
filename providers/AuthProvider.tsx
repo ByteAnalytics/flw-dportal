@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import apiClient from "@/api/client";
-import { getAuthSessionFlag } from "@/api/cookie-auth";
+import { getAuthSessionFlag, getRefreshTokenCookie } from "@/api/cookie-auth";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { hydrate, isHydrated } = useAuthStore();
+  const { hydrate, isHydrated, setRefreshToken } = useAuthStore();
 
   useEffect(() => {
     async function initAuth() {
@@ -14,9 +14,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (hasSessionFlag) {
         try {
+          const refreshToken = getRefreshTokenCookie();
+
+          // ✅ Put refresh token in store FIRST so the interceptor
+          // has it ready before any API call goes out
+          if (refreshToken) setRefreshToken(refreshToken);
+
           const response = await apiClient.get("/users/me");
           const user = response.data?.data;
-          hydrate(user, null, null);
+          hydrate(user, null, refreshToken);
         } catch (error) {
           console.error("Auth hydration failed:", error);
           hydrate(null, null, null);
@@ -29,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isHydrated) {
       initAuth();
     }
-  }, [hydrate, isHydrated]);
+  }, [hydrate, isHydrated, setRefreshToken]);
 
   return <>{children}</>;
 }
