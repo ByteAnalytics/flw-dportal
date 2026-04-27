@@ -1,4 +1,10 @@
-import { useGet, usePost, usePut, useDynamicDelete } from "@/hooks/use-queries";
+import {
+  useGet,
+  usePost,
+  usePut,
+  useDynamicDelete,
+  useDelete,
+} from "@/hooks/use-queries";
 import { ApiResponse } from "@/types";
 import { TeamsResponse, SingleTeamResponse } from "@/types/teams";
 import { OnboardUserFormData } from "@/schema/settings";
@@ -16,19 +22,20 @@ export const useCreateTeam = () =>
 export const useUpdateTeam = (id: string) =>
   usePut<ApiResponse<null>, TeamFormData>(`/teams/${id}`, ["teams", id]);
 
-export const useDeleteTeam = () => useDynamicDelete<ApiResponse<null>>();
+export const useDeleteTeam = () =>
+  useDelete<ApiResponse<null>, { team_ids: string[] }>(`/teams`, ["teams"]);
 
 export const useOnboardUser = () =>
   usePost<ApiResponse<null>, OnboardUserFormData>("/users", ["users"]);
 
-export const useAddUserToTeam = (teamId: string, userId: string) =>
-  usePost<ApiResponse<null>, null>(`/teams/${teamId}/add-user/${userId}`, [
-    "teams",
-    teamId,
-  ]);
+export const useAddUserToTeam = (teamId: string) =>
+  usePost<ApiResponse<null>, { user_ids: string[] }>(
+    `/teams/${teamId}/add-users`,
+    ["teams"],
+  );
 
-  export const useRemoveUserFromTeam = (teamId: string, userId: string) =>
-    usePost<ApiResponse<null>, null>(`/teams/${teamId}/remove-user/${userId}`, [
-      "teams",
-      teamId,
-    ]);
+export const useRemoveUserFromTeam = (teamId: string) =>
+  useDelete<ApiResponse<null>, { user_ids: string[] }>(
+    `/teams/${teamId}/remove-users`,
+    ["teams", teamId],
+  );
