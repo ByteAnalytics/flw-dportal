@@ -2,7 +2,6 @@ import {
   useGet,
   usePost,
   usePut,
-  useDynamicDelete,
   useDelete,
 } from "@/hooks/use-queries";
 import { ApiResponse } from "@/types";
