@@ -1,4 +1,3 @@
-// hooks/use-users.ts
 import { useGet, usePost, usePut, useDynamicDelete } from "@/hooks/use-queries";
 import { buildQueryString } from "@/lib/utils";
 import { UserFormData } from "@/schema/profile";
