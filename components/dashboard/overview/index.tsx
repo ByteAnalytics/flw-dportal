@@ -55,7 +55,7 @@ const Dashboard = () => {
             Welcome back, David
           </h1>
           <p className="text-InfraMuted font-[500] text-sm mt-0.5">
-            Here are your team's processes and recent activity
+            {` Here are your team's processes and recent activity`}
           </p>
         </div>
 

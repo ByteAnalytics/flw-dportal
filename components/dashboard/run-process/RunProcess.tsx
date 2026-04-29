@@ -1,17 +1,14 @@
 "use client";
 
+import React, { useState } from "react";
 import { Search } from "lucide-react";
 import { SheetWrapper } from "@/components/ui/custom-sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownItem } from "@/components/ui/custom-dropdown";
 import { STATUS_OPTIONS } from "@/constants/overview";
 import { useProcessManagement } from "@/hooks/use-processes";
-import {
-  Process,
-  ProcessApi,
-  ProcessEffort,
-  ProcessStatus,
-} from "@/types/processes";
+import { ProcessApi, ProcessEffort, ProcessStatus } from "@/types/processes";
+import { RunProcessResponse } from "@/hooks/use-run-process";
 import { FilterDropdown } from "./Filterdropdown";
 import { DataSourceStep } from "./DataSourceStep";
 import { ConfigureStep } from "./ConfigureStep";
@@ -59,7 +56,6 @@ const getPlaceholderExtras = (processId: string) =>
 const RunProcess = () => {
   const {
     isSheetOpen,
-    setIsSheetOpen,
     selectedProcess,
     step,
     setStep,
@@ -82,7 +78,21 @@ const RunProcess = () => {
     handleDashboard,
   } = useProcessManagement({ withRunFlow: true });
 
-  // client-side category filter — API doesn't support it yet
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [runResult, setRunResult] = useState<RunProcessResponse | null>(null);
+
+  const handleExecuteComplete = (result: RunProcessResponse) => {
+    setRunResult(result);
+    startExecute();
+    setStep("execute");
+  };
+
+  const handleRunAnotherWithReset = () => {
+    setRunResult(null);
+    setUploadedFiles([]);
+    handleRunAnother();
+  };
+
   const filteredProcesses = processes.filter((p) => {
     if (selectedCategory === "all") return true;
     return getPlaceholderExtras(p.id).categoryType === selectedCategory;
@@ -196,22 +206,30 @@ const RunProcess = () => {
                   process={selectedProcess}
                   dataSource={dataSource}
                   setDataSource={setDataSource}
-                  onContinue={() => setStep("configure")}
+                  onContinue={(files) => {
+                    if (files) setUploadedFiles(files);
+                    setStep("configure");
+                  }}
                 />
               )}
+
               {step === "configure" && (
                 <ConfigureStep
                   process={selectedProcess}
                   dataSource={dataSource}
+                  files={uploadedFiles}
                   onBack={() => setStep("datasource")}
-                  onExecute={startExecute}
+                  onExecute={handleExecuteComplete}
                 />
               )}
+
               {step === "execute" && (
                 <ExecuteStep
                   process={selectedProcess}
                   execPhase={execPhase}
-                  onRunAnother={handleRunAnother}
+                  result={runResult}
+                  files={uploadedFiles}
+                  onRunAnother={handleRunAnotherWithReset}
                   onDashboard={handleDashboard}
                 />
               )}
