@@ -3,6 +3,7 @@
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth-store";
 import { EnvironmentHelper } from "@/lib/environment-utils";
+<<<<<<< HEAD
 
 // const isProduction =
 //   EnvironmentHelper.isProduction() || EnvironmentHelper.isDemo();
@@ -11,12 +12,20 @@ const apiBaseUrl = EnvironmentHelper.getApiBaseUrl();
 
 // const API_BASE = !isProduction ? "/api/proxy" : apiBaseUrl;
 
+=======
+import { setRefreshTokenCookie } from "@/api/cookie-auth";
+
+const apiBaseUrl = EnvironmentHelper.getApiBaseUrl();
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 const API_BASE = apiBaseUrl;
 
 const apiClient = axios.create({
   baseURL: API_BASE,
   timeout: 60000,
+<<<<<<< HEAD
   // withCredentials: true,
+=======
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 });
 
 let isRefreshing = false;
@@ -38,7 +47,10 @@ apiClient.interceptors.request.use(
     const { accessToken } = useAuthStore.getState();
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
+<<<<<<< HEAD
       // config.headers["ngrok-skip-browser-warning"] = "true";
+=======
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
     }
     return config;
   },
@@ -51,10 +63,15 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const status = error.response?.status;
+<<<<<<< HEAD
 
     const requestFailed = status === 401 || status === 403;
 
     // Prevent infinite loop if refresh endpoint itself fails
+=======
+    const requestFailed = status === 401 || status === 403;
+
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
     if (requestFailed && originalRequest?.url?.includes("/auth/refresh")) {
       const { logout } = useAuthStore.getState();
       logout();
@@ -69,17 +86,23 @@ apiClient.interceptors.response.use(
         return new Promise((resolve, reject) => {
           refreshQueue.push({ resolve, reject });
         })
+<<<<<<< HEAD
           .then(() => {
             return apiClient(originalRequest);
           })
           .catch((err) => {
             return Promise.reject(err);
           });
+=======
+          .then(() => apiClient(originalRequest))
+          .catch((err) => Promise.reject(err));
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
       }
 
       isRefreshing = true;
 
       try {
+<<<<<<< HEAD
         const { refreshToken } = useAuthStore.getState();
         const refreshRes = await axios.post(
           `${API_BASE}/auth/refresh`,
@@ -87,6 +110,13 @@ apiClient.interceptors.response.use(
           {
             withCredentials: true,
           },
+=======
+        const { refreshToken, hydrate } = useAuthStore.getState();
+
+        const refreshRes = await axios.post(
+          `${API_BASE}/auth/refresh`,
+          { refresh_token: refreshToken }
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
         );
 
         const newAccessToken =
@@ -98,26 +128,48 @@ apiClient.interceptors.response.use(
           throw new Error("Failed to refresh token - no access token received");
         }
 
+<<<<<<< HEAD
         const meRes = await axios.get(`${API_BASE}/users/me`, {
           headers: { Authorization: `Bearer ${newAccessToken}` },
           withCredentials: true,
+=======
+        // Use rotated refresh token if backend provides one, else keep existing
+        const newRefreshToken =
+          refreshRes.data?.data?.refresh_token ?? refreshToken;
+
+        // Always persist the refresh token to cookie after a successful refresh
+        if (newRefreshToken) setRefreshTokenCookie(newRefreshToken);
+
+        const meRes = await axios.get(`${API_BASE}/users/me`, {
+          headers: { Authorization: `Bearer ${newAccessToken}` }
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
         });
 
         const user = meRes.data?.data;
 
+<<<<<<< HEAD
         const { hydrate } = useAuthStore.getState();
 
         hydrate(user, newAccessToken, refreshToken);
+=======
+        hydrate(user, newAccessToken, newRefreshToken);
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 
         processQueue(null, newAccessToken);
         return apiClient(originalRequest);
       } catch (err) {
+<<<<<<< HEAD
         // Refresh failed - reject all queued requests
+=======
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
         const { logout } = useAuthStore.getState();
         processQueue(err, null);
         logout();
         window.location.replace("/auth/sign-in");
+<<<<<<< HEAD
 
+=======
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

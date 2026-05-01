@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # FLW Dportal FE 
+=======
+# IFRACREDIT App
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 
 A Next.js 15 TypeScript application with Tailwind CSS, Shadcn UI components, React Query, and small utility providers and stores — meant as a starting point for building IFRS-related UIs.
 
@@ -68,11 +72,35 @@ This project is production-ready with complete Docker containerization and an au
 ### GitHub Actions CI/CD
 
 - ✅ **Automated linting** and build checks on every PR
+<<<<<<< HEAD
+=======
+- ✅ **Docker image builds** — separate dev (`ridzy619/infracredit-frontend-dev`) and production (`ridzy619/infracredit-frontend`) images
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 - ✅ **DockerHub integration** — auto-push on every commit to main/feat branches
 - ✅ **Smart triggers** — PRs run tests only, pushes build and deploy
 - ✅ **Version tagging** — commit SHA tags for easy rollback
 - ✅ **VM deployment** — automatic deployment to VM via SSH on push to main
 
+<<<<<<< HEAD
+=======
+### Quick Deployment Options
+
+**Option 1: Local Docker**
+```bash
+docker-compose up -d --build
+```
+
+**Option 2: Pre-built Images**
+```bash
+# Production image
+docker pull ridzy619/infracredit-frontend
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend
+
+# Development image
+docker pull ridzy619/infracredit-frontend-dev
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend-dev
+```
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 
 **Option 3: Vercel** (quick deployment)
 
@@ -193,6 +221,19 @@ docker-compose -f docker-compose.production.yml down
 ./scripts/build.sh    # Build image with version tag
 ```
 
+<<<<<<< HEAD
+=======
+#### Common Commands
+```bash
+# Rebuild after code changes
+docker-compose down && docker-compose up -d --build
+
+# Access container shell
+docker exec -it infracredit-frontend-dev sh
+
+# Clean slate
+docker-compose down && docker system prune -a
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 ```
 
 #### Troubleshooting
@@ -275,6 +316,25 @@ VM Deployment (deploy.yml)
      App live on VM
 ```
 
+<<<<<<< HEAD
+=======
+### Pre-built Images
+
+```bash
+# Production (from main branch)
+docker pull ridzy619/infracredit-frontend
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend
+
+# Specific commit (for rollback)
+docker pull ridzy619/infracredit-frontend:abc1234
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend:abc1234
+
+# Development
+docker pull ridzy619/infracredit-frontend-dev
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend-dev
+```
+
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 ---
 
 ## Docker Files Reference
@@ -302,6 +362,10 @@ VM Deployment (deploy.yml)
 ## Troubleshooting
 
 - Dev server errors → remove `.next/` and re-run `npm run dev`
+<<<<<<< HEAD
 - Stale types → restart your editor's TS server
 
 C:\Users\RaymondChen\Desktop\Ops Automation portal\dportal_platform_frontend
+=======
+- Stale types → restart your editor's TS server
+>>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
