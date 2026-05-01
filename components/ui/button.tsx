@@ -55,7 +55,7 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }),'cursor-pointer hover:bg-gray-200 hover:text-gray-800')}
+      className={cn(buttonVariants({ variant, size, className }),'cursor-pointer hover:bg-[#F5A623]/70 hover:text-gray-800')}
       {...props}
     />
   )

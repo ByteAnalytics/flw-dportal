@@ -1,4 +1,4 @@
-import ByteLogo from "@/public/assets/BYTE ANALYTICS.svg";
+import flwLogo from "@/public/assets/Flutterwave_Logo.png";
 import { StaticImageData } from "next/image";
 
 export type Environment = "development" | "demo" | "production";
@@ -59,7 +59,7 @@ export class EnvironmentHelper {
   }
 
   static getBrandLogo(): StaticImageData {
-    return ByteLogo;
+    return flwLogo;
   }
 
   static getMetaDescription(baseDescription: string): string {

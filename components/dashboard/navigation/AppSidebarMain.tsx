@@ -110,9 +110,9 @@ export function NavMain({ items }: NavMainProps) {
                   className={cn(
                     "transition-colors duration-200 rounded-[12px] !px-4",
                     active
-                      ? "bg-[#006D37] text-white"
-                      : "text-InfraMuted hover:text-white hover:bg-[#006D37]/70",
-                    isByte && active && "bg-[#006D37]",
+                      ? "bg-[#F5A623] text-white"
+                      : "text-InfraMuted hover:text-white hover:bg-[#F5A623]/70",
+                    isByte && active && "bg-[#F5A623]",
                   )}
                   data-active={active}
                 >
@@ -140,8 +140,8 @@ export function NavMain({ items }: NavMainProps) {
                 key={team?.id}
                 className="flex items-center gap-2.5 px-2 py-1.5 rounded-[10px] hover:bg-InfraBorder/20 transition-colors cursor-pointer"
               >
-                <div className="w-7 h-7 rounded-full bg-[#006D37]/20 flex items-center justify-center flex-shrink-0">
-                  <Users className="w-3.5 h-3.5 text-[#006D37]" />
+                <div className="w-7 h-7 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
+                  <Users className="w-3.5 h-3.5 text-[#F5A623]" />
                 </div>
                 <p className="text-[12px] font-[500] text-InfraMuted truncate leading-none">
                   {team?.name}
@@ -161,8 +161,8 @@ export function NavMain({ items }: NavMainProps) {
             className="flex items-center gap-2.5 px-2 py-1.5 rounded-[10px] hover:bg-InfraBorder/20 transition-colors cursor-pointer"
           >
             <div className="relative flex-shrink-0">
-              <div className="w-2 h-2 rounded-full bg-[#006D37]" />
-              <div className="absolute inset-0 rounded-full bg-[#006D37]/30 animate-ping" />
+              <div className="w-2 h-2 rounded-full bg-[#F5A623]" />
+              <div className="absolute inset-0 rounded-full bg-[#F5A623]/30 animate-ping" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-[500] text-InfraMuted truncate leading-none mb-0.5">
@@ -172,7 +172,7 @@ export function NavMain({ items }: NavMainProps) {
                 {api.desc}
               </p>
             </div>
-            <span className="text-[9px] font-[700] text-[#006D37] bg-[#006D37]/10 px-1.5 py-0.5 rounded-full flex-shrink-0">
+            <span className="text-[9px] font-[700] text-[#F5A623] bg-[#F5A623]/10 px-1.5 py-0.5 rounded-full flex-shrink-0">
               Live
             </span>
           </div>
