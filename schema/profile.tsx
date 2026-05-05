@@ -27,7 +27,7 @@ export const UserFormSchema = z.object({
     })
     .optional(),
 
-  is_active: z.boolean().optional(),
+  is_active: z.union([z.boolean(), z.string()]).optional(),
 
   addAsEmailReceipient: z
     .nativeEnum(AddAsEmailReceipient, {
