@@ -31,7 +31,6 @@ export const FlwLogo = () => {
       <p className="text-[1.6rem] font-black tracking-tight leading-none">
         <span className="text-gray-900">flw</span>
         <span className="relative inline-block ml-1">
-          {/* Gradient text */}
           <span
             className="bg-clip-text text-transparent"
             style={{
