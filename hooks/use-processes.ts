@@ -56,7 +56,7 @@ export const useProcessManagement = (
 
   const { data: teamsData } = useTeams();
 
-  const processes = data?.data ?? [];
+  const processes = useMemo(() => data?.data ?? [], [data?.data]);
 
   const teamFilterOptions = useMemo(
     () => [
@@ -137,8 +137,8 @@ export const useProcessManagement = (
   useEffect(() => {
     if (!withRunFlow || !idParam || processes.length === 0) return;
     const found = processes.find((p) => p.id === idParam);
-    if (found) openRunSheet(found);
-  }, [idParam, processes, withRunFlow]);
+    if (found) setTimeout(() => openRunSheet(found), 0);
+  }, [idParam, processes, withRunFlow, openRunSheet]);
 
   return {
     // shared state

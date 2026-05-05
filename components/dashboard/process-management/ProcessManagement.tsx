@@ -61,7 +61,6 @@ const ProcessManagement = () => {
     setFrequencyFilter,
     data,
     isLoading,
-    refetch,
     teamFilterOptions,
     hasActiveFilters,
     resetFilters,
@@ -143,7 +142,7 @@ const ProcessManagement = () => {
         </button>
       ),
     }));
-  }, [data]);
+  }, [data, setSelectedProcessId]);
 
   return (
     <div>
