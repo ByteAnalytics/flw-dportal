@@ -1,6 +1,5 @@
 "use client";
 
-import { useRecentActivity, useTeamsSummary } from "@/hooks/use-dashboard";
 import RecentActivityTable from "./AdminRecentActivityTable";
 import TeamsSidebar from "./AdminTeams";
 import { StatCard } from "@/components/shared/StatCard";

@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import CustomButton from "@/components/ui/custom-button";
-import { FormFieldType, User, UserRole, UserStatus } from "@/types";
+import { FormFieldType, User, UserRole } from "@/types";
 import CustomInputField from "@/components/ui/custom-input-field";
 import { Form } from "@/components/ui/form";
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
@@ -32,7 +32,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
       last_name: user?.last_name ?? "",
       email: user?.email ?? "",
       role: (user?.role as UserRole) ?? UserRole.USER,
-      is_active: user?.is_active ?? false,
+      is_active: user?.is_active ? "active" : "inactive",
     },
   });
 
@@ -63,7 +63,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
 
       if (user?.id) {
         payload.role = data.role;
-        payload.status = data.is_active;
+        payload.status = data.is_active === "active" || data.is_active === true;
       } else {
         payload.role = data.role;
       }

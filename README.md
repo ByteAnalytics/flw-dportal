@@ -68,6 +68,7 @@ This project is production-ready with complete Docker containerization and an au
 ### GitHub Actions CI/CD
 
 - ✅ **Automated linting** and build checks on every PR
+- ✅ **Docker image builds** — separate dev (`ridzy619/infracredit-frontend-dev`) and production (`ridzy619/infracredit-frontend`) images
 - ✅ **DockerHub integration** — auto-push on every commit to main/feat branches
 - ✅ **Smart triggers** — PRs run tests only, pushes build and deploy
 - ✅ **Version tagging** — commit SHA tags for easy rollback
@@ -210,6 +211,16 @@ docker-compose -f docker-compose.production.yml down
 ./scripts/build.sh    # Build image with version tag
 ```
 
+#### Common Commands
+```bash
+# Rebuild after code changes
+docker-compose down && docker-compose up -d --build
+
+# Access container shell
+docker exec -it infracredit-frontend-dev sh
+
+# Clean slate
+docker-compose down && docker system prune -a
 ```
 
 #### Troubleshooting
@@ -292,6 +303,22 @@ VM Deployment (deploy.yml)
      App live on VM
 ```
 
+### Pre-built Images
+
+```bash
+# Production (from main branch)
+docker pull ridzy619/infracredit-frontend
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend
+
+# Specific commit (for rollback)
+docker pull ridzy619/infracredit-frontend:abc1234
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend:abc1234
+
+# Development
+docker pull ridzy619/infracredit-frontend-dev
+docker run -d -p 3000:3000 ridzy619/infracredit-frontend-dev
+```
+
 ---
 
 ## Docker Files Reference
@@ -320,5 +347,3 @@ VM Deployment (deploy.yml)
 
 - Dev server errors → remove `.next/` and re-run `npm run dev`
 - Stale types → restart your editor's TS server
-
-C:\Users\RaymondChen\Desktop\Ops Automation portal\dportal_platform_frontend

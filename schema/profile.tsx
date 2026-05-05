@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AddAsEmailReceipient, UserRole, UserStatus } from "@/types";
+import { AddAsEmailReceipient, UserRole } from "@/types";
 
 export const UserFormSchema = z.object({
   first_name: z
@@ -27,7 +27,7 @@ export const UserFormSchema = z.object({
     })
     .optional(),
 
-  is_active: z.boolean().optional(),
+  is_active: z.union([z.boolean(), z.string()]).optional(),
 
   addAsEmailReceipient: z
     .nativeEnum(AddAsEmailReceipient, {
