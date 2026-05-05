@@ -1,26 +1,14 @@
 "use client";
 
-<<<<<<< HEAD
-=======
 import React, { useState } from "react";
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 import { Search } from "lucide-react";
 import { SheetWrapper } from "@/components/ui/custom-sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownItem } from "@/components/ui/custom-dropdown";
 import { STATUS_OPTIONS } from "@/constants/overview";
 import { useProcessManagement } from "@/hooks/use-processes";
-<<<<<<< HEAD
-import {
-  Process,
-  ProcessApi,
-  ProcessEffort,
-  ProcessStatus,
-} from "@/types/processes";
-=======
 import { ProcessApi, ProcessEffort, ProcessStatus } from "@/types/processes";
 import { RunProcessResponse } from "@/hooks/use-run-process";
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 import { FilterDropdown } from "./Filterdropdown";
 import { DataSourceStep } from "./DataSourceStep";
 import { ConfigureStep } from "./ConfigureStep";
@@ -68,10 +56,6 @@ const getPlaceholderExtras = (processId: string) =>
 const RunProcess = () => {
   const {
     isSheetOpen,
-<<<<<<< HEAD
-    setIsSheetOpen,
-=======
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
     selectedProcess,
     step,
     setStep,
@@ -94,9 +78,6 @@ const RunProcess = () => {
     handleDashboard,
   } = useProcessManagement({ withRunFlow: true });
 
-<<<<<<< HEAD
-  // client-side category filter — API doesn't support it yet
-=======
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [runResult, setRunResult] = useState<RunProcessResponse | null>(null);
 
@@ -112,7 +93,6 @@ const RunProcess = () => {
     handleRunAnother();
   };
 
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
   const filteredProcesses = processes.filter((p) => {
     if (selectedCategory === "all") return true;
     return getPlaceholderExtras(p.id).categoryType === selectedCategory;
@@ -210,12 +190,8 @@ const RunProcess = () => {
           title={selectedProcess.process_name}
           open={isSheetOpen}
           setOpen={handleSheetClose}
-<<<<<<< HEAD
-          SheetContentClassName="sm:max-w-[500px] mb-4"
-=======
           SheetContentClassName="sm:max-w-[500px] mb-4 px-0 bg-white"
           headerClassName="px-4"
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
         >
           <div className="flex flex-col h-full pb-4">
             <span className="bg-[#E8F0FF] w-fit text-[#2E5DB0] text-[11px] font-semibold px-2.5 py-0.5 rounded-full inline-block mb-4">
@@ -224,21 +200,12 @@ const RunProcess = () => {
 
             <StepTabs step={step} onStepClick={setStep} />
 
-<<<<<<< HEAD
-            <div className="flex-1 pt-5 pb-[1.5rem]">
-=======
             <div className="flex-1 pt-5 pb-[1.5rem] px-4">
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
               {step === "datasource" && (
                 <DataSourceStep
                   process={selectedProcess}
                   dataSource={dataSource}
                   setDataSource={setDataSource}
-<<<<<<< HEAD
-                  onContinue={() => setStep("configure")}
-                />
-              )}
-=======
                   onContinue={(files) => {
                     if (files) setUploadedFiles(files);
                     setStep("configure");
@@ -246,35 +213,23 @@ const RunProcess = () => {
                 />
               )}
 
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
               {step === "configure" && (
                 <ConfigureStep
                   process={selectedProcess}
                   dataSource={dataSource}
-<<<<<<< HEAD
-                  onBack={() => setStep("datasource")}
-                  onExecute={startExecute}
-                />
-              )}
-=======
                   files={uploadedFiles}
                   onBack={() => setStep("datasource")}
                   onExecute={handleExecuteComplete}
                 />
               )}
 
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
               {step === "execute" && (
                 <ExecuteStep
                   process={selectedProcess}
                   execPhase={execPhase}
-<<<<<<< HEAD
-                  onRunAnother={handleRunAnother}
-=======
                   result={runResult}
                   files={uploadedFiles}
                   onRunAnother={handleRunAnotherWithReset}
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
                   onDashboard={handleDashboard}
                 />
               )}

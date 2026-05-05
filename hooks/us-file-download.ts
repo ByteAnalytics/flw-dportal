@@ -6,31 +6,15 @@ import apiClient from "@/api/client";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
 
-<<<<<<< HEAD
-=======
 interface DownloadOptions {
   method?: "get" | "post";
   data?: any;
 }
 
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 export function useFileDownload() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const downloadFile = useCallback(
-<<<<<<< HEAD
-    async (url: string, customFileName?: string) => {
-      try {
-        setIsDownloading(true);
-
-        const response = await apiClient.get(url, {
-          responseType: "blob",
-          headers: {
-            Accept:
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          },
-        });
-=======
     async (
       url: string,
       customFileName?: string,
@@ -57,7 +41,6 @@ export function useFileDownload() {
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 },
               });
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 
         const contentDisposition = response.headers["content-disposition"];
         const fileNameMatch = contentDisposition?.match(/filename="(.+)"/);
@@ -72,10 +55,6 @@ export function useFileDownload() {
         link.download = fileName;
         document.body.appendChild(link);
         link.click();
-<<<<<<< HEAD
-
-=======
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
       } catch (error: any) {

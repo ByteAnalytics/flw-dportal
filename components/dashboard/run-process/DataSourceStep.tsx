@@ -1,13 +1,5 @@
 "use client";
 
-<<<<<<< HEAD
-import React from "react";
-import { cn } from "@/lib/utils";
-import CustomButton from "@/components/ui/custom-button";
-import { API_CONNECTIONS} from "@/constants/overview";
-import { SOURCE_OPTIONS } from "@/constants/data";
-import { DataSourceType, Process } from "@/types/processes";
-=======
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import CustomButton from "@/components/ui/custom-button";
@@ -15,21 +7,13 @@ import { API_CONNECTIONS } from "@/constants/overview";
 import { SOURCE_OPTIONS } from "@/constants/data";
 import { DataSourceType, Process } from "@/types/processes";
 import FileUpload from "@/components/shared/Fileupload";
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 
 interface DataSourceStepProps {
   process: Process;
   dataSource: DataSourceType;
   setDataSource: (v: DataSourceType) => void;
-<<<<<<< HEAD
-  onContinue: () => void;
-}
-
-// Types
-=======
   onContinue: (files?: File[]) => void;
 }
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 interface ApiConnection {
   name: string;
   desc: string;
@@ -37,19 +21,8 @@ interface ApiConnection {
   icon: string;
 }
 
-<<<<<<< HEAD
-// Reusable Source Option Card Component
-interface SourceOptionCardProps {
-  option: {
-    key: DataSourceType;
-    icon: string;
-    title: string;
-    sub: string;
-  };
-=======
 interface SourceOptionCardProps {
   option: { key: DataSourceType; icon: string; title: string; sub: string };
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
   isSelected: boolean;
   onSelect: () => void;
 }
@@ -64,13 +37,8 @@ const SourceOptionCard: React.FC<SourceOptionCardProps> = ({
     className={cn(
       "border rounded-[12px] p-4 text-center transition-all",
       isSelected
-<<<<<<< HEAD
-        ? "border-[#006D37] bg-[#FFFBF0]"
-        : "border-[#E1E3E2] bg-white hover:border-[#006D37]",
-=======
         ? "border-[#EAA945] bg-[#EAA945]/10"
         : "border-[#E1E3E2] hover:border-[#EAA945]",
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
     )}
   >
     <div className="text-xl mb-2">{option.icon}</div>
@@ -81,66 +49,15 @@ const SourceOptionCard: React.FC<SourceOptionCardProps> = ({
   </button>
 );
 
-<<<<<<< HEAD
-// Reusable File Upload Component
-interface FileUploadProps {
-  acceptedFormats?: string;
-}
-
-const FileUpload: React.FC<FileUploadProps> = ({
-  acceptedFormats = "JPEG, PDF, PNG, Arbiter 2.0, CSVs, Excel, CC",
-}) => (
-  <div>
-    <p className="text-[14px] font-semibold mb-2.5">Upload Files</p>
-    <div className="border-2 border-dashed border-[#D1D5DB] rounded-[12px] p-7 text-center bg-[#FAFAFA]">
-      <svg
-        className="w-9 h-9 mx-auto mb-2.5 text-[#C0C4C3]"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      >
-        <polyline points="16 16 12 12 8 16" />
-        <line x1="12" y1="12" x2="12" y2="21" />
-        <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-      </svg>
-      <p className="text-[13px] text-[#9A9E9D] mb-3">
-        Drag and drop files, or click to browse
-      </p>
-      <div className="flex items-center justify-center gap-3">
-        <button className="bg-white border border-[#E1E3E2] rounded-[8px] px-3.5 py-1.5 text-[12px] font-medium text-[#5B5F5E] hover:bg-[#F3F3F3]">
-          Choose Files
-        </button>
-        <span className="text-[12px] text-[#9A9E9D]">No file chosen</span>
-      </div>
-      <p className="text-[11px] text-[#9A9E9D] mt-3">
-        Accepted: {acceptedFormats}
-      </p>
-    </div>
-  </div>
-);
-
-// Reusable API Connection Card Component
-interface ApiConnectionCardProps {
-  connection: ApiConnection;
-}
-
-const ApiConnectionCard: React.FC<ApiConnectionCardProps> = ({
-=======
 // ─── API connection card ──────────────────────────────────────────────────────
 
 const ApiConnectionCard: React.FC<{ connection: ApiConnection }> = ({
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
   connection,
 }) => (
   <div className="border border-[#E1E3E2] rounded-[12px] p-3.5">
     <div className="flex items-start justify-between mb-2">
       <span className="text-lg">{connection.icon}</span>
-<<<<<<< HEAD
-      <div className="w-9 h-5 bg-[#006D37] rounded-full relative flex-shrink-0">
-=======
       <div className="w-9 h-5 bg-[#EAA945] rounded-full relative flex-shrink-0">
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
         <div className="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full" />
       </div>
     </div>
@@ -157,16 +74,7 @@ const ApiConnectionCard: React.FC<{ connection: ApiConnection }> = ({
   </div>
 );
 
-<<<<<<< HEAD
-// Reusable API Connections Section Component
-interface ApiConnectionsProps {
-  connections: ApiConnection[];
-}
-
-const ApiConnectionsSection: React.FC<ApiConnectionsProps> = ({
-=======
 const ApiConnectionsSection: React.FC<{ connections: ApiConnection[] }> = ({
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
   connections,
 }) => (
   <div>
@@ -183,20 +91,6 @@ const ApiConnectionsSection: React.FC<{ connections: ApiConnection[] }> = ({
   </div>
 );
 
-<<<<<<< HEAD
-// Reusable Info Card Component
-interface InfoCardProps {
-  process: Process;
-}
-
-const InfoCard: React.FC<InfoCardProps> = ({ process }) => (
-  <div className="bg-[#EFF4FF] rounded-[10px] p-3.5 text-[12px] text-[#2E5DB0] leading-relaxed">
-    {process.process_name} · Daily · Input: JPEG, PDF, PNG, Arbiter 2.0, CSVs, Excel,
-    CC · Output: A drafted Email and Slack notification · 3 API(s) available
-  </div>
-);
-
-=======
 // ─── Info card ────────────────────────────────────────────────────────────────
 
 const InfoCard: React.FC<{ process: Process }> = ({ process }) => (
@@ -209,24 +103,12 @@ const InfoCard: React.FC<{ process: Process }> = ({ process }) => (
 
 // ─── Main step ────────────────────────────────────────────────────────────────
 
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 export const DataSourceStep: React.FC<DataSourceStepProps> = ({
   process,
   dataSource,
   setDataSource,
   onContinue,
 }) => {
-<<<<<<< HEAD
-  const showFileUpload = dataSource === "upload" || dataSource === "both";
-  const showApiConnections = dataSource === "api" || dataSource === "both";
-
-  return (
-    <div className="flex flex-col gap-5">
-      {/* Info Card */}
-      <InfoCard process={process} />
-
-      {/* Source Options Section */}
-=======
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const showFileUpload = dataSource === "upload" || dataSource === "both";
@@ -242,7 +124,6 @@ export const DataSourceStep: React.FC<DataSourceStepProps> = ({
       <InfoCard process={process} />
 
       {/* Source selection */}
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
       <div>
         <p className="text-[14px] font-semibold text-[#0A0A0A] mb-3">
           How would you like to provide data?
@@ -253,42 +134,24 @@ export const DataSourceStep: React.FC<DataSourceStepProps> = ({
               key={opt.key}
               option={opt}
               isSelected={dataSource === opt.key}
-<<<<<<< HEAD
-              onSelect={() => setDataSource(opt.key)}
-=======
               onSelect={() => {
                 setDataSource(opt.key);
                 // Clear files if switching away from upload
                 if (opt.key === "api") setSelectedFiles([]);
               }}
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
             />
           ))}
         </div>
       </div>
 
-<<<<<<< HEAD
-      {/* Conditional Sections */}
-      {showFileUpload && <FileUpload />}
-=======
       {/* File upload */}
       {showFileUpload && <FileUpload multiple onChange={setSelectedFiles} />}
 
       {/* API connections */}
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
       {showApiConnections && (
         <ApiConnectionsSection connections={API_CONNECTIONS} />
       )}
 
-<<<<<<< HEAD
-      {/* Continue Button */}
-      {dataSource && (
-        <CustomButton
-          title="Continue"
-          onClick={onContinue}
-          textClassName="!text-[0.875rem] font-[600]"
-          className="w-full rounded-[12px] !h-[45px] bg-[#006D37] hover:bg-[#D4911A]"
-=======
       {/* Continue */}
       {dataSource && (
         <CustomButton
@@ -299,7 +162,6 @@ export const DataSourceStep: React.FC<DataSourceStepProps> = ({
           disabled={!canContinue}
           textClassName="!text-[0.875rem] font-[600]"
           className="w-full rounded-[12px] !h-[43px] disabled:opacity-50 disabled:cursor-not-allowed"
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
         />
       )}
     </div>

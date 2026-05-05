@@ -27,11 +27,8 @@ import { Trash2 } from "lucide-react";
 import { LOG_STATUS_STYLES } from "@/constants/activity-logs";
 import ProcessSheet from "./ProcessSheet";
 
-<<<<<<< HEAD
-=======
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 interface RecentExecution {
   id: string;
   user: { name: string; initials: string };
@@ -242,13 +239,8 @@ const ProcessDetailsSheet: React.FC<ProcessDetailsSheetProps> = ({
               ) : (
                 <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[12px] px-4 py-3">
                   <p className="text-[13px] text-[#9CA3AF] text-center">
-<<<<<<< HEAD
-                    No team assigned. Click "Assign Team" to add this process to
-                    a team.
-=======
                     {`No team assigned. Click "Assign Team" to add this process to
                     a team.`}
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
                   </p>
                 </div>
               )}

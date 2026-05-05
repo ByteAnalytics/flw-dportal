@@ -4,8 +4,6 @@ import React from "react";
 import { ArrowLeft, Download } from "lucide-react";
 import CustomButton from "@/components/ui/custom-button";
 import { ExecPhase, Process } from "@/types/processes";
-<<<<<<< HEAD
-=======
 import {
   RunProcessResponse,
   RunProcessResult,
@@ -13,78 +11,43 @@ import {
   buildRunProcessUrl,
 } from "@/hooks/use-run-process";
 import { useFileDownload } from "@/hooks/us-file-download";
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 
 interface ExecuteStepProps {
   process: Process;
   execPhase: ExecPhase;
-<<<<<<< HEAD
-=======
   result?: RunProcessResponse | null;
   files?: File[];
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
   onRunAnother: () => void;
   onDashboard: () => void;
 }
 
-<<<<<<< HEAD
-// Types
-interface OutputFile {
-  name: string;
-  size: string;
-  icon: string;
-  primary: boolean;
-}
-
-=======
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 interface StatItem {
   label: string;
   value: string;
   green?: boolean;
 }
 
-<<<<<<< HEAD
-// Reusable Loading/Executing Component
-=======
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 const ExecutingState: React.FC<{ processTitle: string }> = ({
   processTitle,
 }) => (
   <div className="flex flex-col items-center justify-center py-12 text-center gap-5">
-<<<<<<< HEAD
-    <div className="w-14 h-14 border-[3px] border-[#F0F2EF] border-t-[#006D37] rounded-full animate-spin" />
-=======
     <div className="w-14 h-14 border-[3px] border-[#F0F2EF] border-t-[#f5a623] rounded-full animate-spin" />
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
     <div>
       <h3 className="text-[16px] font-bold mb-1.5">Executing Process...</h3>
       <p className="text-[13px] text-[#9A9E9D]">{processTitle}</p>
     </div>
     <div className="w-full h-1.5 bg-[#F0F2EF] rounded-full overflow-hidden">
-<<<<<<< HEAD
-      <div className="h-full bg-[#006D37] rounded-full w-[60%] transition-all duration-1000" />
-    </div>
-    <p className="text-[12px] text-[#006D37] font-medium flex items-center gap-1.5">
-=======
       <div className="h-full bg-[#f5a623] rounded-full w-[60%] transition-all duration-1000" />
     </div>
     <p className="text-[12px] text-[#f5a623] font-medium">
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
       ✓ Processing records...
     </p>
   </div>
 );
 
-<<<<<<< HEAD
-// Reusable Success Header Component
-const SuccessHeader: React.FC<{ processTitle: string }> = ({
-  processTitle,
-=======
 const SuccessHeader: React.FC<{ processTitle: string; message?: string }> = ({
   processTitle,
   message,
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 }) => (
   <div className="text-center py-2">
     <div className="w-12 h-12 bg-[#D6F5E3] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -99,26 +62,16 @@ const SuccessHeader: React.FC<{ processTitle: string; message?: string }> = ({
       </svg>
     </div>
     <h3 className="text-[16px] font-bold mb-1">
-<<<<<<< HEAD
-      Process Completed Successfully
-=======
       {message ?? "Process Completed Successfully"}
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
     </h3>
     <p className="text-[13px] text-[#9A9E9D]">{processTitle}</p>
   </div>
 );
 
-<<<<<<< HEAD
-// Reusable Stat Card Component
-const StatCard: React.FC<StatItem> = ({ label, value, green }) => (
-  <div className="bg-[#F9F9F9] rounded-[10px] p-3">
-=======
 // ─── Stat card ────────────────────────────────────────────────────────────────
 
 const StatCard: React.FC<StatItem> = ({ label, value, green }) => (
   <div className="bg-[#F9F9F9] border flex flex-col items-center rounded-[10px] p-3">
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
     <p className="text-[11px] text-[#9A9E9D] mb-1.5">{label}</p>
     <p
       className={`text-[18px] font-bold ${green ? "text-[#006D37]" : "text-[#0A0A0A]"}`}
@@ -128,106 +81,6 @@ const StatCard: React.FC<StatItem> = ({ label, value, green }) => (
   </div>
 );
 
-<<<<<<< HEAD
-// Reusable Output File Component
-const OutputFileItem: React.FC<OutputFile> = ({
-  name,
-  size,
-  icon,
-  primary,
-}) => (
-  <div className="border border-[#E1E3E2] rounded-[10px] p-3 flex items-center gap-3">
-    <div className="w-8 h-8 bg-[#E8F5EC] rounded-[8px] flex items-center justify-center text-base flex-shrink-0">
-      {icon}
-    </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-[12px] font-semibold text-[#0A0A0A] truncate">
-        {name}
-      </p>
-      <p className="text-[11px] text-[#9A9E9D]">Generated just now · {size}</p>
-    </div>
-    <button
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[11px] font-semibold flex-shrink-0 ${
-        primary
-          ? "bg-[#006D37] text-white"
-          : "bg-white border border-[#E1E3E2] text-[#5B5F5E]"
-      }`}
-    >
-      <Download className="w-3 h-3" /> Download
-    </button>
-  </div>
-);
-
-// Reusable Output Files Section Component
-const OutputFilesSection: React.FC<{ files: OutputFile[] }> = ({ files }) => (
-  <div>
-    <p className="text-[13px] font-semibold mb-2.5">Output Files</p>
-    <div className="space-y-2">
-      {files.map((file) => (
-        <OutputFileItem key={file.name} {...file} />
-      ))}
-    </div>
-  </div>
-);
-
-// Reusable Slack Notification Component
-const SlackNotification: React.FC<{ channel?: string }> = ({
-  channel = "#ops-automation",
-}) => (
-  <div className="bg-[#E9F9EF] rounded-[10px] px-3.5 py-2.5 flex items-center gap-2 text-[12px] text-[#006D37] font-medium">
-    🌐 Slack notification sent to{" "}
-    <strong className="font-bold">{channel}</strong>
-  </div>
-);
-
-// Reusable Footer Actions Component
-interface FooterActionsProps {
-  onRunAnother: () => void;
-  onDashboard: () => void;
-  runAnotherText?: string;
-  dashboardText?: string;
-}
-
-const FooterActions: React.FC<FooterActionsProps> = ({
-  onRunAnother,
-  onDashboard,
-  runAnotherText = "↻ Run Another",
-  dashboardText = "Dashboard",
-}) => (
-  <div className="flex gap-2.5 pt-3 border-t border-[#E1E3E2]">
-    <CustomButton
-      title={runAnotherText}
-      onClick={onRunAnother}
-      textClassName="!text-[0.875rem] font-[600]"
-      className="flex-1 rounded-[8px] !h-[42px] bg-[#006D37] hover:bg-[#D4911A]"
-    />
-    <button
-      onClick={onDashboard}
-      className="flex-1 bg-white border border-[#E1E3E2] text-[#5B5F5E] font-medium text-[13px] rounded-[8px] py-2.5 flex items-center justify-center gap-1.5 hover:bg-[#F3F3F3]"
-    >
-      <ArrowLeft className="w-3.5 h-3.5" /> {dashboardText}
-    </button>
-  </div>
-);
-
-// Data
-const OUTPUT_FILES: OutputFile[] = [
-  {
-    name: "retrieving_evidence_disputes_arbiter_2026-04-11.xlsx",
-    size: "2.4 MB",
-    icon: "📊",
-    primary: true,
-  },
-  {
-    name: "execution_log.txt",
-    size: "14 KB",
-    icon: "📄",
-    primary: false,
-  },
-];
-
-const STATS: StatItem[] = [
-=======
 // ─── Result details ───────────────────────────────────────────────────────────
 
 const ResultDetails: React.FC<{ result: RunProcessResult }> = ({ result }) => {
@@ -301,18 +154,12 @@ const ResultDetails: React.FC<{ result: RunProcessResult }> = ({ result }) => {
 // ─── Fallback stats ───────────────────────────────────────────────────────────
 
 const FALLBACK_STATS: StatItem[] = [
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
   { label: "Duration", value: "10.2s" },
   { label: "Records Processed", value: "95" },
   { label: "API Calls Made", value: "37" },
   { label: "Status", value: "Complete", green: true },
 ];
 
-<<<<<<< HEAD
-export const ExecuteStep: React.FC<ExecuteStepProps> = ({
-  process,
-  execPhase,
-=======
 // ─── Download button ──────────────────────────────────────────────────────────
 
 const DownloadButton: React.FC<{
@@ -381,7 +228,6 @@ export const ExecuteStep: React.FC<ExecuteStepProps> = ({
   execPhase,
   result,
   files = [],
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
   onRunAnother,
   onDashboard,
 }) => {
@@ -389,28 +235,6 @@ export const ExecuteStep: React.FC<ExecuteStepProps> = ({
     return <ExecutingState processTitle={process.process_name} />;
   }
 
-<<<<<<< HEAD
-  return (
-    <div className="flex flex-col gap-4">
-      {/* Success Header */}
-      <SuccessHeader processTitle={process.process_name} />
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-2.5">
-        {STATS.map((stat) => (
-          <StatCard key={stat.label} {...stat} />
-        ))}
-      </div>
-
-      {/* Output Files */}
-      <OutputFilesSection files={OUTPUT_FILES} />
-
-      {/* Slack Notification */}
-      <SlackNotification />
-
-      {/* Footer Actions */}
-      <FooterActions onRunAnother={onRunAnother} onDashboard={onDashboard} />
-=======
   const apiResult = result?.data?.result;
 
   return (
@@ -436,7 +260,6 @@ export const ExecuteStep: React.FC<ExecuteStepProps> = ({
         onRunAnother={onRunAnother}
         onDashboard={onDashboard}
       />
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
     </div>
   );
 };

@@ -46,13 +46,8 @@ const TeamDetailsMembersTab: React.FC<MembersTabProps> = ({
   });
 
   const { data: usersData, isLoading: usersLoading } = useUsers();
-<<<<<<< HEAD
-  const addUserToTeam = useAddUserToTeam(teamId, modal.selectedId);
-  const removeUserFromTeam = useRemoveUserFromTeam(teamId, removingId ?? "");
-=======
   const addUserToTeam = useAddUserToTeam(teamId);
   const removeUserFromTeam = useRemoveUserFromTeam(teamId);
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
 
   const availableUsers =
     usersData?.data?.filter(
@@ -65,14 +60,8 @@ const TeamDetailsMembersTab: React.FC<MembersTabProps> = ({
   }));
 
   const handleRemoveMember = async (memberId: string) => {
-<<<<<<< HEAD
-    setRemovingId(memberId);
-    try {
-      await removeUserFromTeam.mutateAsync(null);
-=======
     try {
       await removeUserFromTeam.mutateAsync({ user_ids: [memberId] });
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
       toast.success("Member removed from team");
       await queryClient.invalidateQueries({ queryKey: ["teams", teamId] });
       onMemberUpdated?.();
@@ -157,15 +146,11 @@ const TeamDetailsMembersTab: React.FC<MembersTabProps> = ({
         options={userOptions}
         selectedValue={modal.selectedId}
         onSelectChange={modal.setSelectedId}
-<<<<<<< HEAD
-        onConfirm={() => modal.submit(() => addUserToTeam.mutateAsync(null))}
-=======
         onConfirm={() =>
           modal.submit(() =>
             addUserToTeam.mutateAsync({ user_ids: [modal.selectedId] }),
           )
         }
->>>>>>> 589c80b46b3158aadaf075bdb5e445eca870f91f
         onCancel={modal.reset}
         confirmLabel="Add Member"
         emptyMessage="No available users to add."
