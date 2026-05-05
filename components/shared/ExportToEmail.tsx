@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { CustomModal } from "@/components/ui/custom-modal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -76,7 +76,7 @@ export const ExportToEmail: React.FC<ExportToEmailProp> = ({
     form.setValue("email", updated.join(", "));
   };
 
-  const handleSubmitForm = async (_values: ExportToEmailFormData) => {
+  const handleSubmitForm = async () => {
     try {
       const response = await sendToEmail.mutateAsync({
         recipients: selectedRecipients,

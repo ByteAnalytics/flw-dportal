@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AddAsEmailReceipient, UserRole, UserStatus } from "@/types";
+import { AddAsEmailReceipient, UserRole } from "@/types";
 
 export const UserFormSchema = z.object({
   first_name: z

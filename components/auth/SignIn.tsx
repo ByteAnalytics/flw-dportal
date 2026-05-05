@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Navigation, Autoplay } from "swiper/modules";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Brand, FlwLogo } from "../shared/Brand";
+import { FlwLogo } from "../shared/Brand";
 import { Form } from "../ui/form";
 import CustomInputField from "../ui/custom-input-field";
 import CustomButton from "../ui/custom-button";
@@ -18,7 +18,7 @@ import AnimatedDots from "./AnimatedDots";
 import { toast } from "sonner";
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";
 import { authService } from "@/api/auth-service";
-import { setAuthCookies } from "@/api/cookie-auth";
+
 import { useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { AUTH_SLIDES } from "@/constants/auth";

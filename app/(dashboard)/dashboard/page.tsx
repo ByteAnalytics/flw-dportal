@@ -1,4 +1,3 @@
-import Dashboard from "@/components/dashboard/overview";
 import AdminDashboard from "@/components/dashboard/overview/AdminDashboard";
 import { EnvironmentHelper } from "@/lib/environment-utils";
 import { Metadata } from "next";
