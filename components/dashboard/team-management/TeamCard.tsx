@@ -39,10 +39,10 @@ const TeamCard: React.FC<TeamCardProps> = ({ team, onClick }) => {
 
   const handleConfirmDelete = async () => {
     try {
-      (await deleteTeam.mutateAsync({ team_ids: [team.id] }),
-        toast.success("Team deleted successfully"));
+      await deleteTeam.mutateAsync({ team_ids: [team.id] });
+      toast.success("Team deleted successfully");
       setShowDeleteModal(false);
-    } catch (error: any) {
+    } catch {
       toast.error("Failed to delete team");
     }
   };

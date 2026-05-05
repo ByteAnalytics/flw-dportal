@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -65,7 +66,7 @@ const TeamDetailsMembersTab: React.FC<MembersTabProps> = ({
       toast.success("Member removed from team");
       await queryClient.invalidateQueries({ queryKey: ["teams", teamId] });
       onMemberUpdated?.();
-    } catch (error: any) {
+    } catch {
       toast.error("Failed to remove member from team");
     } finally {
       setRemovingId(null);

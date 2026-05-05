@@ -142,7 +142,7 @@ const ActivityLogs = () => {
   const { data: teamsData } = useTeams();
 
   const stats = statsData?.data;
-  const activities = activitiesData?.data?.data ?? [];
+  const activities = useMemo(() => activitiesData?.data?.data ?? [], [activitiesData?.data?.data]);
   const totalPages = activitiesData?.data?.pages ?? 1;
   const currentPage = activitiesData?.data?.page ?? 1;
 

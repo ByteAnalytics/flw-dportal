@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import CustomButton from "@/components/ui/custom-button";
-import { FormFieldType, User, UserRole, UserStatus } from "@/types";
+import { FormFieldType, User, UserRole } from "@/types";
 import CustomInputField from "@/components/ui/custom-input-field";
 import { Form } from "@/components/ui/form";
 import { extractErrorMessage, extractSuccessMessage } from "@/lib/utils";

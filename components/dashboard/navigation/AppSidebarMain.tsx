@@ -21,15 +21,8 @@ interface NavMainProps {
   items: readonly NavItem[];
 }
 
-const TEAM = {
-  name: "Operations Team",
-};
 
-const ACTIVE_APIS = [
-  { name: "Arbiter 2.0", desc: "Disputes portal" },
-  { name: "CC Portal", desc: "Transaction data" },
-  { name: "Slack", desc: "Notifications" },
-];
+
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({
   children,
