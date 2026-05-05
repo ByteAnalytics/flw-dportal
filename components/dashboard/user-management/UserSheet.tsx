@@ -32,7 +32,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
       last_name: user?.last_name ?? "",
       email: user?.email ?? "",
       role: (user?.role as UserRole) ?? UserRole.USER,
-      is_active: user?.is_active ?? false,
+      is_active: user?.is_active ? "active" : "inactive",
     },
   });
 
@@ -63,7 +63,7 @@ const UserSheet: React.FC<UserSheetProps> = ({ user, onClose, onSuccess }) => {
 
       if (user?.id) {
         payload.role = data.role;
-        payload.status = data.is_active;
+        payload.status = data.is_active === "active" || data.is_active === true;
       } else {
         payload.role = data.role;
       }
